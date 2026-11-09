@@ -12,3 +12,44 @@ spring:
   flyway:
     enabled: true
     locations: classpath:db/migration
+
+  # ---- Sign-in: OpenID Connect against the school workspace (proposal section 4) ----
+  # Staff sign in with their own school account; Sijill has no passwords. Add one registration and the
+  # app switches from the development form login to OIDC automatically (see SecurityConfig).
+  #
+  # security:
+  #   oauth2:
+  #     client:
+  #       registration:
+  #         workspace:
+  #           client-id: ${OIDC_CLIENT_ID}
+  #           client-secret: ${OIDC_CLIENT_SECRET}
+  #           scope: openid,email,profile
+  #       provider:
+  #         workspace:
+  #           issuer-uri: ${OIDC_ISSUER_URI}
+
+server:
+  servlet:
+    session:
+      timeout: 8h        # staff sessions expire after 8 hours (section 4); IT/Leadership idle limit is future work
+
+logging:
+  pattern:
+    # Every log line carries the correlation ID of its request or background job (see CorrelationIdFilter).
+    # Search the logs for one value to follow a single click through controller, services, re-check and e-mail.
+    level: "%5p [%X{correlationId:-}]"
+
+sijill:
+  jobs:
+    enabled: true        # false switches off every scheduled job (nightly check, reminders, message delivery)
+  # First start-up only: creates the organisation and the first Leadership person so somebody can sign in.
+  # Does nothing once an organisation exists. Uncomment and fill in for a new installation.
+  #
+  # bootstrap:
+  #   enabled: true
+  #   org-name: Example School Network
+  #   head-office-name: Head Office
+  #   head-office-domain: example.edu
+  #   admin-email: first.leader@example.edu
+  #   admin-name: First Leader
