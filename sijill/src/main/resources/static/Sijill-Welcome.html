@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Welcome to Sijill</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&amp;family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+<link rel="stylesheet" href="prototype/sijill.css">
+<link rel="stylesheet" href="prototype/welcome.css">
+<script>window.__resources = {};</script>
+<script src="prototype/react.js"></script>
+<script src="prototype/react-dom.js"></script>
+<script src="prototype/dc-runtime.js"></script>
+</head>
+<body>
+<x-dc>
+
+<div dir="{{dir}}" lang="{{langCode}}" style="min-height: 100vh">
+  <header style="background: #17181C; color: #fff">
+    <div class="wrap" style="display: flex; flex-wrap: wrap; align-items: center; gap: 12px; padding-top: 14px; padding-bottom: 14px">
+      <span style="font-size: 22px; font-weight: 700">Sijill <span lang="ar" style="font-family: 'IBM Plex Sans Arabic', sans-serif; margin-inline-start: 6px">سجل</span></span>
+      <span style="font-size: 13px; color: #C9CCD6">{{t.org}}</span>
+      <div style="flex: 1 1 auto"></div>
+      <div role="group" aria-label="Language" style="display: flex; gap: 6px"><button type="button" class="wlang {{enCls}}" sc-camel-on-click="{{toEn}}">English</button><button type="button" class="wlang {{arCls}}" sc-camel-on-click="{{toAr}}">العربية</button></div>
+    </div>
+  </header>
+
+  <section style="background: repeating-linear-gradient(0deg, rgba(255,255,255,.03) 0 2px, transparent 2px 5px), linear-gradient(150deg, #A3194A -10%, #8A1538 40%, #4F0A20 100%); color: #fff">
+    <div class="wrap" style="padding-top: 44px; padding-bottom: 56px; display: flex; flex-wrap: wrap; gap: 32px; align-items: center">
+      <div style="flex: 1 1 460px">
+        <div style="font-size: 13px; letter-spacing: 0.08em; text-transform: uppercase; color: #F6D3DF; font-weight: 600">{{t.kicker}}</div>
+        <h1 style="font-size: 40px; line-height: 1.15; margin: 12px 0 14px">{{t.title}}</h1>
+        <p style="font-size: 18px; line-height: 1.6; color: rgba(255,255,255,.86); margin: 0 0 24px; max-width: 560px">{{t.lead}}</p>
+        <div style="display: flex; flex-wrap: wrap; gap: 10px"><a class="btn btn-primary" href="Sijill-Prototype.html">{{t.signIn}}</a><a class="btn" href="#how">{{t.seeHow}}</a></div>
+      </div>
+      <div style="flex: 1 1 340px">
+        <div class="card" style="color: #17181C; box-shadow: 0 20px 50px rgba(0,0,0,0.3)">
+          <div style="display: flex; gap: 8px; align-items: center; margin-bottom: 10px"><span class="badge" style="background: var(--brand); color: #fff">{{t.mockUrgent}}</span><span class="badge" style="background: var(--blue-50); color: var(--blue-700)">{{t.mockTold}}</span></div>
+          <div style="font-size: 18px; font-weight: 700; margin-bottom: 4px">{{t.mockTitle}}</div>
+          <div style="font-size: 14px; color: var(--brand); font-weight: 600; margin-bottom: 10px" dir="ltr">Grade 7B marks – Term 1.xlsx</div>
+          <p style="font-size: 14px; line-height: 1.5; margin: 0 0 8px"><strong>{{t.mockWhyL}}</strong> {{t.mockWhy}}</p>
+          <ol style="margin: 0 0 14px; padding-inline-start: 20px; font-size: 14px; line-height: 1.6"><sc-for list="{{t.mockSteps}}" as="x" hint-placeholder-count="2"><li>{{x}}</li></sc-for></ol>
+          <div style="display: flex; flex-wrap: wrap; gap: 8px"><span class="btn btn-primary" style="min-height: 38px; font-size: 13px">{{t.mockFixed}}</span><span class="btn" style="min-height: 38px; font-size: 13px">{{t.mockWrong}}</span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="wrap" style="padding-top: 40px">
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 14px">
+      <sc-for list="{{t.promises}}" as="p" hint-placeholder-count="4"><div class="card"><div style="font-size: 28px; margin-bottom: 6px" aria-hidden="true">{{p.icon}}</div><h3 style="margin: 0 0 6px; font-size: 17px">{{p.title}}</h3><p class="muted" style="margin: 0; font-size: 14px; line-height: 1.55">{{p.text}}</p></div></sc-for>
+    </div>
+  </section>
+
+  <section id="how" class="wrap" style="padding-top: 48px">
+    <h2 class="sec">{{t.howTitle}}</h2>
+    <p class="muted" style="margin: 0 0 20px; font-size: 15px">{{t.howSub}}</p>
+    <ol style="list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px">
+      <sc-for list="{{t.steps}}" as="s" hint-placeholder-count="5"><li class="card" style="display: flex; flex-direction: column; gap: 10px"><span class="num">{{s.n}}</span><h3 style="margin: 0; font-size: 16px">{{s.title}}</h3><p class="muted" style="margin: 0; font-size: 14px; line-height: 1.55">{{s.text}}</p></li></sc-for>
+    </ol>
+  </section>
+
+  <section class="wrap" style="padding-top: 48px">
+    <h2 class="sec">{{t.rolesTitle}}</h2>
+    <p class="muted" style="margin: 0 0 20px; font-size: 15px">{{t.rolesSub}}</p>
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 14px">
+      <sc-for list="{{t.roles}}" as="r" hint-placeholder-count="5"><div class="card"><h3 style="margin: 0 0 4px; font-size: 17px">{{r.name}}</h3><div style="font-size: 13px; color: var(--brand); font-weight: 600; margin-bottom: 8px">{{r.who}}</div><ul style="margin: 0; padding-inline-start: 18px; font-size: 14px; line-height: 1.6"><sc-for list="{{r.does}}" as="d" hint-placeholder-count="3"><li>{{d}}</li></sc-for></ul></div></sc-for>
+    </div>
+  </section>
+
+  <section class="wrap" style="padding-top: 48px">
+    <h2 class="sec">{{t.rulesTitle}}</h2>
+    <p class="muted" style="margin: 0 0 20px; font-size: 15px">{{t.rulesSub}}</p>
+    <div class="card" style="padding: 8px 22px">
+      <sc-for list="{{t.rules}}" as="r" hint-placeholder-count="8"><div style="display: flex; gap: 14px; align-items: baseline; padding: 12px 0; border-bottom: 1px solid var(--line)"><span style="font-weight: 700; color: var(--brand); min-width: 28px">{{r.id}}</span><span style="flex: 1 1 auto; font-size: 15px">{{r.text}}</span><sc-if value="{{r.urgent}}" hint-placeholder-val="{{false}}"><span class="badge" style="background: var(--brand); color: #fff">{{t.urgentWord}}</span></sc-if></div></sc-for>
+    </div>
+  </section>
+
+  <section class="wrap" style="padding-top: 48px">
+    <div style="display: flex; flex-wrap: wrap; gap: 14px">
+      <div class="card" style="flex: 1 1 320px; background: var(--green-50); border-color: #BFE8D4"><h3 style="margin: 0 0 10px; font-size: 17px">{{t.seesTitle}}</h3><ul style="margin: 0; padding-inline-start: 18px; font-size: 14px; line-height: 1.7"><sc-for list="{{t.sees}}" as="x" hint-placeholder-count="3"><li>{{x}}</li></sc-for></ul></div>
+      <div class="card" style="flex: 1 1 320px; background: var(--brand-50); border-color: var(--brand-100)"><h3 style="margin: 0 0 10px; font-size: 17px">{{t.neverTitle}}</h3><ul style="margin: 0; padding-inline-start: 18px; font-size: 14px; line-height: 1.7"><sc-for list="{{t.never}}" as="x" hint-placeholder-count="4"><li>{{x}}</li></sc-for></ul></div>
+    </div>
+  </section>
+
+  <section class="wrap" style="padding-top: 48px">
+    <h2 class="sec">{{t.faqTitle}}</h2>
+    <div style="display: flex; flex-direction: column; gap: 10px; margin-top: 16px">
+      <sc-for list="{{faq}}" as="q" hint-placeholder-count="6"><div class="card" style="padding: 0"><button type="button" sc-camel-on-click="{{q.toggle}}" aria-expanded="{{q.exp}}" style="display: flex; justify-content: space-between; align-items: center; gap: 12px; width: 100%; padding: 18px 22px; border: 0; background: transparent; font: inherit; font-size: 16px; font-weight: 600; text-align: start; cursor: pointer; color: #17181C"><span>{{q.q}}</span><span aria-hidden="true">{{q.sign}}</span></button><sc-if value="{{q.open}}" hint-placeholder-val="{{false}}"><p style="margin: 0; padding: 0 22px 18px; font-size: 15px; line-height: 1.6; color: var(--ink-2)">{{q.a}}</p></sc-if></div></sc-for>
+    </div>
+  </section>
+
+  <section class="wrap" style="padding-top: 48px; padding-bottom: 56px">
+    <div class="card" style="background: #17181C; color: #fff; border: 0; display: flex; flex-wrap: wrap; gap: 16px; align-items: center; padding: 28px">
+      <div style="flex: 1 1 380px"><h2 style="margin: 0 0 6px; font-size: 22px">{{t.ctaTitle}}</h2><p style="margin: 0; color: var(--line-2); font-size: 15px; line-height: 1.5">{{t.ctaText}}</p></div>
+      <a class="btn btn-primary" href="Sijill-Prototype.html">{{t.signIn}}</a>
+    </div>
+    <p class="muted" style="font-size: 12px; margin: 16px 0 0">{{t.foot}}</p>
+  </section>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script="" data-props="{&quot;$preview&quot;:{&quot;width&quot;:1280,&quot;height&quot;:2600}}">
+class Component extends DCLogic {
+  constructor(props) { super(props); this.state = { lang: 'en', open: 0 }; }
+
+  T() {
+    return {
+      en: {
+        org: 'Education Above All', kicker: 'For every member of staff',
+        title: 'School files that are safe, and easy to find.',
+        lead: 'Sijill checks our school files in Google Drive against a short list of EAA rules. If one of your files needs a fix, you get a clear message with the steps. It never touches your files: you make every fix yourself, in about two minutes.',
+        signIn: 'Sign in with Google', seeHow: 'See how it works',
+        mockUrgent: 'Urgent', mockTold: 'Owner notified', mockTitle: 'Public link on a mark book', mockWhyL: 'Why it matters:', mockWhy: 'Anyone with the link can open student names and marks.',
+        mockSteps: ['Open the file and select Share.', 'Under General access, choose Restricted.'], mockFixed: 'I’ve fixed it', mockWrong: 'This looks wrong',
+        promises: [
+          { icon: '👁', title: 'It only reads', text: 'Sijill has read-only access. It cannot move, edit, share or delete anything.' },
+          { icon: '✉', title: 'Clear messages', text: 'One message per issue, in English and Arabic: what is wrong, why it matters, and how to fix it.' },
+          { icon: '🙋', title: 'You stay in charge', text: 'You make the fix. If Sijill is wrong, say so with one button; your coordinator decides.' },
+          { icon: '🏫', title: 'Scores for schools, not people', text: 'Each school has a file health score that rises as files are fixed. Nobody gets a personal score.' }
+        ],
+        howTitle: 'How it works', howSub: 'The same simple loop runs every night, for every school.',
+        steps: [
+          { n: 1, title: 'EAA sets the rules', text: 'A short list of rules, written in plain words, for example “Student records belong in Student Records”.' },
+          { n: 2, title: 'Sijill checks', text: 'Every night, and within minutes of a change, it reads where each file is, what it is and who can open it.' },
+          { n: 3, title: 'The owner is told', text: 'If a file breaks a rule, its owner gets one message with the steps. Urgent issues also go to the coordinator.' },
+          { n: 4, title: 'You fix it', text: 'You make the change in Google Drive. Sijill checks again and closes the issue. A reminder comes only if nothing changes.' },
+          { n: 5, title: 'Coordinators help', text: 'Anything still open after a reminder goes to the school coordinator, who helps in person or allows an exception.' }
+        ],
+        rolesTitle: 'What each person sees', rolesSub: 'You sign in with your EAA Google account. Your role comes from Google Workspace, so there is nothing to sign up for.',
+        roles: [
+          { name: 'Staff', who: 'Teachers, nurses, office staff', does: ['“My files”: what to fix, and how', '“I’ve fixed it”, “This looks wrong”, “I need help”', 'The rules, in plain words'] },
+          { name: 'Coordinator', who: 'One per school', does: ['A follow-up list of what needs a person', 'Reviews files Sijill is unsure about', 'Allows exceptions, with a reason and end date'] },
+          { name: 'Principal', who: 'One per school', does: ['The school’s score and how it changes', 'What is open and what is fixed', 'Read-only'] },
+          { name: 'Leadership', who: 'Executive Director and head office', does: ['All schools side by side', 'Urgent issues across EAA', 'A weekly one-page report'] },
+          { name: 'IT', who: 'The IT lead', does: ['Connects Google Workspace (read-only)', 'Adds, edits, pauses and deletes rules', 'Manages schools, folders, roles, people and settings'] }
+        ],
+        rulesTitle: 'The starter rules', rulesSub: 'IT can add or change rules at any time. Each one comes with fix steps in English and Arabic.',
+        rules: [
+          { id: 'R1', text: 'School files belong in the school’s shared drive, not a personal My Drive.' },
+          { id: 'R2', text: 'No “Anyone with the link” sharing on sensitive files.', urgent: true },
+          { id: 'R3', text: 'Restricted files (student and staff records) stay inside EAA.', urgent: true },
+          { id: 'R4', text: 'Student records belong in the Student Records folder.' },
+          { id: 'R5', text: 'Only the right people can open Restricted files.' },
+          { id: 'R6', text: 'Exams are not shared outside EAA before the exam.' },
+          { id: 'R7', text: 'One official copy of each policy.' },
+          { id: 'R8', text: 'People leaving move their school files first.' }
+        ], urgentWord: 'Urgent',
+        seesTitle: 'What Sijill looks at', sees: ['Files in EAA shared drives and your EAA My Drive', 'Where each file is saved and who can open it', 'Enough of the content to know what kind of document it is'],
+        neverTitle: 'What Sijill never does', never: ['Move, change, share or delete your files', 'Look at personal email, phones, laptops, USB sticks or WhatsApp', 'Keep copies of your files', 'Send names or ID numbers to the AI: they are hidden first'],
+        faqTitle: 'Questions staff ask',
+        faq: [
+          ['Do I need to install anything or create an account?', 'No. Sign in with your EAA Google account. Messages arrive by email, and your “My files” page lists anything open.'],
+          ['How long does a fix take?', 'Most take about two minutes: changing a sharing setting or moving a file into the right folder.'],
+          ['What if I am not the right person to fix it?', 'Press “I need help” and say why. Your coordinator will sort it out.'],
+          ['What if Sijill gets it wrong?', 'Press “This looks wrong” and add a note. Your coordinator decides, and the answer helps Sijill improve.'],
+          ['Will this get me into trouble?', 'No. The aim is safe, findable files. Scores are for schools, not people, and most issues come from habits nobody was told about.'],
+          ['How many messages will I get?', 'Only when one of your files breaks a rule, and one reminder if nothing changes. You can switch to one daily summary in My preferences.']
+        ],
+        ctaTitle: 'Ready when you are', ctaText: 'Sign in to see if any of your files need attention. Most people have nothing, or one or two quick fixes.',
+        foot: 'Demo page with synthetic data. Questions about access or settings: contact IT.'
+      },
+      ar: {
+        org: 'مؤسسة التعليم فوق الجميع', kicker: 'لكل الموظفين',
+        title: 'ملفات مدرسية آمنة وسهلة الوصول.',
+        lead: 'يراجع «سِجِل» ملفات مدارسنا في Google Drive وفق قائمة قصيرة من قواعد المؤسسة. إذا احتاج أحد ملفاتك إلى تصحيح، تصلك رسالة واضحة بالخطوات. لا يلمس ملفاتك أبدًا: أنتِ من يجري التصحيح بنفسه، في دقيقتين تقريبًا.',
+        signIn: 'تسجيل الدخول عبر Google', seeHow: 'كيف يعمل',
+        mockUrgent: 'عاجل', mockTold: 'تم إبلاغ المالك', mockTitle: 'رابط عام على سجل درجات', mockWhyL: 'لماذا يهم ذلك:', mockWhy: 'يمكن لأي شخص لديه الرابط فتح أسماء الطالبات ودرجاتهن.',
+        mockSteps: ['افتحي الملف واختاري «مشاركة».', 'ضمن «الوصول العام» اختاري «مقيّد».'], mockFixed: 'صحّحتُه', mockWrong: 'يبدو هذا خطأ',
+        promises: [
+          { icon: '👁', title: 'يقرأ فقط', text: 'صلاحية «سِجِل» للقراءة فقط. لا يستطيع نقل أي ملف أو تعديله أو مشاركته أو حذفه.' },
+          { icon: '✉', title: 'رسائل واضحة', text: 'رسالة واحدة لكل ملاحظة، بالعربية والإنجليزية: ما المشكلة، ولماذا تهم، وكيف تُصحَّح.' },
+          { icon: '🙋', title: 'القرار لكِ', text: 'أنتِ من يصحّح. وإذا أخطأ «سِجِل» فقولي ذلك بزر واحد، والمنسقة تقرّر.' },
+          { icon: '🏫', title: 'التقييم للمدارس لا للأشخاص', text: 'لكل مدرسة مؤشر لسلامة الملفات يرتفع مع التصحيح. لا يوجد تقييم شخصي لأحد.' }
+        ],
+        howTitle: 'كيف يعمل', howSub: 'الحلقة البسيطة نفسها تعمل كل ليلة، لكل مدرسة.',
+        steps: [
+          { n: 1, title: 'المؤسسة تضع القواعد', text: 'قائمة قصيرة بلغة بسيطة، مثل «مكان سجلات الطالبات هو مجلد سجلات الطالبات».' },
+          { n: 2, title: '«سِجِل» يراجع', text: 'كل ليلة، وخلال دقائق من أي تغيير، يقرأ مكان كل ملف ونوعه ومن يمكنه فتحه.' },
+          { n: 3, title: 'إبلاغ المالك', text: 'إذا خالف ملفٌ قاعدةً، تصل مالكه رسالة واحدة بالخطوات. والملاحظات العاجلة تصل المنسقة أيضًا.' },
+          { n: 4, title: 'أنتِ تصحّحين', text: 'تجرين التغيير في Google Drive، فيعيد «سِجِل» الفحص ويغلق الملاحظة. ولا يصل تذكير إلا إذا لم يتغير شيء.' },
+          { n: 5, title: 'المنسقة تساعد', text: 'ما يبقى مفتوحًا بعد التذكير يصل إلى منسقة المدرسة، فتساعد شخصيًا أو تسمح باستثناء.' }
+        ],
+        rolesTitle: 'ماذا يرى كل شخص', rolesSub: 'تدخلين بحساب Google الخاص بالمؤسسة، ودورك يأتي من Google Workspace، فلا حاجة إلى أي تسجيل.',
+        roles: [
+          { name: 'الموظفون', who: 'المعلمات والممرضات والإداريات', does: ['صفحة «ملفاتي»: ما يحتاج إلى تصحيح وكيف', 'أزرار «صحّحتُه» و«يبدو هذا خطأ» و«أحتاج إلى مساعدة»', 'القواعد بلغة بسيطة'] },
+          { name: 'المنسقة', who: 'واحدة لكل مدرسة', does: ['قائمة متابعة بما يحتاج إلى شخص', 'مراجعة الملفات غير الواضحة', 'السماح باستثناء مع السبب وتاريخ الانتهاء'] },
+          { name: 'المديرة', who: 'واحدة لكل مدرسة', does: ['مؤشر المدرسة وتغيّره', 'ما هو مفتوح وما تم تصحيحه', 'اطّلاع فقط'] },
+          { name: 'القيادة', who: 'المديرة التنفيذية والمكتب الرئيسي', does: ['كل المدارس جنبًا إلى جنب', 'الملاحظات العاجلة في المؤسسة', 'تقرير أسبوعي من صفحة واحدة'] },
+          { name: 'تقنية المعلومات', who: 'مسؤول تقنية المعلومات', does: ['ربط Google Workspace (قراءة فقط)', 'إضافة القواعد وتعديلها وإيقافها وحذفها', 'إدارة المدارس والمجلدات والأدوار والأشخاص والإعدادات'] }
+        ],
+        rulesTitle: 'القواعد الأولى', rulesSub: 'يمكن لتقنية المعلومات إضافة القواعد أو تغييرها في أي وقت، ولكل قاعدة خطوات تصحيح بالعربية والإنجليزية.',
+        rules: [
+          { id: 'R1', text: 'مكان ملفات المدرسة هو المساحة المشتركة للمدرسة، لا المساحة الشخصية.' },
+          { id: 'R2', text: 'لا مشاركة بخيار «أي شخص لديه الرابط» على الملفات الحساسة.', urgent: true },
+          { id: 'R3', text: 'الملفات المقيّدة (سجلات الطالبات والموظفين) تبقى داخل المؤسسة.', urgent: true },
+          { id: 'R4', text: 'مكان سجلات الطالبات هو مجلد سجلات الطالبات.' },
+          { id: 'R5', text: 'الملفات المقيّدة يفتحها الأشخاص المعنيون فقط.' },
+          { id: 'R6', text: 'لا تُشارَك الاختبارات خارج المؤسسة قبل موعدها.' },
+          { id: 'R7', text: 'نسخة رسمية واحدة لكل سياسة.' },
+          { id: 'R8', text: 'من يغادر ينقل ملفاته المدرسية أولًا.' }
+        ], urgentWord: 'عاجل',
+        seesTitle: 'ما يراجعه «سِجِل»', sees: ['الملفات في المساحات المشتركة ومساحتك الشخصية على حساب المؤسسة', 'مكان حفظ كل ملف ومن يمكنه فتحه', 'ما يكفي من المحتوى لمعرفة نوع المستند'],
+        neverTitle: 'ما لا يفعله «سِجِل» أبدًا', never: ['نقل ملفاتك أو تعديلها أو مشاركتها أو حذفها', 'الاطلاع على البريد الشخصي أو الهواتف أو الحواسيب أو وحدات USB أو واتساب', 'الاحتفاظ بنسخ من ملفاتك', 'إرسال الأسماء أو أرقام الهوية إلى الذكاء الاصطناعي: تُخفى أولًا'],
+        faqTitle: 'أسئلة يطرحها الموظفون',
+        faq: [
+          ['هل أحتاج إلى تثبيت شيء أو إنشاء حساب؟', 'لا. ادخلي بحساب Google الخاص بالمؤسسة. تصل الرسائل بالبريد، وصفحة «ملفاتي» تعرض كل ما هو مفتوح.'],
+          ['كم يستغرق التصحيح؟', 'معظمها دقيقتان تقريبًا: تغيير إعداد المشاركة أو نقل الملف إلى المجلد الصحيح.'],
+          ['ماذا لو لم أكن الشخص المناسب للتصحيح؟', 'اضغطي «أحتاج إلى مساعدة» واذكري السبب، وستتولى المنسقة الأمر.'],
+          ['ماذا لو أخطأ «سِجِل»؟', 'اضغطي «يبدو هذا خطأ» وأضيفي ملاحظة. المنسقة تقرّر، والإجابة تساعد «سِجِل» على التحسن.'],
+          ['هل سيوقعني هذا في مشكلة؟', 'لا. الهدف ملفات آمنة يسهل الوصول إليها. التقييم للمدارس لا للأشخاص، ومعظم الملاحظات سببها عادات لم يُنبَّه إليها أحد.'],
+          ['كم رسالة ستصلني؟', 'فقط عندما يخالف أحد ملفاتك قاعدة، وتذكير واحد إذا لم يتغير شيء. ويمكنك اختيار ملخص يومي واحد من «تفضيلاتي».']
+        ],
+        ctaTitle: 'جاهز متى شئتِ', ctaText: 'ادخلي لتري إن كان أي من ملفاتك يحتاج إلى انتباه. معظم الناس لا يجدون شيئًا، أو تصحيحًا سريعًا أو اثنين.',
+        foot: 'صفحة تجريبية ببيانات مصطنعة. للأسئلة عن الوصول أو الإعدادات: تواصلي مع تقنية المعلومات.'
+      }
+    };
+  }
+
+  renderVals() {
+    const s = this.state, t = this.T()[s.lang];
+    return {
+      t: t, dir: s.lang === 'ar' ? 'rtl' : 'ltr', langCode: s.lang,
+      enCls: s.lang === 'en' ? 'wlang-on' : '', arCls: s.lang === 'ar' ? 'wlang-on' : '',
+      toEn: () => this.setState({ lang: 'en' }), toAr: () => this.setState({ lang: 'ar' }),
+      faq: t.faq.map((f, i) => ({ q: f[0], a: f[1], open: s.open === i, exp: s.open === i ? 'true' : 'false', sign: s.open === i ? '−' : '+', toggle: () => this.setState({ open: s.open === i ? -1 : i }) }))
+    };
+  }
+}
+</script>
+</x-dc>
+</body></html>

@@ -1,0 +1,1416 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sijill — Product Prototype</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&amp;family=IBM+Plex+Sans+Arabic:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<link rel="stylesheet" href="prototype/sijill.css">
+<script>window.__resources = {}; /* template is read from this page; no self-fetch (works from file://) */</script>
+<script src="prototype/react.js"></script>
+<script src="prototype/react-dom.js"></script>
+<script src="prototype/dc-runtime.js"></script>
+</head>
+<body>
+<x-dc>
+<div dir="{{dir}}" style="min-height: 100vh">
+
+  <sc-if value="{{is.signin}}" hint-placeholder-val="{{true}}">
+    <div class="signin">
+      <section class="signin-art" aria-label="About Sijill">
+        <div>
+          <div class="brand-row"><span class="brand-mark"></span><span class="brand-name">Sijill</span></div>
+          <div class="brand-sub"><span class="brand-ar" lang="ar" dir="rtl">سجل</span><span class="brand-pill" lang="ar" dir="rtl">تعليم</span></div>
+          <div class="brand-tag" style="color: rgba(255,255,255,.7)">Qatar Educational Register</div>
+        </div>
+        <div>
+          <h2>Every school file safe, findable and owned.</h2>
+          <p>Sijill reads your school drives, tells the right person what to fix and why, and follows up until it is done. Staff keep working as they do today.</p>
+          <ul>
+            <li><i>1</i><span>Read-only: Sijill never moves, edits, shares or deletes a file.</span></li>
+            <li><i>2</i><span>Each person sees only what their role needs.</span></li>
+            <li><i>3</i><span>Every change is logged and cannot be altered.</span></li>
+          </ul>
+        </div>
+        <div style="font-size: 12.5px; opacity: .75">Prototype with synthetic data. Every school, person and file is invented.</div>
+      </section>
+      <section class="signin-form" aria-labelledby="si-title">
+        <div class="card signin-card">
+          <h1 id="si-title" style="font-size: 26px; font-weight: 800; letter-spacing: -.02em; margin: 0 0 8px">Sign in</h1>
+          <p class="muted" style="font-size: 14.5px; line-height: 1.6; margin: 0 0 24px">Use your Education Above All Google account. There is nothing to sign up for and no new password: IT has already added everyone from Google Workspace.</p>
+          <button type="button" class="btn btn-primary" style="width: 100%; min-height: 50px; font-size: 15px" sc-camel-on-click="{{signIn}}">Continue with Google</button>
+          <p class="muted" style="font-size: 12.5px; margin: 14px 0 0">Only @demo-eaa.test accounts can sign in. In this demo you will sign in as <b style="color: var(--ink)">{{signInAs}}</b>.</p>
+          <hr class="divider" style="margin: 26px 0 18px">
+          <a href="Sijill-Welcome.html" style="font-size: 14px">New to Sijill? See how it works</a>
+        </div>
+      </section>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{signedIn}}" hint-placeholder-val="{{true}}">
+    <div class="frame">
+
+      <aside class="sidebar" aria-label="Main navigation">
+        <div class="brand">
+          <div class="brand-row"><span class="brand-mark"></span><span class="brand-name">Sijill</span></div>
+          <div class="brand-sub"><span class="brand-ar" lang="ar" dir="rtl">سجل</span><span class="brand-pill" lang="ar" dir="rtl">تعليم</span></div>
+          <div class="brand-tag">Qatar Educational Register</div>
+        </div>
+        <div class="who"><b>{{me.name}}</b>{{me.roleLabel}} · {{me.site}}</div>
+        <nav class="nav" aria-label="Sections">
+          <sc-for list="{{nav}}" as="n" hint-placeholder-count="5">
+            <div style="display: contents">
+              <sc-if value="{{n.sep}}" hint-placeholder-val="{{false}}"><div class="nav-sep"></div></sc-if>
+              <button type="button" class="nav-item {{n.cls}}" sc-camel-on-click="{{n.go}}">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="{{n.icon}}"/></svg>
+                <span>{{n.label}}</span>
+                <sc-if value="{{n.hasCount}}" hint-placeholder-val="{{false}}"><span class="count">{{n.count}}</span></sc-if>
+              </button>
+            </div>
+          </sc-for>
+        </nav>
+        <div class="sys"><span class="sys-dot {{sys.cls}}"></span><div><b>{{sys.label}}</b><span>{{sys.sub}}</span></div></div>
+      </aside>
+
+      <div class="content">
+
+        <header class="topbar">
+          <form class="search" role="search" sc-camel-on-submit="{{globalSearch}}">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M11 18a7 7 0 1 1 0-14 7 7 0 0 1 0 14zM20 20l-4-4"/></svg>
+            <label class="sr" for="gs">Search</label>
+            <input id="gs" name="q" type="search" placeholder="Search files, issues or schools…" autocomplete="off">
+          </form>
+          <div class="top-right">
+            <div class="lang" role="group" aria-label="Language">
+              <button type="button" class="{{langArCls}}" lang="ar" sc-camel-on-click="{{setAr}}">عربي</button><i></i><button type="button" class="{{langEnCls}}" sc-camel-on-click="{{setEn}}">EN</button>
+            </div>
+            <div style="position: relative">
+              <button type="button" class="icon-btn" aria-label="Notifications" sc-camel-on-click="{{toggleNotif}}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 17h12l-1.6-2.4V10.5a4.4 4.4 0 0 0-8.8 0v4.1zM10 20a2 2 0 0 0 4 0"/></svg><sc-if value="{{notif.has}}" hint-placeholder-val="{{false}}"><span class="bell-count">{{notif.count}}</span></sc-if></button>
+              <sc-if value="{{notif.open}}" hint-placeholder-val="{{false}}">
+                <div class="menu" style="min-width: 360px">
+                  <div style="display: flex; justify-content: space-between; align-items: center; padding: 6px 12px 10px"><strong style="font-size: 14px">Notifications</strong><button type="button" class="btn btn-quiet btn-sm" sc-camel-on-click="{{notif.markRead}}">Mark all as read</button></div>
+                  <sc-if value="{{notif.empty}}" hint-placeholder-val="{{false}}"><p class="muted" style="margin: 0; padding: 8px 12px 12px; font-size: 13px">Nothing new.</p></sc-if>
+                  <sc-for list="{{notif.items}}" as="n" hint-placeholder-count="2"><button type="button" class="menu-item" sc-camel-on-click="{{n.go}}"><div style="font-weight: 600; font-size: 13px">{{n.title}}</div><div class="muted" style="font-size: 12px">{{n.text}}</div></button></sc-for>
+                </div>
+              </sc-if>
+            </div>
+            <div style="position: relative">
+              <button type="button" class="user-btn" sc-camel-on-click="{{toggleUser}}">
+                <span class="avatar">{{me.initials}}</span>
+                <span style="text-align: start">{{me.first}}<small>{{me.roleLabel}}</small></span>
+                <svg viewBox="0 0 24 24" style="width: 16px; height: 16px; fill: none; stroke: var(--ink-3); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
+              </button>
+              <sc-if value="{{userMenuOpen}}" hint-placeholder-val="{{false}}">
+                <div class="menu">
+                  <div style="padding: 6px 12px 10px; font-size: 13px"><div style="font-weight: 700">{{me.name}}</div><div class="muted">{{me.email}}</div><div class="muted">{{me.roleLabel}} · {{me.site}}</div></div>
+                  <button type="button" class="menu-item" sc-camel-on-click="{{goPrefs}}">My preferences</button>
+                  <button type="button" class="menu-item" sc-camel-on-click="{{goHelp}}">Help</button>
+                  <button type="button" class="menu-item" sc-camel-on-click="{{signOut}}">Sign out</button>
+                </div>
+              </sc-if>
+            </div>
+          </div>
+        </header>
+        <div class="banner banner-note" role="note"><span>Demo with synthetic data: every school, person and file is invented. Sijill only reads Google Drive. It never moves, changes or deletes files; people make every fix.</span></div>
+        <sc-if value="{{disconnected}}" hint-placeholder-val="{{false}}"><div class="banner banner-alert" role="alert">Sijill is disconnected from Google Workspace. No checks are running. IT can reconnect it in Settings › Connection.</div></sc-if>
+
+        <main class="page">
+
+      <!-- OVERVIEW (leadership and IT) -->
+      <sc-if value="{{is.overview}}" hint-placeholder-val="{{false}}">
+        <section aria-labelledby="ov-title">
+          <div class="page-top">
+            <div class="page-head"><h1 id="ov-title" class="page-title">{{greeting}}, {{me.first}}</h1><p class="page-sub">{{ov.sub}}</p></div>
+            <div class="actions">
+              <sc-if value="{{ov.canCheck}}" hint-placeholder-val="{{true}}"><button type="button" class="btn btn-primary" sc-camel-on-click="{{runCheck}}">Run the first check</button></sc-if>
+              <sc-if value="{{ov.after}}" hint-placeholder-val="{{false}}"><button type="button" class="btn" sc-camel-on-click="{{downloadReport}}">Download weekly report (PDF)</button></sc-if>
+            </div>
+          </div>
+
+          <sc-if value="{{ov.before}}" hint-placeholder-val="{{true}}">
+            <div class="card" style="max-width: 820px">
+              <div class="card-head"><span class="ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 7.5V12l3 2M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0"/></svg></span><div><h2>Not checked yet</h2><small>Setup is finished</small></div></div>
+              <p style="margin: 0 0 8px; font-size: 14.5px; line-height: 1.6">Sijill has not looked at any files yet. Today nobody knows what is where: files sit in 17 shared drives, 124 personal My Drives, on laptops and on USB sticks.</p>
+              <p class="muted" style="margin: 0; font-size: 13px">{{ov.beforeHint}}</p>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ov.after}}" hint-placeholder-val="{{false}}">
+            <div class="kpi-grid">
+              <sc-for list="{{ov.kpis}}" as="k" hint-placeholder-count="6">
+                <div class="card kpi">
+                  <span class="kpi-ic {{k.tone}}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="{{k.icon}}"/></svg></span>
+                  <div><div class="kpi-label">{{k.label}}</div><div class="kpi-value">{{k.value}}</div></div>
+                  <div class="kpi-foot"><span>{{k.foot}}</span><sc-if value="{{k.hasSpark}}" hint-placeholder-val="{{true}}"><svg class="spark {{k.sparkCls}}" viewBox="0 0 110 34" aria-hidden="true"><path d="{{k.spark}}"/></svg></sc-if></div>
+                </div>
+              </sc-for>
+            </div>
+
+            <div class="grid-3">
+              <div class="card">
+                <div class="card-head"><span class="ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 21V6a1 1 0 0 1 1-1h8a1 1 0 0 1 1 1v15M14 10h5a1 1 0 0 1 1 1v10M3 21h18M8 9h2M8 13h2M8 17h2"/></svg></span><div><h2>{{ov.siteWordCap}} performance</h2><small>File health score today</small></div></div>
+                <div class="tiles">
+                  <sc-for list="{{ov.tiles}}" as="t" hint-placeholder-count="5">
+                    <button type="button" class="tile" sc-camel-on-click="{{t.go}}">
+                      <div class="tile-top"><span class="dot" style="{{t.dot}}"></span>{{t.name}}</div>
+                      <div class="tile-score"><b>{{t.score}}</b><sc-if value="{{t.hasSpark}}" hint-placeholder-val="{{true}}"><svg class="spark {{t.sparkCls}}" viewBox="0 0 110 34" style="width: 70px; height: 26px" aria-hidden="true"><path d="{{t.spark}}"/></svg></sc-if></div>
+                      <div class="meter"><i style="{{t.bar}}"></i></div>
+                      <small>{{t.files}} files</small>
+                    </button>
+                  </sc-for>
+                </div>
+              </div>
+
+              <div class="card">
+                <div class="card-head"><span class="ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 21V4M5 4h12l-2.5 4L17 12H5"/></svg></span><div><h2>Issues trend</h2><small>Open issues across the school week</small></div><sc-if value="{{ov.trend.has}}" hint-placeholder-val="{{true}}"><span class="delta {{ov.trend.deltaCls}}">{{ov.trend.delta}}</span></sc-if></div>
+                <sc-if value="{{ov.trend.has}}" hint-placeholder-val="{{true}}">
+                  <div class="legend"><span><i style="background: var(--brand)"></i>Total</span><span><i style="background: #F2A20C"></i>Urgent</span></div>
+                  <div class="chart-box">
+                    <svg class="chart" viewBox="0 0 340 200" role="img" aria-label="Open issues by school day">
+                      <g class="grid"><sc-for list="{{ov.trend.yl}}" as="y" hint-placeholder-count="4"><line x1="0" x2="340" y1="{{y.y}}" y2="{{y.y}}"/></sc-for></g>
+                      <path d="{{ov.trend.area}}" fill="rgba(138,21,56,.10)"/>
+                      <path d="{{ov.trend.total}}" fill="none" stroke="#8A1538" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
+                      <path d="{{ov.trend.urgent}}" fill="none" stroke="#F2A20C" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
+                      <sc-for list="{{ov.trend.dots}}" as="d" hint-placeholder-count="5"><circle cx="{{d.x}}" cy="{{d.y}}" r="4" fill="#fff" stroke="#8A1538" stroke-width="2.2"/></sc-for>
+                    </svg>
+                    <sc-for list="{{ov.trend.yl}}" as="y" hint-placeholder-count="4"><span class="ylab" style="{{y.style}}">{{y.t}}</span></sc-for>
+                  </div>
+                  <div class="xaxis"><sc-for list="{{ov.trend.xl}}" as="x" hint-placeholder-count="5"><span>{{x.t}}</span></sc-for></div>
+                </sc-if>
+                <sc-if value="{{ov.trend.none}}" hint-placeholder-val="{{false}}"><div class="empty">The trend appears once two school days have passed.<br>Use “Next day” in the demo controls.</div></sc-if>
+              </div>
+
+              <div class="card">
+                <div class="card-head"><span class="ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4 3 20h18zM12 10v4.5M12 17.5h.01"/></svg></span><h2>Critical alerts</h2><span class="pill-count">{{ov.alertCount}}</span></div>
+                <sc-if value="{{ov.noUrgent}}" hint-placeholder-val="{{false}}"><div class="empty">No urgent issues are open.</div></sc-if>
+                <div class="alerts">
+                  <sc-for list="{{ov.urgentList}}" as="u" hint-placeholder-count="2">
+                    <button type="button" class="alert" dir="auto" sc-camel-on-click="{{u.open}}"><span class="alert-dot">!</span><span><b>{{u.title}}</b><span>{{u.file}}</span><span>{{u.school}} · owner: {{u.owner}} · {{u.status}}</span></span></button>
+                  </sc-for>
+                </div>
+                <p class="muted" style="margin: 12px 0 0; font-size: 12px">Urgent issues go to the file owner and the school coordinator at the same time.</p>
+              </div>
+            </div>
+
+            <div class="grid-row3">
+              <div class="card" style="overflow-x: auto">
+                <div class="card-head"><span class="ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 7h14M5 12h14M5 17h9"/></svg></span><div><h2>Recent issues</h2><small>Latest issues across the network</small></div></div>
+                <div role="table" aria-label="Recent issues" style="min-width: 600px">
+                  <div role="row" class="trow thead" style="grid-template-columns: 72px 1.6fr 80px 1.5fr 84px 128px"><div role="columnheader">ID</div><div role="columnheader">File</div><div role="columnheader">School</div><div role="columnheader">Rule</div><div role="columnheader">Severity</div><div role="columnheader">Status</div></div>
+                  <sc-for list="{{ov.recent}}" as="r" hint-placeholder-count="5">
+                    <div role="row" class="trow" style="grid-template-columns: 72px 1.6fr 80px 1.5fr 84px 128px">
+                      <div role="cell" class="muted" style="font-weight: 600">{{r.id}}</div>
+                      <div role="cell"><button type="button" class="row-btn" dir="auto" sc-camel-on-click="{{r.open}}">{{r.file}}</button></div>
+                      <div role="cell" style="font-size: 13px">{{r.school}}</div>
+                      <div role="cell" style="font-size: 13px">{{r.rule}}</div>
+                      <div role="cell"><span class="badge {{r.sevCls}}">{{r.sev}}</span></div>
+                      <div role="cell"><span class="badge {{r.scls}}">{{r.status}}</span></div>
+                    </div>
+                  </sc-for>
+                </div>
+              </div>
+
+              <div class="stack">
+              <div class="card">
+                <div class="card-head"><span class="ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 4.5 6v5.5c0 4.6 3.2 8 7.5 9.5 4.3-1.5 7.5-4.9 7.5-9.5V6zM9 12l2.2 2.2L15.5 10"/></svg></span><div><h2>Compliance overview</h2><small>Share of files by status</small></div></div>
+                <div class="donut-wrap">
+                  <div class="donut-box"><svg class="donut" viewBox="0 0 132 132" role="img" aria-label="Compliance overview">
+                    <circle cx="66" cy="66" r="52" fill="none" stroke="#ECEEF4" stroke-width="16"/>
+                    <sc-for list="{{ov.donut.segs}}" as="g" hint-placeholder-count="3"><circle cx="66" cy="66" r="52" fill="none" stroke-width="16" style="{{g.style}}" transform="rotate(-90 66 66)"/></sc-for>
+                  </svg><div class="donut-center"><b>{{ov.donut.center}}</b><span>COMPLIANT</span></div></div>
+                  <div class="legend-rows"><sc-for list="{{ov.donut.segs}}" as="g" hint-placeholder-count="3"><div><span class="dot" style="{{g.dot}}"></span>{{g.label}}<b>{{g.pct}}</b></div></sc-for></div>
+                </div>
+              </div>
+
+              <div class="card quick">
+                <h2 class="h2"><svg viewBox="0 0 24 24" style="width: 18px; height: 18px; fill: none; stroke: #F2C14E; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round" aria-hidden="true"><path d="M13 3 5 13.5h6L10 21l8-10.5h-6z"/></svg>Quick actions</h2>
+                <sc-for list="{{ov.quick}}" as="q" hint-placeholder-count="4">
+                  <button type="button" class="quick-btn" sc-camel-on-click="{{q.go}}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="{{q.icon}}"/></svg><span>{{q.label}}</span><svg viewBox="0 0 24 24" aria-hidden="true" style="width: 14px; height: 14px; opacity: .7"><path d="M9 6l6 6-6 6"/></svg></button>
+                </sc-for>
+                <small>Sijill only reads files; every fix is made by a person.</small>
+              </div>
+              </div>
+            </div>
+
+            <div class="card" style="margin-top: 20px">
+              <div class="card-head"><span class="ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 21V6a1 1 0 0 1 1-1h8a1 1 0 0 1 1 1v15M14 10h5a1 1 0 0 1 1 1v10M3 21h18"/></svg></span><div><h2>All {{ov.siteWord}}</h2><small>Score, open issues and what happened this week</small></div></div>
+              <div style="overflow-x: auto">
+                <div role="table" aria-label="Sites" style="min-width: 840px">
+                  <div role="row" class="trow thead" style="grid-template-columns: 110px 250px 1fr 1fr 1fr 1fr 150px"><div role="columnheader">Name</div><div role="columnheader">File health score</div><div role="columnheader">Open issues</div><div role="columnheader">Urgent</div><div role="columnheader">Need follow-up</div><div role="columnheader">Fixed so far</div><div role="columnheader">This week</div></div>
+                  <sc-for list="{{ov.rows}}" as="s" hint-placeholder-count="5">
+                    <div role="row" class="trow" style="grid-template-columns: 110px 250px 1fr 1fr 1fr 1fr 150px">
+                      <div role="cell"><button type="button" class="row-btn" sc-camel-on-click="{{s.go}}">{{s.name}}</button></div>
+                      <div role="cell"><sc-if value="{{s.has}}" hint-placeholder-val="{{true}}"><div style="display: flex; align-items: center; gap: 8px"><div style="width: 80px; height: 8px; background: var(--line); border-radius: 4px; overflow: hidden"><div style="{{s.bar}}"></div></div><span style="min-width: 22px; font-weight: 700">{{s.score}}</span><span class="badge {{s.cls}}">{{s.status}}</span></div></sc-if><sc-if value="{{s.none}}" hint-placeholder-val="{{false}}"><span class="badge b-neutral">Waiting for first check</span></sc-if></div>
+                      <div role="cell">{{s.open}}</div><div role="cell">{{s.urgent}}</div><div role="cell">{{s.esc}}</div><div role="cell">{{s.fixed}}</div>
+                      <div role="cell"><div class="bars"><sc-for list="{{s.trend}}" as="t" hint-placeholder-count="3"><div class="bar" style="{{t.style}}" title="{{t.label}}"></div></sc-for></div></div>
+                    </div>
+                  </sc-for>
+                </div>
+              </div>
+              <p class="muted" style="margin: 14px 0 0; font-size: 12px; line-height: 1.55">The file health score is 100 when every checked file follows the rules. It drops for each open issue, and urgent issues count three times: 100 − (normal + 3 × urgent) ÷ files checked × 100. Good is 85 or more, Watch is 70 to 84, Needs attention is below 70. The bars show the score at the end of each school day.</p>
+            </div>
+
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 20px; margin-top: 20px">
+              <div class="card">
+                <div class="card-head"><span class="ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3h7l5 5v13H7zM14 3v5h5M10 13h6M10 17h6"/></svg></span><h2>Weekly report</h2></div>
+                <p style="margin: 0 0 14px; font-size: 14px; line-height: 1.55">A one-page summary of every school's score, what was fixed and what still needs follow-up.</p>
+                <button type="button" class="btn" sc-camel-on-click="{{toggleWeekly}}">{{ov.weeklyLabel}}</button>
+              </div>
+              <div class="card">
+                <div class="card-head"><span class="ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></span><h2>How accurate is the checker?</h2></div>
+                <sc-for list="{{accuracy}}" as="m" hint-placeholder-count="4"><div style="display: flex; justify-content: space-between; gap: 8px; font-size: 13px; padding: 8px 0; border-bottom: 1px solid var(--line)"><span>{{m.label}}</span><span class="muted">target {{m.target}} · result [from evaluation]</span></div></sc-for>
+              </div>
+            </div>
+          </sc-if>
+        </section>
+      </sc-if>
+
+      <!-- SITE PAGE -->
+      <sc-if value="{{is.site}}" hint-placeholder-val="{{false}}">
+        <section aria-labelledby="st-title">
+          <sc-if value="{{st.canBack}}" hint-placeholder-val="{{false}}"><button type="button" class="btn btn-quiet" style="padding: 0 8px" sc-camel-on-click="{{goOverview}}">← Overview</button></sc-if>
+          <div class="page-head"><h1 class="page-title" id="st-title">{{st.name}}</h1><p class="page-sub">{{st.sub}}</p></div>
+          <sc-if value="{{st.ready}}" hint-placeholder-val="{{true}}">
+            <div style="display: flex; flex-wrap: wrap; gap: 16px; margin-bottom: 16px">
+              <div class="card" style="flex: 1 1 220px">
+                <div class="muted" style="font-size: 13px">File health score today</div>
+                <div style="display: flex; align-items: baseline; gap: 10px; margin: 6px 0"><span style="font-size: 40px; font-weight: 700">{{st.score}}</span><span class="badge {{st.cls}}">{{st.status}}</span></div>
+                <div class="bars" style="height: 48px"><sc-for list="{{st.trend}}" as="t" hint-placeholder-count="3"><div class="bar" style="{{t.style}}" title="{{t.label}}"></div></sc-for></div>
+              </div>
+              <div style="flex: 3 1 520px; display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 16px">
+                <sc-for list="{{st.counts}}" as="c" hint-placeholder-count="4">
+                  <div class="card kpi" style="padding: 18px 20px"><span class="kpi-ic {{c.tone}}" style="width: 46px; height: 46px"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="{{c.icon}}"/></svg></span><div><div class="kpi-label">{{c.label}}</div><div class="kpi-value" style="font-size: 30px">{{c.value}}</div></div><div class="kpi-foot"><span>{{c.foot}}</span></div></div>
+                </sc-for>
+              </div>
+            </div>
+            <div class="card" style="margin-bottom: 16px">
+              <h2 class="h2">Open issues by rule</h2>
+              <sc-for list="{{st.byRule}}" as="r" hint-placeholder-count="8"><div style="display: grid; grid-template-columns: 44px 1fr 160px 40px; gap: 10px; align-items: center; font-size: 13px; padding: 5px 0"><strong>{{r.id}}</strong><span>{{r.name}}</span><div style="height: 8px; background: var(--line); border-radius: 4px; overflow: hidden"><div style="{{r.bar}}"></div></div><span style="text-align: right">{{r.n}}</span></div></sc-for>
+            </div>
+            <sc-if value="{{st.hasDetail}}" hint-placeholder-val="{{false}}">
+              <div class="card">
+                <h2 class="h2">Issues followed in detail</h2>
+                <div style="overflow-x: auto"><div role="table" aria-label="Open issues" style="min-width: 700px">
+                  <div role="row" class="trow thead" style="grid-template-columns: 1.6fr 1.4fr 1fr 1fr"><div role="columnheader">Issue</div><div role="columnheader">File</div><div role="columnheader">Owner</div><div role="columnheader">Status</div></div>
+                  <sc-for list="{{st.rows}}" as="r" hint-placeholder-count="4"><div role="row" class="trow" style="grid-template-columns: 1.6fr 1.4fr 1fr 1fr"><div role="cell"><sc-if value="{{r.urgent}}" hint-placeholder-val="{{false}}"><span class="badge b-urgent" style="margin-right: 6px">Urgent</span></sc-if>{{r.title}}</div><div role="cell"><button type="button" class="row-btn" dir="auto" sc-camel-on-click="{{r.open}}">{{r.file}}</button></div><div role="cell">{{r.owner}}</div><div role="cell"><span class="badge {{r.scls}}">{{r.status}}</span></div></div></sc-for>
+                </div></div>
+                <sc-if value="{{st.noRows}}" hint-placeholder-val="{{false}}"><p class="muted" style="margin: 12px 0 0">No open issues are being followed in detail.</p></sc-if>
+              </div>
+            </sc-if>
+            <p class="muted" style="margin: 12px 0 0; font-size: 12px">{{st.note}}</p>
+          </sc-if>
+        </section>
+      </sc-if>
+
+      <!-- FOLLOW-UP (coordinator) -->
+      <sc-if value="{{is.followup}}" hint-placeholder-val="{{false}}">
+        <section aria-labelledby="fu-title">
+          <div class="page-head"><h1 class="page-title" id="fu-title">Follow-up · School B</h1><p class="page-sub">{{fu.sub}}</p></div>
+          <div style="display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 14px">
+            <div role="group" aria-label="Filter" style="display: flex; flex-wrap: wrap; gap: 6px"><sc-for list="{{fu.filters}}" as="f" hint-placeholder-count="5"><button type="button" class="chip {{f.cls}}" sc-camel-on-click="{{f.pick}}">{{f.label}}</button></sc-for></div>
+            <label style="flex: 1 1 220px"><span class="sr">Search issues</span><input class="input" type="search" placeholder="Search by issue, file or person" value="{{fu.search}}" sc-camel-on-change="{{fu.onSearch}}"></label>
+            <sc-if value="{{fu.canBulk}}" hint-placeholder-val="{{false}}"><button type="button" class="btn" sc-camel-on-click="{{fu.bulk}}">{{fu.bulkLabel}}</button></sc-if>
+          </div>
+          <sc-if value="{{fu.empty}}" hint-placeholder-val="{{false}}"><div class="card" style="text-align: center; padding: 36px 20px"><p style="margin: 0 0 6px; font-size: 18px; font-weight: 600">{{fu.emptyTitle}}</p><p class="muted" style="margin: 0">{{fu.emptyText}}</p></div></sc-if>
+          <div style="display: flex; flex-direction: column; gap: 12px">
+            <sc-for list="{{fu.items}}" as="it" hint-placeholder-count="3">
+              <article class="card">
+                <div style="display: flex; flex-wrap: wrap; gap: 8px; align-items: center"><sc-if value="{{it.urgent}}" hint-placeholder-val="{{false}}"><span class="badge b-urgent">Urgent</span></sc-if><span class="badge {{it.scls}}">{{it.status}}</span><span class="muted" style="font-size: 13px">{{it.meta}}</span></div>
+                <h2 style="margin: 10px 0 4px; font-size: 18px">{{it.title}}</h2>
+                <button type="button" class="row-btn" dir="auto" style="font-size: 14px" sc-camel-on-click="{{it.open}}">{{it.file}}</button>
+                <p style="margin: 8px 0 8px; font-size: 14px; line-height: 1.5">{{it.why}}</p>
+                <sc-if value="{{it.hasNote}}" hint-placeholder-val="{{false}}"><p style="margin: 0 0 10px; padding: 10px 12px; border-radius: 12px; background: var(--amber-50); font-size: 13px">{{it.note}}</p></sc-if>
+                <sc-if value="{{it.hasSteps}}" hint-placeholder-val="{{true}}"><div class="muted" style="font-size: 13px; margin-bottom: 4px">Steps the owner was given:</div><ol class="steps muted" style="margin-bottom: 12px"><sc-for list="{{it.steps}}" as="x" hint-placeholder-count="2"><li>{{x}}</li></sc-for></ol></sc-if>
+                <div style="display: flex; flex-wrap: wrap; gap: 8px"><sc-for list="{{it.actions}}" as="a" hint-placeholder-count="2"><button type="button" class="btn {{a.cls}}" sc-camel-on-click="{{a.fn}}">{{a.label}}</button></sc-for></div>
+              </article>
+            </sc-for>
+          </div>
+        </section>
+      </sc-if>
+
+      <!-- EXCEPTIONS -->
+      <sc-if value="{{is.exceptions}}" hint-placeholder-val="{{false}}">
+        <section aria-labelledby="ex-title">
+          <div class="page-head"><h1 class="page-title" id="ex-title">Exceptions</h1><p class="page-sub">Files a coordinator has allowed to stay as they are, with the reason and an end date. When an exception ends, the normal rule applies again.</p></div>
+          <div class="card" style="overflow-x: auto">
+            <sc-if value="{{ex.empty}}" hint-placeholder-val="{{false}}"><p class="muted" style="margin: 0">No exceptions yet.</p></sc-if>
+            <sc-if value="{{ex.has}}" hint-placeholder-val="{{false}}">
+              <div role="table" aria-label="Exceptions" style="min-width: 760px">
+                <div role="row" class="trow thead" style="grid-template-columns: 1.4fr 60px 1.6fr 1fr 1fr 130px"><div role="columnheader">File</div><div role="columnheader">Rule</div><div role="columnheader">Reason</div><div role="columnheader">Allowed by</div><div role="columnheader">Until</div><div role="columnheader"><span class="sr">Action</span></div></div>
+                <sc-for list="{{ex.rows}}" as="x" hint-placeholder-count="1"><div role="row" class="trow" style="grid-template-columns: 1.4fr 60px 1.6fr 1fr 1fr 130px"><div role="cell"><button type="button" class="row-btn" dir="auto" sc-camel-on-click="{{x.open}}">{{x.file}}</button></div><div role="cell">{{x.rule}}</div><div role="cell" style="font-size: 13px">{{x.reason}}</div><div role="cell">{{x.by}}</div><div role="cell">{{x.until}}</div><div role="cell"><sc-if value="{{x.canEnd}}" hint-placeholder-val="{{false}}"><button type="button" class="btn btn-sm" sc-camel-on-click="{{x.end}}">End exception</button></sc-if></div></div></sc-for>
+              </div>
+            </sc-if>
+          </div>
+        </section>
+      </sc-if>
+
+      <!-- MY FILES -->
+      <sc-if value="{{is.mine}}" hint-placeholder-val="{{false}}">
+        <section aria-labelledby="my-title">
+          <div class="page-head"><h1 class="page-title" id="my-title">My files</h1><p class="page-sub">Things to fix in files you own. You make each fix yourself in Google Drive; Sijill never changes your files. Each fix takes about two minutes.</p></div>
+          <sc-if value="{{my.nothing}}" hint-placeholder-val="{{false}}"><div class="card" style="text-align: center; padding: 32px 20px"><p style="margin: 0 0 6px; font-size: 18px; font-weight: 600">{{my.nothingTitle}}</p><p class="muted" style="margin: 0">{{my.nothingText}}</p></div></sc-if>
+          <div style="display: flex; flex-direction: column; gap: 12px">
+            <sc-for list="{{my.open}}" as="it" hint-placeholder-count="2">
+              <article class="card">
+                <div style="display: flex; flex-wrap: wrap; gap: 8px; align-items: center"><sc-if value="{{it.urgent}}" hint-placeholder-val="{{false}}"><span class="badge b-urgent">Urgent</span></sc-if><span class="badge {{it.scls}}">{{it.status}}</span></div>
+                <h2 style="margin: 10px 0 4px; font-size: 18px">{{it.title}}</h2>
+                <div dir="auto" style="font-size: 14px; font-weight: 600; color: var(--brand)">{{it.file}}</div>
+                <p style="margin: 8px 0; font-size: 14px; line-height: 1.5"><strong>Why it matters:</strong> {{it.why}}</p>
+                <div style="font-size: 13px; font-weight: 600; margin-bottom: 4px">How to fix it</div>
+                <ol class="steps" style="margin-bottom: 14px"><sc-for list="{{it.steps}}" as="x" hint-placeholder-count="2"><li>{{x}}</li></sc-for></ol>
+                <sc-if value="{{it.hasNote}}" hint-placeholder-val="{{false}}"><p style="margin: 0 0 12px; padding: 10px 12px; border-radius: 12px; background: var(--brand-50); font-size: 13px">{{it.note}}</p></sc-if>
+                <div style="display: flex; flex-wrap: wrap; gap: 8px"><sc-for list="{{it.actions}}" as="a" hint-placeholder-count="3"><button type="button" class="btn {{a.cls}}" sc-camel-on-click="{{a.fn}}">{{a.label}}</button></sc-for></div>
+              </article>
+            </sc-for>
+          </div>
+          <sc-if value="{{my.hasClosed}}" hint-placeholder-val="{{false}}">
+            <div class="card" style="margin-top: 16px"><h2 class="h2">Done</h2><ul style="list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px"><sc-for list="{{my.closed}}" as="c" hint-placeholder-count="2"><li style="display: flex; flex-wrap: wrap; gap: 8px; align-items: center; font-size: 14px"><span class="badge {{c.scls}}">{{c.status}}</span><span>{{c.title}}</span><span class="muted" dir="auto">· {{c.file}}</span></li></sc-for></ul></div>
+          </sc-if>
+        </section>
+      </sc-if>
+
+      <!-- RULES EXPLAINED (staff) -->
+      <sc-if value="{{is.explained}}" hint-placeholder-val="{{false}}">
+        <section aria-labelledby="re-title">
+          <div class="page-head"><h1 class="page-title" id="re-title">The rules, in plain words</h1><p class="page-sub">These are Education Above All's rules for school files. Sijill checks files against them; if one of your files breaks a rule, you get a message telling you how to fix it.</p></div>
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 12px">
+            <sc-for list="{{explained}}" as="r" hint-placeholder-count="8"><div class="card"><div style="display: flex; gap: 8px; align-items: center; margin-bottom: 6px"><span class="badge b-neutral">{{r.id}}</span><sc-if value="{{r.urgent}}" hint-placeholder-val="{{false}}"><span class="badge b-urgent">Urgent</span></sc-if></div><h2 style="margin: 0 0 6px; font-size: 16px">{{r.name}}</h2><p style="margin: 0 0 8px; font-size: 14px; line-height: 1.5"><strong>Why:</strong> {{r.why}}</p><p class="muted" style="margin: 0; font-size: 13px; line-height: 1.5"><strong>What to do:</strong> {{r.todo}}</p></div></sc-for>
+          </div>
+        </section>
+      </sc-if>
+
+      <!-- FILE DETAIL -->
+      <sc-if value="{{is.file}}" hint-placeholder-val="{{false}}">
+        <section aria-labelledby="fl-title">
+          <button type="button" class="btn btn-quiet" style="padding: 0 8px" sc-camel-on-click="{{goBack}}">← Back</button>
+          <div class="page-head"><h1 class="page-title" id="fl-title" dir="auto">{{fl.name}}</h1></div><div style="display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 12px"><span class="badge b-neutral">{{fl.type}}</span><span class="badge {{fl.scls}}">{{fl.sens}}</span><span class="muted" style="font-size: 13px">{{fl.school}} · owner: {{fl.owner}} · confidence: {{fl.conf}}</span></div>
+          <p style="margin: 0 0 16px; padding: 10px 12px; border-radius: 12px; background: var(--brand-50); font-size: 13px">Sijill only reads this file. It never moves or changes it; the owner makes any fix in Google Drive.</p>
+          <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px">
+            <div class="card"><h2 class="h2">What Sijill understood</h2><p style="margin: 0; font-size: 14px; line-height: 1.5">{{fl.summary}}</p><h3 class="h3">Evidence</h3><ul style="margin: 0; padding-left: 18px; font-size: 14px; line-height: 1.6"><sc-for list="{{fl.evidence}}" as="e" hint-placeholder-count="2"><li dir="auto">{{e}}</li></sc-for></ul><sc-if value="{{fl.hasNote}}" hint-placeholder-val="{{false}}"><p style="margin: 14px 0 0; padding: 10px 12px; border-radius: 12px; background: var(--green-50); font-size: 13px">{{fl.note}}</p></sc-if></div>
+            <div class="card"><h2 class="h2">Where it is and who can see it</h2><dl class="kv"><dt>Saved in</dt><dd>{{fl.loc}}</dd><dt>Who can open it</dt><dd>{{fl.share}}</dd></dl><h3 class="h3">Rules checked</h3><sc-if value="{{fl.clean}}" hint-placeholder-val="{{false}}"><p style="margin: 0; font-size: 14px"><span class="badge b-good">Follows all rules</span></p></sc-if><ul style="list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px"><sc-for list="{{fl.issues}}" as="i" hint-placeholder-count="1"><li style="font-size: 14px"><div style="display: flex; flex-wrap: wrap; gap: 6px; align-items: center"><span class="badge {{i.scls}}">{{i.status}}</span><span>{{i.title}}</span><span class="muted" style="font-size: 12px">{{i.rule}}</span></div><sc-if value="{{i.hasMsg}}" hint-placeholder-val="{{false}}"><button type="button" class="btn btn-quiet btn-sm" style="padding: 0 6px" sc-camel-on-click="{{i.msg}}">View the message sent</button></sc-if></li></sc-for></ul></div>
+            <div class="card" style="grid-column: 1 / -1"><h2 class="h2">History</h2><ol style="list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px"><sc-for list="{{fl.history}}" as="h" hint-placeholder-count="3"><li style="font-size: 13px; line-height: 1.45; border-left: 2px solid var(--brand-100); padding-left: 10px"><div class="muted">{{h.t}} · {{h.who}}</div><div dir="auto">{{h.what}}</div></li></sc-for></ol></div>
+          </div>
+        </section>
+      </sc-if>
+
+      <!-- MESSAGE -->
+      <sc-if value="{{is.email}}" hint-placeholder-val="{{false}}">
+        <section aria-labelledby="em-title">
+          <button type="button" class="btn btn-quiet" style="padding: 0 8px" sc-camel-on-click="{{goBack}}">← Back</button>
+          <div class="page-head"><h1 class="page-title" id="em-title">Message sent to the file owner</h1><p class="page-sub">{{em.sub}}</p></div>
+          <div class="card" style="max-width: 780px">
+            <dl class="kv" style="margin-bottom: 16px"><dt>From</dt><dd>Sijill ({{em.sender}})</dd><dt>To</dt><dd>{{em.to}}</dd><dt>Copy</dt><dd>{{em.cc}}</dd><dt>Subject</dt><dd style="font-weight: 600" dir="auto">{{em.subject}}</dd></dl>
+            <sc-if value="{{em.hasBanner}}" hint-placeholder-val="{{false}}"><p style="margin: 0 0 12px; padding: 10px 12px; border-radius: 12px; background: var(--amber-50); color: var(--amber-700); font-size: 13px">{{em.banner}}</p></sc-if>
+            <sc-if value="{{em.showEn}}" hint-placeholder-val="{{true}}"><p style="margin: 0; font-size: 15px; line-height: 1.6; white-space: pre-line">{{em.en}}</p></sc-if>
+            <sc-if value="{{em.both}}" hint-placeholder-val="{{true}}"><hr style="border: 0; border-top: 1px solid var(--line); margin: 16px 0"></sc-if>
+            <sc-if value="{{em.showAr}}" hint-placeholder-val="{{true}}"><p lang="ar" dir="rtl" style="margin: 0; font-size: 16px; line-height: 1.8; white-space: pre-line; font-family: 'IBM Plex Sans Arabic', sans-serif">{{em.ar}}</p></sc-if>
+            <div style="display: flex; flex-wrap: wrap; gap: 8px; margin-top: 16px"><sc-for list="{{em.actions}}" as="a" hint-placeholder-count="2"><button type="button" class="btn {{a.cls}}" sc-camel-on-click="{{a.fn}}">{{a.label}}</button></sc-for></div>
+          </div>
+        </section>
+      </sc-if>
+
+      <!-- RULES LIST -->
+      <sc-if value="{{is.rules}}" hint-placeholder-val="{{false}}">
+        <section aria-labelledby="ru-title">
+          <div class="page-top">
+            <div style="flex: 1 1 360px"><div class="page-head"><h1 class="page-title" id="ru-title">Rules</h1><p class="page-sub">{{ru.sub}}</p></div></div>
+            <sc-if value="{{ru.canEdit}}" hint-placeholder-val="{{false}}"><button type="button" class="btn btn-primary" sc-camel-on-click="{{ru.add}}">Add a rule</button></sc-if>
+          </div>
+          <div class="card" style="overflow-x: auto">
+            <div role="table" aria-label="Rules" style="min-width: 900px">
+              <div role="row" class="trow thead" style="grid-template-columns: 50px 2fr 1.5fr 100px 100px 90px 230px"><div role="columnheader">#</div><div role="columnheader">Rule</div><div role="columnheader">Applies to</div><div role="columnheader">Severity</div><div role="columnheader">Status</div><div role="columnheader">Open issues</div><div role="columnheader"><span class="sr">Actions</span></div></div>
+              <sc-for list="{{ru.rows}}" as="r" hint-placeholder-count="8">
+                <div role="row" class="trow" style="grid-template-columns: 50px 2fr 1.5fr 100px 100px 90px 230px">
+                  <div role="cell" style="font-weight: 700">{{r.id}}</div>
+                  <div role="cell"><div style="font-weight: 600">{{r.name}}</div><div class="muted" style="font-size: 12px">Checks: {{r.check}} · version {{r.version}}</div></div>
+                  <div role="cell" style="font-size: 13px">{{r.applies}}</div>
+                  <div role="cell"><span class="badge {{r.sevCls}}">{{r.sev}}</span></div>
+                  <div role="cell"><span class="badge {{r.stCls}}">{{r.status}}</span></div>
+                  <div role="cell">{{r.open}}</div>
+                  <div role="cell"><sc-if value="{{r.canEdit}}" hint-placeholder-val="{{false}}"><div style="display: flex; flex-wrap: wrap; gap: 6px"><button type="button" class="btn btn-sm" sc-camel-on-click="{{r.edit}}">Edit</button><button type="button" class="btn btn-sm" sc-camel-on-click="{{r.toggle}}">{{r.toggleLabel}}</button><button type="button" class="btn btn-sm btn-danger" sc-camel-on-click="{{r.del}}">Delete</button></div></sc-if><sc-if value="{{r.readOnly}}" hint-placeholder-val="{{true}}"><button type="button" class="btn btn-sm" sc-camel-on-click="{{r.edit}}">View</button></sc-if></div>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+        </section>
+      </sc-if>
+
+      <!-- RULE EDITOR -->
+      <sc-if value="{{is.ruleEdit}}" hint-placeholder-val="{{false}}">
+        <section aria-labelledby="rd-title">
+          <button type="button" class="btn btn-quiet" style="padding: 0 8px" sc-camel-on-click="{{rd.cancel}}">← Rules</button>
+          <div class="page-head"><h1 class="page-title" id="rd-title">{{rd.title}}</h1><p class="page-sub">{{rd.sub}}</p></div>
+          <div style="display: flex; flex-wrap: wrap; gap: 16px; align-items: flex-start">
+            <div class="card" style="flex: 3 1 460px; display: flex; flex-direction: column; gap: 16px">
+              <label class="lbl">Rule name <span class="hint">Say it the way a teacher would understand it.</span><input class="input" type="text" value="{{rd.name}}" sc-camel-on-change="{{rd.onName}}" placeholder="For example: Consent forms belong in Student Records"></label>
+              <label class="lbl">Why it matters <span class="hint">One sentence. It appears in every message.</span><input class="input" type="text" value="{{rd.why}}" sc-camel-on-change="{{rd.onWhy}}" placeholder="For example: They carry parents' signatures and phone numbers."></label>
+              <div class="lbl">What Sijill checks<div role="group" aria-label="What Sijill checks" style="display: flex; flex-wrap: wrap; gap: 6px"><sc-for list="{{rd.checks}}" as="c" hint-placeholder-count="7"><button type="button" class="chip {{c.cls}}" sc-camel-on-click="{{c.pick}}">{{c.label}}</button></sc-for></div></div>
+              <div class="lbl">Which documents <span class="hint">Choose “All types” or one or more document types.</span><div role="group" aria-label="Document types" style="display: flex; flex-wrap: wrap; gap: 6px"><sc-for list="{{rd.types}}" as="c" hint-placeholder-count="8"><button type="button" class="chip {{c.cls}}" sc-camel-on-click="{{c.pick}}">{{c.label}}</button></sc-for></div></div>
+              <div class="lbl">Which sensitivity levels<div role="group" aria-label="Sensitivity" style="display: flex; flex-wrap: wrap; gap: 6px"><sc-for list="{{rd.sens}}" as="c" hint-placeholder-count="5"><button type="button" class="chip {{c.cls}}" sc-camel-on-click="{{c.pick}}">{{c.label}}</button></sc-for></div></div>
+              <div style="display: flex; flex-wrap: wrap; gap: 20px">
+                <div class="lbl">Severity<div class="seg" role="group" aria-label="Severity"><sc-for list="{{rd.sev}}" as="c" hint-placeholder-count="2"><button type="button" class="seg-btn {{c.cls}}" sc-camel-on-click="{{c.pick}}">{{c.label}}</button></sc-for></div><span class="hint">Urgent: the coordinator is told at once.</span></div>
+                <div class="lbl">Remind the owner after<div class="seg" role="group" aria-label="Reminder"><sc-for list="{{rd.remind}}" as="c" hint-placeholder-count="4"><button type="button" class="seg-btn {{c.cls}}" sc-camel-on-click="{{c.pick}}">{{c.label}}</button></sc-for></div><span class="hint">Follow-up starts one day after the reminder.</span></div>
+              </div>
+              <label class="lbl">How to fix it, in English <span class="hint">One step per line. Keep each step short.</span><textarea class="input area" sc-camel-on-change="{{rd.onEn}}" value="{{rd.en}}"></textarea></label>
+              <label class="lbl">How to fix it, in Arabic <span class="hint">One step per line.</span><textarea class="input area" dir="rtl" lang="ar" sc-camel-on-change="{{rd.onAr}}" value="{{rd.ar}}"></textarea></label>
+            </div>
+            <div style="flex: 2 1 320px; display: flex; flex-direction: column; gap: 16px">
+              <div class="card"><h2 class="h2">Preview the impact</h2><p style="margin: 0 0 6px; font-size: 28px; font-weight: 700">{{rd.impact}}</p><p class="muted" style="margin: 0; font-size: 13px; line-height: 1.5">{{rd.impactText}}</p></div>
+              <div class="card"><h2 class="h2">Message preview</h2><div style="font-size: 13px; font-weight: 600; margin-bottom: 6px">{{rd.msgSubject}}</div><p style="margin: 0; font-size: 13px; line-height: 1.6; white-space: pre-line">{{rd.msgEn}}</p><hr style="border: 0; border-top: 1px solid var(--line); margin: 12px 0"><p lang="ar" dir="rtl" style="margin: 0; font-size: 14px; line-height: 1.8; white-space: pre-line; font-family: 'IBM Plex Sans Arabic', sans-serif">{{rd.msgAr}}</p></div>
+              <sc-if value="{{rd.canEdit}}" hint-placeholder-val="{{true}}"><div class="card" style="display: flex; flex-wrap: wrap; gap: 8px"><button type="button" class="btn btn-primary" sc-camel-on-click="{{rd.saveOn}}">{{rd.saveOnLabel}}</button><button type="button" class="btn" sc-camel-on-click="{{rd.saveDraft}}">Save as draft</button><button type="button" class="btn btn-quiet" sc-camel-on-click="{{rd.cancel}}">Cancel</button><p class="muted" style="margin: 4px 0 0; font-size: 12px; flex-basis: 100%">Changes apply from the next nightly check. Every change is recorded with a new version number.</p></div></sc-if>
+              <sc-if value="{{rd.readOnly}}" hint-placeholder-val="{{false}}"><p class="muted" style="margin: 0; font-size: 13px">Only IT can change rules.</p></sc-if>
+            </div>
+          </div>
+        </section>
+      </sc-if>
+
+      <!-- PEOPLE -->
+      <sc-if value="{{is.people}}" hint-placeholder-val="{{false}}">
+        <section aria-labelledby="pp-title">
+          <div class="page-top">
+            <div style="flex: 1 1 360px"><div class="page-head"><h1 class="page-title" id="pp-title">People</h1><p class="page-sub">{{pp.sub}}</p></div></div>
+            <sc-if value="{{pp.isAdmin}}" hint-placeholder-val="{{false}}"><button type="button" class="btn" sc-camel-on-click="{{pp.sync}}">Sync with Google Workspace</button></sc-if>
+          </div>
+          <div style="display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 14px">
+            <label style="flex: 1 1 240px"><span class="sr">Search people</span><input class="input" type="search" placeholder="Search by name or email" value="{{pp.search}}" sc-camel-on-change="{{pp.onSearch}}"></label>
+            <div role="group" aria-label="Filter by site" style="display: flex; flex-wrap: wrap; gap: 6px"><sc-for list="{{pp.sites}}" as="f" hint-placeholder-count="6"><button type="button" class="chip {{f.cls}}" sc-camel-on-click="{{f.pick}}">{{f.label}}</button></sc-for></div>
+          </div>
+          <div class="card" style="overflow-x: auto">
+            <div role="table" aria-label="People" style="min-width: 900px">
+              <div role="row" class="trow thead" style="grid-template-columns: 1.6fr 1fr 1fr 1.1fr 110px 90px 170px"><div role="columnheader">Name</div><div role="columnheader">Site</div><div role="columnheader">Role</div><div role="columnheader">Status</div><div role="columnheader">Files in My Drive</div><div role="columnheader">Open issues</div><div role="columnheader"><span class="sr">Actions</span></div></div>
+              <sc-for list="{{pp.rows}}" as="p" hint-placeholder-count="8">
+                <div role="row" class="trow" style="grid-template-columns: 1.6fr 1fr 1fr 1.1fr 110px 90px 170px">
+                  <div role="cell"><div style="font-weight: 600">{{p.name}}</div><div class="muted" style="font-size: 12px">{{p.email}}</div></div>
+                  <div role="cell">{{p.site}}</div><div role="cell">{{p.role}}</div>
+                  <div role="cell"><span class="badge {{p.scls}}">{{p.status}}</span></div>
+                  <div role="cell">{{p.myDrive}}</div><div role="cell">{{p.open}}</div>
+                  <div role="cell"><div style="display: flex; flex-wrap: wrap; gap: 6px"><sc-for list="{{p.actions}}" as="a" hint-placeholder-count="1"><button type="button" class="btn btn-sm {{a.cls}}" sc-camel-on-click="{{a.fn}}">{{a.label}}</button></sc-for></div></div>
+                </div>
+              </sc-for>
+            </div>
+            <sc-if value="{{pp.none}}" hint-placeholder-val="{{false}}"><p class="muted" style="margin: 12px 0 0">Nobody matches.</p></sc-if>
+            <p class="muted" style="margin: 12px 0 0; font-size: 12px">People and their roles come from Google Workspace groups, so nobody signs up separately. IT can override a role or status here. Showing {{pp.shown}} of 124 synthetic staff.</p>
+          </div>
+        </section>
+      </sc-if>
+
+      <!-- SETTINGS -->
+      <sc-if value="{{is.settings}}" hint-placeholder-val="{{false}}">
+        <section aria-labelledby="se-title">
+          <div class="page-head"><h1 class="page-title" id="se-title">Settings</h1><p class="page-sub">Everything here is configuration, not code, so Sijill can grow with EAA or be set up for another organisation.</p></div>
+          <div role="tablist" aria-label="Settings sections" style="display: flex; flex-wrap: wrap; gap: 2px; border-bottom: 1px solid var(--line-2); margin-bottom: 16px"><sc-for list="{{se.tabs}}" as="t" hint-placeholder-count="6"><button type="button" role="tab" aria-selected="{{t.sel}}" class="tab {{t.cls}}" sc-camel-on-click="{{t.pick}}">{{t.label}}</button></sc-for></div>
+
+          <sc-if value="{{se.is.connection}}" hint-placeholder-val="{{true}}">
+            <div style="display: flex; flex-wrap: wrap; gap: 16px; align-items: flex-start">
+              <div class="card" style="flex: 2 1 420px">
+                <div style="display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 8px"><h2 class="h2" style="margin: 0">Google Workspace</h2><span class="badge {{se.conn.cls}}">{{se.conn.status}}</span></div>
+                <dl class="kv" style="margin-bottom: 14px"><dt>Domain</dt><dd>demo-eaa.test</dd><dt>Access</dt><dd>Read-only: Drive files and sharing, directory (people, groups, org units)</dd><dt>Connected by</dt><dd>Omar Fathi (IT)</dd><dt>Checks</dt><dd>New and changed files within minutes; a full check every night at 02:00</dd><dt>Last full check</dt><dd>{{se.conn.last}}</dd></dl>
+                <div style="display: flex; flex-wrap: wrap; gap: 8px"><button type="button" class="btn" sc-camel-on-click="{{se.conn.test}}">Test connection</button><button type="button" class="btn" sc-camel-on-click="{{se.conn.run}}">Run a full check now</button><sc-if value="{{se.conn.on}}" hint-placeholder-val="{{true}}"><button type="button" class="btn btn-danger" sc-camel-on-click="{{se.conn.disconnect}}">Disconnect</button></sc-if><sc-if value="{{se.conn.off}}" hint-placeholder-val="{{false}}"><button type="button" class="btn btn-primary" sc-camel-on-click="{{se.conn.reconnect}}">Reconnect</button></sc-if></div>
+              </div>
+              <div class="card" style="flex: 1 1 280px"><h2 class="h2">Other connections</h2><div style="display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 8px 0; border-bottom: 1px solid var(--line)"><span>Microsoft 365 (OneDrive, SharePoint, Teams)</span><span class="badge b-neutral">Planned</span></div><div style="display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 8px 0"><span>Google Chat messages</span><span class="badge b-neutral">Planned</span></div><p class="muted" style="margin: 8px 0 0; font-size: 12px">New connections plug into the same rules, issues and screens.</p></div>
+            </div>
+            <div class="card" style="margin-top: 16px; overflow-x: auto"><h2 class="h2">Recent checks</h2>
+              <div role="table" aria-label="Recent checks" style="min-width: 620px"><div role="row" class="trow thead" style="grid-template-columns: 90px 1fr 120px 1.4fr"><div role="columnheader">When</div><div role="columnheader">Type</div><div role="columnheader">Files read</div><div role="columnheader">Notes</div></div>
+                <sc-for list="{{se.scans}}" as="x" hint-placeholder-count="2"><div role="row" class="trow" style="grid-template-columns: 90px 1fr 120px 1.4fr; font-size: 13px"><div role="cell">{{x.when}}</div><div role="cell">{{x.type}}</div><div role="cell">{{x.files}}</div><div role="cell">{{x.note}}</div></div></sc-for>
+              </div>
+              <sc-if value="{{se.noScans}}" hint-placeholder-val="{{false}}"><p class="muted" style="margin: 8px 0 0">No checks have run yet.</p></sc-if>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{se.is.sites}}" hint-placeholder-val="{{false}}">
+            <div class="card" style="margin-bottom: 16px">
+              <div style="display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-end">
+                <label class="lbl" style="flex: 0 1 260px">What you call a site<span class="hint">Used across the app, for example “School” or “Campus”.</span><input class="input" type="text" value="{{se.siteLabel}}" sc-camel-on-change="{{se.onSiteLabel}}"></label>
+                <div style="flex: 1 1 auto"></div>
+                <button type="button" class="btn btn-primary" sc-camel-on-click="{{se.addSite}}">Add a site</button>
+              </div>
+            </div>
+            <div class="card" style="overflow-x: auto; margin-bottom: 16px"><h2 class="h2">Sites</h2>
+              <div role="table" aria-label="Sites" style="min-width: 820px"><div role="row" class="trow thead" style="grid-template-columns: 1fr 100px 1fr 1fr 90px 110px 160px"><div role="columnheader">Name</div><div role="columnheader">Type</div><div role="columnheader">Principal</div><div role="columnheader">Coordinator</div><div role="columnheader">Drives</div><div role="columnheader">In scores</div><div role="columnheader"><span class="sr">Actions</span></div></div>
+                <sc-for list="{{se.sites}}" as="x" hint-placeholder-count="6"><div role="row" class="trow" style="grid-template-columns: 1fr 100px 1fr 1fr 90px 110px 160px"><div role="cell" style="font-weight: 600">{{x.name}}</div><div role="cell">{{x.kind}}</div><div role="cell">{{x.lead}}</div><div role="cell">{{x.reviewer}}</div><div role="cell">{{x.drives}}</div><div role="cell">{{x.counted}}</div><div role="cell"><div style="display: flex; gap: 6px"><button type="button" class="btn btn-sm" sc-camel-on-click="{{x.edit}}">Edit</button><sc-if value="{{x.canRemove}}" hint-placeholder-val="{{true}}"><button type="button" class="btn btn-sm btn-danger" sc-camel-on-click="{{x.remove}}">Remove</button></sc-if></div></div></div></sc-for>
+              </div>
+            </div>
+            <div class="card"><h2 class="h2">Standard folders in every site's shared drives</h2><p class="muted" style="margin: 0 0 12px; font-size: 13px">Rules point to these folders, for example “Student Records / Marks”. Every site uses the same structure.</p>
+              <div style="display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px"><sc-for list="{{se.folders}}" as="f" hint-placeholder-count="8"><span class="badge b-neutral" style="gap: 6px; min-height: 32px">{{f.name}} <button type="button" aria-label="Remove {{f.name}}" sc-camel-on-click="{{f.remove}}" style="border: 0; background: transparent; cursor: pointer; font: inherit; color: var(--brand-700)">×</button></span></sc-for></div>
+              <div style="display: flex; gap: 8px; max-width: 520px"><label style="flex: 1 1 auto"><span class="sr">New folder</span><input class="input" type="text" placeholder="For example: Student Records / Consent" value="{{se.newFolder}}" sc-camel-on-change="{{se.onNewFolder}}"></label><button type="button" class="btn" sc-camel-on-click="{{se.addFolder}}">Add folder</button></div>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{se.is.roles}}" hint-placeholder-val="{{false}}">
+            <div class="card" style="overflow-x: auto"><h2 class="h2">Roles</h2><p class="muted" style="margin: 0 0 12px; font-size: 13px">Five built-in roles. You can rename them to match how your organisation talks, and choose which Google group gives each role.</p>
+              <div role="table" aria-label="Roles" style="min-width: 820px"><div role="row" class="trow thead" style="grid-template-columns: 200px 1.6fr 1.3fr 80px"><div role="columnheader">Name shown in Sijill</div><div role="columnheader">What they can do</div><div role="columnheader">Given by Google group</div><div role="columnheader">People</div></div>
+                <sc-for list="{{se.roles}}" as="r" hint-placeholder-count="5"><div role="row" class="trow" style="grid-template-columns: 200px 1.6fr 1.3fr 80px"><div role="cell"><label><span class="sr">Name for {{r.key}}</span><input class="input" type="text" value="{{r.label}}" sc-camel-on-change="{{r.onLabel}}"></label></div><div role="cell" style="font-size: 13px">{{r.can}}</div><div role="cell" style="font-size: 13px">{{r.group}}</div><div role="cell">{{r.n}}</div></div></sc-for>
+              </div>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{se.is.types}}" hint-placeholder-val="{{false}}">
+            <div class="card" style="overflow-x: auto"><h2 class="h2">Document types and sensitivity</h2><p class="muted" style="margin: 0 0 12px; font-size: 13px">The kinds of document Sijill recognises, and how sensitive each one is by default. Rules use these names.</p>
+              <div role="table" aria-label="Document types" style="min-width: 760px"><div role="row" class="trow thead" style="grid-template-columns: 1.2fr 2fr 100px"><div role="columnheader">Document type</div><div role="columnheader">Default sensitivity</div><div role="columnheader">Files found</div></div>
+                <sc-for list="{{se.types}}" as="t" hint-placeholder-count="8"><div role="row" class="trow" style="grid-template-columns: 1.2fr 2fr 100px"><div role="cell" style="font-weight: 600">{{t.name}}</div><div role="cell"><div class="seg" role="group" aria-label="Sensitivity for {{t.name}}"><sc-for list="{{t.opts}}" as="o" hint-placeholder-count="4"><button type="button" class="seg-btn {{o.cls}}" sc-camel-on-click="{{o.pick}}">{{o.label}}</button></sc-for></div></div><div role="cell">{{t.count}}</div></div></sc-for>
+              </div>
+              <div style="display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; align-items: center"><label style="flex: 1 1 240px"><span class="sr">New document type</span><input class="input" type="text" placeholder="For example: Transport list" value="{{se.newType}}" sc-camel-on-change="{{se.onNewType}}"></label><div class="seg" role="group" aria-label="Sensitivity for the new type"><sc-for list="{{se.newTypeSens}}" as="o" hint-placeholder-count="4"><button type="button" class="seg-btn {{o.cls}}" sc-camel-on-click="{{o.pick}}">{{o.label}}</button></sc-for></div><button type="button" class="btn" sc-camel-on-click="{{se.addType}}">Add type</button></div>
+              <p class="muted" style="margin: 10px 0 0; font-size: 12px">A new type needs a few labelled examples before the checker recognises it reliably; Sijill sends unsure files to review meanwhile.</p>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{se.is.messages}}" hint-placeholder-val="{{false}}">
+            <div class="card" style="display: flex; flex-direction: column; gap: 18px; max-width: 760px">
+              <div class="lbl">Languages for messages<div class="seg" role="group" aria-label="Languages"><sc-for list="{{se.msg.langs}}" as="o" hint-placeholder-count="3"><button type="button" class="seg-btn {{o.cls}}" sc-camel-on-click="{{o.pick}}">{{o.label}}</button></sc-for></div><span class="hint">Each person can change this for themselves in My preferences.</span></div>
+              <div class="lbl">How messages are sent<div class="seg" role="group" aria-label="Delivery"><sc-for list="{{se.msg.delivery}}" as="o" hint-placeholder-count="2"><button type="button" class="seg-btn {{o.cls}}" sc-camel-on-click="{{o.pick}}">{{o.label}}</button></sc-for></div><span class="hint">Urgent issues are always sent straight away.</span></div>
+              <div class="lbl">Quiet hours<div class="seg" role="group" aria-label="Quiet hours"><sc-for list="{{se.msg.quiet}}" as="o" hint-placeholder-count="2"><button type="button" class="seg-btn {{o.cls}}" sc-camel-on-click="{{o.pick}}">{{o.label}}</button></sc-for></div><span class="hint">No messages from 8 pm to 7 am, or on Friday and Saturday. Urgent issues still go to the coordinator.</span></div>
+              <label class="lbl" style="max-width: 420px">Send from<input class="input" type="text" value="{{se.msg.sender}}" sc-camel-on-change="{{se.msg.onSender}}"></label>
+              <div class="lbl">Default reminder time for new rules<div class="seg" role="group" aria-label="Default reminder"><sc-for list="{{se.msg.remind}}" as="o" hint-placeholder-count="4"><button type="button" class="seg-btn {{o.cls}}" sc-camel-on-click="{{o.pick}}">{{o.label}}</button></sc-for></div></div>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{se.is.privacy}}" hint-placeholder-val="{{false}}">
+            <div style="display: flex; flex-wrap: wrap; gap: 16px; align-items: flex-start">
+              <div class="card" style="flex: 2 1 420px"><h2 class="h2">What Sijill keeps, and what it does not</h2>
+                <ul style="margin: 0; padding-left: 18px; font-size: 14px; line-height: 1.7"><li>Keeps a short profile of each file: its type, sensitivity, location, sharing and owner.</li><li>Does not keep copies of file contents.</li><li>Hides names and ID numbers before any text is sent to the AI.</li><li>Cannot change, move or delete files: its Google access is read-only.</li><li>Sees only the EAA Google Workspace: not personal email, phones, laptops or WhatsApp.</li></ul>
+              </div>
+              <div class="card" style="flex: 1 1 300px; display: flex; flex-direction: column; gap: 14px"><div class="lbl">Keep the activity log for<div class="seg" role="group" aria-label="Keep activity for"><sc-for list="{{se.keep}}" as="o" hint-placeholder-count="3"><button type="button" class="seg-btn {{o.cls}}" sc-camel-on-click="{{o.pick}}">{{o.label}}</button></sc-for></div></div><dl class="kv" style="grid-template-columns: 110px 1fr"><dt>AI service</dt><dd>[Chosen at deployment; hosted in Qatar]</dd><dt>Masking</dt><dd>Always on</dd></dl><button type="button" class="btn" sc-camel-on-click="{{se.downloadLog}}">Download the activity log (CSV)</button></div>
+            </div>
+          </sc-if>
+        </section>
+      </sc-if>
+
+      <!-- ACTIVITY -->
+      <sc-if value="{{is.activity}}" hint-placeholder-val="{{false}}">
+        <section aria-labelledby="ac-title">
+          <div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-end; gap: 12px; margin-bottom: 14px"><div><div class="page-head"><h1 class="page-title" id="ac-title">Activity log</h1><p class="page-sub">Everything Sijill checked and sent, everything people did, and every settings change. Newest first.</p></div></div><button type="button" class="btn" sc-camel-on-click="{{downloadLog}}">Download (CSV)</button></div>
+          <div role="group" aria-label="Filter" style="display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px"><sc-for list="{{acFilters}}" as="f" hint-placeholder-count="4"><button type="button" class="chip {{f.cls}}" sc-camel-on-click="{{f.pick}}">{{f.label}}</button></sc-for></div>
+          <div class="card" style="overflow-x: auto">
+            <div role="table" aria-label="Activity" style="min-width: 700px"><div role="row" class="trow thead" style="grid-template-columns: 90px 150px 1fr 70px"><div role="columnheader">When</div><div role="columnheader">Who</div><div role="columnheader">What happened</div><div role="columnheader">File</div></div>
+              <sc-for list="{{log}}" as="a" hint-placeholder-count="6"><div role="row" class="trow" style="grid-template-columns: 90px 150px 1fr 70px; align-items: start"><div role="cell" style="white-space: nowrap; font-size: 13px">{{a.t}}</div><div role="cell" style="font-size: 13px">{{a.who}}</div><div role="cell" style="font-size: 13px; line-height: 1.45" dir="auto">{{a.what}}</div><div role="cell"><sc-if value="{{a.hasFile}}" hint-placeholder-val="{{false}}"><button type="button" class="row-btn" style="font-size: 13px" sc-camel-on-click="{{a.open}}">Open</button></sc-if></div></div></sc-for>
+            </div>
+          </div>
+        </section>
+      </sc-if>
+
+      <!-- PREFERENCES -->
+      <sc-if value="{{is.prefs}}" hint-placeholder-val="{{false}}">
+        <section aria-labelledby="pr-title">
+          <div class="page-head"><h1 class="page-title" id="pr-title">My preferences</h1></div><div class="card" style="display: flex; flex-direction: column; gap: 18px; max-width: 680px">
+            <dl class="kv"><dt>Name</dt><dd>{{me.name}}</dd><dt>Email</dt><dd>{{me.email}}</dd><dt>Role</dt><dd>{{me.roleLabel}} (from your Google group; ask IT to change it)</dd><dt>Site</dt><dd>{{me.site}}</dd></dl>
+            <div class="lbl">Language of my messages<div class="seg" role="group" aria-label="Language"><sc-for list="{{pr.langs}}" as="o" hint-placeholder-count="3"><button type="button" class="seg-btn {{o.cls}}" sc-camel-on-click="{{o.pick}}">{{o.label}}</button></sc-for></div></div>
+            <div class="lbl">How I get messages<div class="seg" role="group" aria-label="Delivery"><sc-for list="{{pr.delivery}}" as="o" hint-placeholder-count="2"><button type="button" class="seg-btn {{o.cls}}" sc-camel-on-click="{{o.pick}}">{{o.label}}</button></sc-for></div><span class="hint">Urgent issues always arrive straight away.</span></div>
+          </div>
+        </section>
+      </sc-if>
+
+      <!-- HELP -->
+      <sc-if value="{{is.help}}" hint-placeholder-val="{{false}}">
+        <section aria-labelledby="hp-title">
+          <div class="page-head"><h1 class="page-title" id="hp-title">Help</h1><p class="page-sub">Short answers to common questions. <a href="Sijill-Welcome.html">Read the staff introduction</a> for the full picture.</p></div>
+          <div style="display: flex; flex-direction: column; gap: 12px; max-width: 820px">
+            <sc-for list="{{faq}}" as="q" hint-placeholder-count="5"><div class="card"><h2 style="margin: 0 0 6px; font-size: 16px">{{q.q}}</h2><p style="margin: 0; font-size: 14px; line-height: 1.6">{{q.a}}</p></div></sc-for>
+            <div class="card" style="display: flex; flex-wrap: wrap; gap: 8px; align-items: center"><span style="font-size: 14px; flex: 1 1 260px">Still stuck? Your coordinator can help with any issue, and IT with access or settings.</span><button type="button" class="btn" sc-camel-on-click="{{contactCoord}}">Message my coordinator</button></div>
+          </div>
+        </section>
+      </sc-if>
+        </main>
+      </div>
+    </div>
+  </sc-if>
+
+  <div role="region" aria-label="Demo controls" class="dock {{dockCls}}">
+    <b class="tag">DEMO CONTROLS</b>
+    <sc-if value="{{dockOpen}}" hint-placeholder-val="{{true}}">
+      <span class="dim">not part of the product</span>
+      <span>View as</span>
+      <sc-for list="{{roles}}" as="r" hint-placeholder-count="5"><button type="button" class="demo-chip {{r.cls}}" sc-camel-on-click="{{r.pick}}">{{r.label}}</button></sc-for>
+      <span>School day: <b style="color: #F2C14E">{{dayName}}</b></span>
+      <button type="button" class="demo-chip" sc-camel-on-click="{{nextDay}}">Next day ▸</button>
+      <button type="button" class="demo-chip" sc-camel-on-click="{{toggleGuide}}">{{guideLabel}}</button>
+      <button type="button" class="demo-chip" sc-camel-on-click="{{reset}}">Reset</button>
+      <a href="Sijill-Welcome.html">Staff welcome page</a>
+    </sc-if>
+    <button type="button" class="demo-chip dock-min" sc-camel-on-click="{{toggleDock}}">{{dockLabel}}</button>
+  </div>
+
+
+  <sc-if value="{{guideOpen}}" hint-placeholder-val="{{false}}">
+    <aside class="drawer" aria-labelledby="gd-title">
+      <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; margin-bottom: 4px">
+        <h2 id="gd-title" class="h2" style="margin: 0">Demo guide: a school week at EAA</h2>
+        <button type="button" class="btn btn-quiet btn-sm" sc-camel-on-click="{{toggleGuide}}">Close</button>
+      </div>
+      <p class="muted" style="margin: 0 0 14px; font-size: 13px">Each step switches to the right person and screen.</p>
+      <ol style="list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 4px">
+            <sc-for list="{{guide}}" as="g" hint-placeholder-count="10"><li><button type="button" class="guide-step {{g.cls}}" sc-camel-on-click="{{g.go}}"><span class="gnum">{{g.n}}</span><span style="display: flex; flex-direction: column; gap: 2px"><span style="font-size: 14px; font-weight: 600">{{g.title}}</span><span class="muted" style="font-size: 12px; line-height: 1.4">{{g.hint}}</span></span></button></li></sc-for>
+          </ol>
+    </aside>
+  </sc-if>
+
+  <!-- DIALOGS -->
+  <sc-if value="{{dlg.open}}" hint-placeholder-val="{{false}}">
+    <div class="scrim">
+      <div role="dialog" aria-modal="true" aria-labelledby="dlg-title" class="card" style="max-width: 540px; width: 100%; max-height: 90vh; overflow: auto">
+        <h2 id="dlg-title" style="margin: 0 0 6px; font-size: 18px">{{dlg.title}}</h2>
+        <p class="muted" style="margin: 0 0 14px; font-size: 14px; line-height: 1.5">{{dlg.text}}</p>
+        <sc-if value="{{dlg.hasText}}" hint-placeholder-val="{{false}}"><label class="lbl" style="margin-bottom: 14px">{{dlg.textLabel}}<textarea class="input area" value="{{dlg.textVal}}" sc-camel-on-change="{{dlg.onText}}" placeholder="{{dlg.textHint}}"></textarea></label></sc-if>
+        <sc-if value="{{dlg.hasName}}" hint-placeholder-val="{{false}}"><label class="lbl" style="margin-bottom: 14px">Site name<input class="input" type="text" value="{{dlg.nameVal}}" sc-camel-on-change="{{dlg.onName}}" placeholder="For example: School F"></label></sc-if>
+        <sc-for list="{{dlg.groups}}" as="g" hint-placeholder-count="0"><div class="lbl" style="margin-bottom: 14px">{{g.label}}<div role="group" aria-label="{{g.label}}" style="display: flex; flex-wrap: wrap; gap: 6px"><sc-for list="{{g.opts}}" as="o" hint-placeholder-count="3"><button type="button" class="chip {{o.cls}}" sc-camel-on-click="{{o.pick}}">{{o.label}}</button></sc-for></div></div></sc-for>
+        <div style="display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-end; margin-top: 6px"><button type="button" class="btn btn-quiet" sc-camel-on-click="{{dlg.cancel}}">Cancel</button><button type="button" class="btn {{dlg.okCls}}" sc-camel-on-click="{{dlg.ok}}">{{dlg.okLabel}}</button></div>
+      </div>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{hasToast}}" hint-placeholder-val="{{false}}">
+    <div role="status" class="toast">{{toast}}</div>
+  </sc-if>
+</div>
+
+<script type="text/x-dc" data-dc-script="" data-props="{&quot;$preview&quot;:{&quot;width&quot;:1440,&quot;height&quot;:1240}}">
+class Component extends DCLogic {
+  constructor(props) { super(props); this.state = this.fresh(); }
+
+  fresh() {
+    return {
+      signedIn: false, role: 'ed', screen: 'signin', siteView: 'School B', fileId: 'd1', emailIssue: 'iss1', back: 'overview', tab: 'connection',
+      day: 0, iss: {}, snaps: {}, custom: {}, customFiles: {}, extra: [],
+      rules: this.starterRules(), draft: null, people: this.starterPeople(), sites: this.starterSites(),
+      folders: ['Academic', 'Administration', 'Student Records / Marks', 'Student Records / Reports', 'Student Records / Behaviour', 'Student Records / Health', 'Student Records / Contacts', 'Student Records / SEN', 'Archive'],
+      types: this.starterTypes(), roleLabels: { admin: 'IT admin', leadership: 'Leadership', lead: 'Principal', reviewer: 'Coordinator', staff: 'Staff' },
+      siteLabel: 'School', msg: { langs: 'both', delivery: 'each', quiet: 'on', sender: 'sijill@demo-eaa.test', remind: 2 }, keep: '2 years',
+      connected: true, weekly: true, prefs: {}, filter: 'open', search: '', pSearch: '', pSite: 'all', aFilter: 'all',
+      dlg: null, notifOpen: false, userMenu: false, seen: {}, newFolder: '', newType: '', newTypeSens: 'Internal',
+      tick: 0, toast: '', guideOpen: false, rtl: false, dockMin: false,
+      activity: [{ t: 'Before', who: 'Omar Fathi', what: 'Finished setup: connected Google Workspace with read-only access; 6 sites, 17 shared drives, 124 staff from Google groups, 8 starter rules.', kind: 'config' }]
+    };
+  }
+
+  DAYS() { return ['Before', 'Sun', 'Mon', 'Tue', 'Wed', 'Thu']; }
+  ROLE() { return { ed: 'leadership', coord: 'reviewer', principal: 'lead', it: 'admin', teacher: 'staff' }; }
+  ME() { return { ed: 'Lina Sabbagh', coord: 'Huda Saleh', principal: 'Reem Khalil', it: 'Omar Fathi', teacher: 'Sara Mansour' }; }
+  CHECKS() { return { location: 'Where the file is saved', link: '“Anyone with the link” sharing', outside: 'Sharing outside EAA', visible: 'Who inside EAA can open it', duplicates: 'Duplicate copies', exam: 'Sharing before an exam date', leaving: 'Owner is leaving' }; }
+  RATIO() { return { location: 0.3, link: 0.15, outside: 0.04, visible: 0.12, duplicates: 0.08, exam: 0.2, leaving: 0.03 }; }
+  SENS() { return ['Public', 'Internal', 'Confidential', 'Restricted']; }
+
+  starterRules() {
+    const r = (id, name, why, check, types, sens, sev, remind, en, ar) => ({ id, name, why, check, types, sens, sev, remind, en, ar, status: 'active', version: 1 });
+    return [
+      r('R1', 'School files belong in the school’s shared drive', 'Files kept in a personal My Drive are lost when someone leaves.', 'location', ['All types'], ['Any'], 'normal', 2, ['Move the file into the right folder of your school’s shared drive.'], ['انقلي الملف إلى المجلد المناسب في المساحة المشتركة لمدرستك.']),
+      r('R2', 'No public links on sensitive files', 'Anyone who gets the link can open the file.', 'link', ['All types'], ['Confidential', 'Restricted'], 'urgent', 1, ['Open the file and select Share.', 'Under General access, choose Restricted.'], ['افتحي الملف واختاري «مشاركة».', 'ضمن «الوصول العام» اختاري «مقيّد».']),
+      r('R3', 'Restricted files stay inside EAA', 'Student and staff records must never reach personal or outside accounts.', 'outside', ['All types'], ['Restricted'], 'urgent', 1, ['Open Share and remove any address outside EAA.'], ['افتحي «مشاركة» واحذفي أي عنوان من خارج المؤسسة.']),
+      r('R4', 'Student records belong in Student Records', 'Marks, reports, behaviour, health, special-needs and contact files need the tightest access.', 'location', ['Mark book', 'Report card', 'Behaviour report', 'Medical list', 'Special-needs plan', 'Contact list'], ['Restricted'], 'normal', 2, ['Move the file to your school’s Student Records folder.'], ['انقلي الملف إلى مجلد سجلات الطالبات في مدرستك.']),
+      r('R5', 'Only the right people can open Restricted files', 'Each kind of record has a short list of people who need it.', 'visible', ['All types'], ['Restricted'], 'normal', 2, ['Open Share and remove anyone who does not need the file.'], ['افتحي «مشاركة» واحذفي من لا يحتاج إلى الملف.']),
+      r('R6', 'Exams are not shared outside before the exam', 'An exam seen early is no longer a fair test.', 'exam', ['Exam paper'], ['Confidential'], 'normal', 2, ['Remove outside addresses, or ask your coordinator to allow them until the exam date.'], ['احذفي العناوين الخارجية، أو اطلبي من المنسقة السماح بها حتى موعد الاختبار.']),
+      r('R7', 'One official copy of each policy', 'Staff may follow an old version by mistake.', 'duplicates', ['Policy'], ['Any'], 'normal', 3, ['Keep the official copy and move the others to Archive.'], ['احتفظي بالنسخة الرسمية وانقلي النسخ الأخرى إلى الأرشيف.']),
+      r('R8', 'People leaving move their school files first', 'Files in a personal My Drive can be lost when the account closes.', 'leaving', ['All types'], ['Any'], 'normal', 2, ['Move each school file from your My Drive into the school’s shared drive before your last day.'], ['انقلي كل ملف مدرسي من مساحتك الشخصية إلى المساحة المشتركة قبل آخر يوم عمل.'])
+    ];
+  }
+
+  starterPeople() {
+    const p = (id, name, site, role, status, myDrive, title) => ({ id, name, email: name.toLowerCase().replace(/ /g, '.') + '@demo-eaa.test', site, role, status, myDrive, title: title || '' });
+    return [
+      p('p1', 'Lina Sabbagh', 'EAA Central', 'leadership', 'Active', 0, 'Executive Director'),
+      p('p2', 'Omar Fathi', 'EAA Central', 'admin', 'Active', 0, 'IT lead'),
+      p('p3', 'Huda Saleh', 'School B', 'reviewer', 'Active', 0),
+      p('p4', 'Reem Khalil', 'School B', 'lead', 'Active', 0),
+      p('p5', 'Sara Mansour', 'School B', 'staff', 'Active', 1, 'Maths teacher'),
+      p('p6', 'Layla Haddad', 'School B', 'staff', 'Leaving', 2, 'English teacher'),
+      p('p7', 'Mona Ali', 'School B', 'staff', 'Active', 3, 'Science teacher'),
+      p('p8', 'Noor Hamad', 'School B', 'staff', 'New', 0, 'Arabic teacher'),
+      p('p9', 'Aisha Rahman', 'School A', 'reviewer', 'Active', 0),
+      p('p10', 'Nadia Karim', 'School A', 'lead', 'Active', 0),
+      p('p11', 'Amal Nasser', 'School C', 'staff', 'Active', 0, 'Nurse'),
+      p('p12', 'Hind Saeed', 'School C', 'reviewer', 'Active', 0),
+      p('p13', 'Rasha Amin', 'School C', 'lead', 'Active', 0),
+      p('p14', 'Dana Saleem', 'School D', 'reviewer', 'Active', 0),
+      p('p15', 'Mariam Odeh', 'School D', 'lead', 'Active', 0),
+      p('p16', 'Salma Idris', 'School E', 'reviewer', 'Active', 0),
+      p('p17', 'Ghada Farouk', 'School E', 'lead', 'Active', 0)
+    ];
+  }
+
+  starterSites() {
+    const s = (name, kind, lead, reviewer, drives, counted) => ({ name, kind, lead, reviewer, drives, counted, removed: false });
+    return [
+      s('EAA Central', 'Head office', 'Lina Sabbagh', 'Omar Fathi', 2, false),
+      s('School A', 'School', 'Nadia Karim', 'Aisha Rahman', 3, true),
+      s('School B', 'School', 'Reem Khalil', 'Huda Saleh', 3, true),
+      s('School C', 'School', 'Rasha Amin', 'Hind Saeed', 3, true),
+      s('School D', 'School', 'Mariam Odeh', 'Dana Saleem', 3, true),
+      s('School E', 'School', 'Ghada Farouk', 'Salma Idris', 3, true)
+    ];
+  }
+
+  starterTypes() {
+    return [['Mark book', 'Restricted', 40], ['Report card', 'Restricted', 35], ['Behaviour report', 'Restricted', 18], ['Medical list', 'Restricted', 6], ['Special-needs plan', 'Restricted', 8], ['Contact list', 'Restricted', 12], ['Staff HR record', 'Restricted', 10], ['Exam paper', 'Confidential', 30], ['Consent form', 'Confidential', 28], ['Policy', 'Internal', 45], ['Meeting minutes', 'Internal', 25], ['Lesson plan', 'Internal', 120], ['Worksheet', 'Internal', 110], ['Newsletter', 'Public', 15]].map(t => ({ name: t[0], sens: t[1], count: t[2] }));
+  }
+
+  base() { return { 'School A': { files: 98, n: 34, u: 1, f: 0.7 }, 'School B': { files: 112, n: 36, u: 0, f: 0.7 }, 'School C': { files: 104, n: 30, u: 0, f: 0.7 }, 'School D': { files: 92, n: 20, u: 0, f: 0.7 }, 'School E': { files: 106, n: 38, u: 1, f: 0.85 } }; }
+  gen(sc, d) { const b = this.base()[sc]; const n = Math.round(b.n * Math.pow(b.f, d - 1)); return { n: n, u: d === 1 ? b.u : 0, esc: d >= 3 ? Math.round(n * 0.25) : 0 }; }
+
+  defs(s) {
+    const D = {
+      iss1: { file: 'd1', rule: 'R2', sev: 'urgent', owner: 'Sara Mansour', school: 'School B', title: 'Public link on a mark book', why: 'Anyone with the link can open student names and marks.', whyAr: 'يمكن لأي شخص لديه الرابط فتح أسماء الطالبات ودرجاتهن.', steps: ['Open the file and select Share.', 'Under General access, choose Restricted.', 'Move the file to School B – Student Records / Marks.'], ar: ['افتحي الملف واختاري «مشاركة».', 'ضمن «الوصول العام» اختاري «مقيّد».', 'انقلي الملف إلى School B – Student Records / Marks.'] },
+      iss2: { file: 'd2', rule: 'R4', sev: 'normal', owner: 'Sara Mansour', school: 'School B', title: 'Behaviour report in a teaching folder', why: 'All School B staff can open it, and behaviour records belong in Student Records.', whyAr: 'يمكن لجميع موظفي المدرسة فتحه، ومكان سجلات السلوك هو سجلات الطالبات.', steps: ['Move the file to School B – Student Records / Behaviour.', 'Check that only coordinators and the principal can open it.'], ar: ['انقلي الملف إلى School B – Student Records / Behaviour.', 'تأكدي أن المنسقة والمديرة فقط يمكنهما فتحه.'] },
+      iss3: { file: 'd8', rule: 'R1', sev: 'normal', owner: 'Sara Mansour', school: 'School B', title: 'School file in a personal My Drive', why: 'If you leave or lose access, the school loses this file.', whyAr: 'إذا غادرتِ أو فقدتِ الوصول، تفقد المدرسة هذا الملف.', steps: ['Move the file to School B – Student Records / Contacts.'], ar: ['انقلي الملف إلى School B – Student Records / Contacts.'] },
+      iss4: { file: 'd5', rule: 'R3', sev: 'urgent', owner: 'Amal Nasser', school: 'School C', title: 'Health list shared outside EAA', why: 'A personal gmail.com address can open student health information.', whyAr: 'يمكن لعنوان gmail.com شخصي فتح معلومات صحية عن الطالبات.', steps: ['Open Share and remove the outside address.', 'Move the file to School C – Student Records / Health.'], ar: ['افتحي «مشاركة» واحذفي العنوان الخارجي.', 'انقلي الملف إلى School C – Student Records / Health.'] },
+      iss5: { file: 'd3', rule: 'Review', sev: 'normal', owner: 'Huda Saleh', school: 'School B', person: true, title: 'Sijill could not read this file', why: 'It is a scanned PDF with no readable text. Tell Sijill what it is, and the normal rules will apply.', steps: [] },
+      iss6: { file: 'd9', rule: 'Review', sev: 'normal', owner: 'Huda Saleh', school: 'School B', person: true, title: 'Sijill is not sure what this is', why: 'It looks like behaviour notes (62% sure), which is not sure enough to message the owner. What is it?', steps: [] },
+      iss7: { file: 'd10', rule: 'R7', sev: 'normal', owner: 'Huda Saleh', school: 'School B', title: 'Three copies of the same policy', why: 'Staff may open an old version by mistake.', whyAr: 'قد يفتح الموظفون نسخة قديمة بالخطأ.', steps: ['Keep “Assessment Policy 2026-27.docx” as the official copy.', 'Move the “final_v2” and “FINAL” copies to School B – Archive.'], ar: ['اعتمدي «Assessment Policy 2026-27.docx» نسخةً رسمية.', 'انقلي النسختين الأخريين إلى School B – Archive.'] },
+      iss8: { file: 'd15', rule: 'R8', sev: 'normal', owner: 'Layla Haddad', school: 'School B', title: 'School files in a leaving teacher’s My Drive', why: 'Layla leaves at the end of term. Two school files are only in her personal My Drive.', whyAr: 'ستغادرين نهاية الفصل، وملفّان مدرسيان موجودان فقط في مساحتك الشخصية.', steps: ['Move “Year 8 English unit plan” to School B – Academic / English.', 'Move “8C reading groups” to School B – Student Records / Marks.'], ar: ['انقلي «Year 8 English unit plan» إلى School B – Academic / English.', 'انقلي «8C reading groups» إلى School B – Student Records / Marks.'] },
+      iss9: { file: 'd7', rule: 'R6', sev: 'normal', owner: 'Sara Mansour', school: 'School B', title: 'Exam shared outside before the exam', why: 'An outside address can open the December exam before students sit it.', whyAr: 'يمكن لعنوان خارجي فتح اختبار ديسمبر قبل أن تؤديه الطالبات.', steps: ['Remove the outside address, or ask your coordinator to allow it until the exam date.'], ar: ['احذفي العنوان الخارجي، أو اطلبي من المنسقة السماح به حتى موعد الاختبار.'] },
+      iss5b: { file: 'd3', rule: 'R4', sev: 'normal', owner: 'Sara Mansour', school: 'School B', title: 'Report cards in a teaching folder', why: 'Report cards are student records.', whyAr: 'بطاقات التقارير من سجلات الطالبات.', steps: ['Move the file to School B – Student Records / Reports.'], ar: ['انقلي الملف إلى School B – Student Records / Reports.'] },
+      iss6b: { file: 'd9', rule: 'R4', sev: 'normal', owner: 'Sara Mansour', school: 'School B', title: 'Behaviour notes in a teaching folder', why: 'Behaviour notes are student records.', whyAr: 'ملاحظات السلوك من سجلات الطالبات.', steps: ['Move the file to School B – Student Records / Behaviour.'], ar: ['انقلي الملف إلى School B – Student Records / Behaviour.'] }
+    };
+    return Object.assign(D, s.custom);
+  }
+
+  files(s) {
+    const fixed = id => !!s.iss[id] && s.iss[id].status === 'fixed';
+    const exc = id => !!s.iss[id] && s.iss[id].status === 'exception';
+    const c5 = s.iss.iss5 ? s.iss.iss5.choice : null, c6 = s.iss.iss6 ? s.iss.iss6.choice : null;
+    const F = {
+      d1: { name: 'Grade 7B marks – Term 1.xlsx', type: 'Mark book', sens: 'Restricted', school: 'School B', owner: 'Sara Mansour', conf: '96%', summary: 'Term 1 maths marks for Grade 7B.', evidence: ['A table of 28 student names next to term marks', 'A column of student ID numbers'], loc: fixed('iss1') ? 'School B – Student Records / Marks' : 'School B – Academic / Shared', share: fixed('iss1') ? 'Grade 7 teachers and coordinators' : 'Anyone with the link', issues: ['iss1'] },
+      d2: { name: 'تقرير سلوك – الصف الثامن.docx', type: 'Behaviour report', sens: 'Restricted', school: 'School B', owner: 'Sara Mansour', conf: '93%', summary: 'A behaviour incident report for Grade 8, written in Arabic.', evidence: ['سرد لحادثة سلوكية داخل الصف', 'Names two students and a guardian’s mobile number'], loc: fixed('iss2') ? 'School B – Student Records / Behaviour' : 'School B – Academic / Grade 8', share: fixed('iss2') ? 'Coordinators and the principal' : 'All School B staff', issues: ['iss2'] },
+      d3: { name: 'Report card scan 7B.pdf', type: c5 === 'report' ? 'Report card' : (c5 === 'other' ? 'Other' : 'Unreadable scan'), sens: c5 === 'report' ? 'Restricted' : (c5 === 'other' ? 'Internal' : 'Needs review'), school: 'School B', owner: 'Sara Mansour', conf: c5 ? 'confirmed by the coordinator' : 'too low to trust', summary: c5 ? 'Confirmed by the coordinator; her answer was saved to improve the checker.' : 'A scanned PDF with no text layer. Sijill could not read it reliably, so it asked a person instead of guessing.', evidence: ['The layout looks like a report card (logo, marks table, signature line)', 'The text recognised from the scan is too weak to trust'], loc: fixed('iss5b') ? 'School B – Student Records / Reports' : 'School B – Academic / Grade 7', share: 'Grade 7 teachers', issues: ['iss5', 'iss5b'] },
+      d5: { name: 'Allergy list – all grades.xlsx', type: 'Medical list', sens: 'Restricted', school: 'School C', owner: 'Amal Nasser', conf: '98%', summary: 'Allergies and medication for students in all grades.', evidence: ['A column headed “Allergy / الحساسية”', 'Medication names next to student names'], loc: fixed('iss4') ? 'School C – Student Records / Health' : 'School C – Administration', share: fixed('iss4') ? 'The nurse, coordinators and the principal' : 'School C staff and one outside gmail.com address', issues: ['iss4'] },
+      d6: { name: 'Maths worksheet – fractions (grade 5).docx', type: 'Worksheet', sens: 'Internal', school: 'School A', owner: 'Teacher, School A', conf: '95%', summary: 'A fractions worksheet for the Grade 5 year group.', evidence: ['Exercises with blank answer lines', '“Grade 5” is the year group, not a mark; there are no student names'], loc: 'School A – Academic / Maths', share: 'School A teachers', issues: [], note: 'Not fooled: a simple keyword search would flag “grade” and “score”. Sijill understood this is a worksheet and raised nothing.' },
+      d7: { name: 'Science exam – Grade 9 (December).pdf', type: 'Exam paper', sens: 'Confidential', school: 'School B', owner: 'Sara Mansour', conf: '94%', summary: 'The December science exam for Grade 9, with marks for each question.', evidence: ['A question paper with marks per question', 'The exam date in the header has not passed'], loc: 'School B – Academic / Assessments', share: fixed('iss9') ? 'Science teachers and coordinators' : 'Science teachers, coordinators and moderator@exam-board.example' + (exc('iss9') ? ' (allowed until the exam date)' : ''), issues: ['iss9'] },
+      d8: { name: 'Parent contacts 7B.xlsx', type: 'Contact list', sens: 'Restricted', school: 'School B', owner: 'Sara Mansour', conf: '97%', summary: 'Guardian names, mobile numbers and emails for Grade 7B.', evidence: ['Guardian names next to +974 mobile numbers', 'Email addresses on personal domains'], loc: fixed('iss3') ? 'School B – Student Records / Contacts' : 'My Drive (Sara Mansour)', share: fixed('iss3') ? 'Grade 7 teachers and coordinators' : 'Only the owner', issues: ['iss3'] },
+      d9: { name: 'notes_final_v3.docx', type: c6 === 'behaviour' ? 'Behaviour notes' : (c6 === 'minutes' ? 'Meeting minutes' : (c6 === 'none' ? 'Personal notes' : 'Unsure')), sens: c6 === 'behaviour' ? 'Restricted' : (c6 ? 'Internal' : 'Needs review'), school: 'School B', owner: 'Sara Mansour', conf: c6 ? 'confirmed by the coordinator' : '62%', summary: c6 ? 'Classified by the coordinator; her answer was saved to improve the checker.' : 'Informal notes. Sijill thinks they are behaviour notes but is not sure enough to message the owner.', evidence: ['Mentions two students by first name', 'Phrases like “warning” and “parents called”'], loc: fixed('iss6b') ? 'School B – Student Records / Behaviour' : 'School B – Academic / Grade 8', share: 'Grade 8 teachers', issues: ['iss6', 'iss6b'] },
+      d10: { name: 'Assessment Policy 2026-27.docx', type: 'Policy', sens: 'Internal', school: 'School B', owner: 'Huda Saleh', conf: '98%', summary: 'School B’s assessment policy for 2026-27.', evidence: ['Three near-identical copies: “final”, “final_v2” and “FINAL”', 'This copy matches the approved version'], loc: 'EAA – Policies & Templates / School B', share: 'All EAA staff (view only)', issues: ['iss7'] },
+      d15: { name: 'Year 8 English unit plan.docx', type: 'Lesson plan', sens: 'Internal', school: 'School B', owner: 'Layla Haddad', conf: '95%', summary: 'A six-lesson English unit for Year 8. “8C reading groups.xlsx” is in the same My Drive.', evidence: ['Learning objectives and a lesson sequence', 'The owner is marked as leaving in Google Workspace'], loc: fixed('iss8') ? 'School B – Academic / English' : 'My Drive (Layla Haddad)', share: fixed('iss8') ? 'School B English teachers' : 'Only the owner', issues: ['iss8'] }
+    };
+    Object.keys(s.customFiles).forEach(k => { const c = s.customFiles[k]; F[k] = Object.assign({}, c, { loc: fixed(c.issues[0]) ? c.site + ' – shared drive' : c.loc }); });
+    return F;
+  }
+
+  isOpen(st) { return !!st && ['told', 'reminded', 'escalated', 'person', 'disputed', 'help'].indexOf(st.status) >= 0; }
+  statusLabel(st) {
+    return { told: ['Owner notified', 'b-internal'], reminded: ['Reminder sent', 'b-watch'], escalated: ['Needs follow-up', 'b-bad'], person: ['Needs review', 'b-watch'], disputed: ['Owner disagrees', 'b-watch'], help: ['Owner asked for help', 'b-watch'], fixed: ['Fixed', 'b-good'], exception: ['Allowed exception', 'b-neutral'], paused: ['Rule paused', 'b-neutral'], withdrawn: ['Closed: rule removed', 'b-neutral'] }[st.status] || ['—', 'b-neutral'];
+  }
+
+  scores(s, day) {
+    const D = this.defs(s), B = this.base(), out = {};
+    s.sites.filter(x => x.kind === 'School' && !x.removed && x.counted).forEach(site => {
+      const sc = site.name, b = B[sc];
+      if (!b || day < 1) { out[sc] = { score: null, open: 0, urgent: 0, esc: 0, fixed: 0 }; return; }
+      const g = this.gen(sc, day);
+      let xn = 0, x0 = 0;
+      s.extra.forEach(e => { if (!e.paused && day >= e.day0) { xn += Math.round((e.per[sc] || 0) * Math.pow(b.f, day - e.day0)); x0 += (e.per[sc] || 0); } });
+      let dn = 0, du = 0, de = 0, total = 0;
+      Object.keys(s.iss).forEach(id => { const d = D[id]; if (!d || d.school !== sc) return; total += 1; if (this.isOpen(s.iss[id])) { if (d.sev === 'urgent') du += 1; else dn += 1; if (s.iss[id].status === 'escalated') de += 1; } });
+      const normal = g.n + xn + dn, urgent = g.u + du, open = normal + urgent;
+      out[sc] = { score: Math.max(0, Math.round(100 - (normal + 3 * urgent) / b.files * 100)), open: open, urgent: urgent, esc: g.esc + de, fixed: Math.max(0, b.n + b.u + x0 + total - open) };
+    });
+    return out;
+  }
+
+  push(s, who, what, file, kind) {
+    const D = this.DAYS();
+    const m = 5 + (s.tick % 18) * 3;
+    const t = (s.day > 0 ? D[s.day] : 'Sun') + ' ' + String(8 + Math.floor(s.tick / 18) % 10).padStart(2, '0') + ':' + String(m).padStart(2, '0');
+    return { activity: [{ t: t, who: who, what: what, file: file, kind: kind || (who === 'Sijill' ? 'sijill' : 'person') }].concat(s.activity), tick: s.tick + 1 };
+  }
+
+  say(msg) { this.setState({ toast: msg }); clearTimeout(this._t); this._t = setTimeout(() => this.setState({ toast: '' }), 3800); }
+  me() { return this.ME()[this.state.role]; }
+  go(screen) { this.setState({ screen: screen, notifOpen: false, userMenu: false }); }
+  openFile(id) { this.setState(s => ({ screen: 'file', fileId: id, notifOpen: false, back: s.screen === 'file' || s.screen === 'email' ? s.back : s.screen })); }
+  openEmail(id) { this.setState(s => ({ screen: 'email', emailIssue: id, back: s.screen === 'file' || s.screen === 'email' ? s.back : s.screen })); }
+  home(role) { return { ed: 'overview', coord: 'followup', principal: 'site', it: 'overview', teacher: 'mine' }[role]; }
+  setRole(r) { this.setState(s => ({ role: r, screen: s.signedIn ? this.home(r) : 'signin', siteView: 'School B', notifOpen: false, userMenu: false, dlg: null })); }
+
+  runCheck() {
+    if (this.state.day > 0) return;
+    if (!this.state.connected) { this.say('Reconnect Google Workspace first.'); return; }
+    this.setState(s => {
+      const iss = {};
+      Object.keys(s.custom).forEach(k => { iss[k] = { status: 'told', found: 1 }; });
+      ['iss1', 'iss2', 'iss3', 'iss4', 'iss7', 'iss8', 'iss9'].forEach(id => { iss[id] = { status: 'told', found: 1 }; });
+      iss.iss5 = { status: 'person', found: 1 }; iss.iss6 = { status: 'person', found: 1 };
+      let cur = Object.assign({}, s, { day: 1 });
+      const log = (who, what, file) => { cur = Object.assign(cur, this.push(cur, who, what, file)); };
+      log('Sijill', 'First full check: 512 files read across 17 shared drives and 124 My Drives. 169 issues found in the five schools, 4 of them urgent. Each file owner was sent one message per issue with the steps to fix it.');
+      log('Sijill', 'Urgent: “Allergy list – all grades” (School C) is shared with a personal gmail.com address. The owner and the School C coordinator were told at once.', 'd5');
+      log('Sijill', 'Urgent: “Grade 7B marks – Term 1” has a public link. Sara Mansour and Huda Saleh were told at once.', 'd1');
+      log('Sijill', '2 School B files need review: a scan Sijill could not read, and a file it could not classify with confidence. Sent to Huda Saleh.', 'd3');
+      return { day: 1, iss: iss, activity: cur.activity, tick: cur.tick };
+    });
+    this.say('First check finished: 169 issues found and owners notified. No files were changed.');
+  }
+
+  nextDay() {
+    const s0 = this.state;
+    if (!s0.signedIn) { this.say('Sign in first.'); return; }
+    if (s0.day === 0) { this.say('Run the first check before moving to the next day.'); return; }
+    if (s0.day >= 5) { this.say('That was Thursday, the end of the school week. Use Reset to start again.'); return; }
+    if (!s0.connected) { this.say('Sijill is disconnected, so no checks run. Reconnect it in Settings.'); return; }
+    this.setState(s => {
+      const D = this.defs(s);
+      const snaps = Object.assign({}, s.snaps, { [s.day]: this.scores(s, s.day) });
+      const nd = s.day + 1;
+      const iss = {};
+      Object.keys(s.iss).forEach(k => { iss[k] = Object.assign({}, s.iss[k]); });
+      let cur = Object.assign({}, s, { day: nd });
+      const log = (who, what, file) => { cur = Object.assign(cur, this.push(cur, who, what, file)); };
+      Object.keys(iss).forEach(id => {
+        const st = iss[id], d = D[id];
+        if (!d || ['told', 'reminded', 'escalated'].indexOf(st.status) < 0) return;
+        if ((id === 'iss4' || id === 'iss1') && st.status !== 'escalated') { st.status = 'fixed'; log(d.owner, 'Fixed “' + d.title.toLowerCase() + '” the same day. Sijill checked again and closed the issue.', d.file); return; }
+        if (st.nudged) { st.status = 'fixed'; log(d.owner, 'Fixed “' + d.title.toLowerCase() + '” after the coordinator followed up. Sijill checked again and closed the issue.', d.file); return; }
+        if (st.status === 'escalated') return;
+        const rule = s.rules.find(r => r.id === d.rule);
+        const remind = rule ? rule.remind : 2, age = nd - st.found;
+        if (st.status === 'told' && age >= remind) { st.status = 'reminded'; log('Sijill', 'Reminder sent to ' + d.owner + ': ' + d.title.toLowerCase() + '.', d.file); }
+        else if (st.status === 'reminded' && age >= remind + 1) { st.status = 'escalated'; log('Sijill', 'Still open after the reminder, so it now needs follow-up from the ' + d.school + ' coordinator: ' + d.title.toLowerCase() + ' (' + d.owner + ').', d.file); }
+      });
+      s.extra.forEach(e => { if (e.day0 === nd && !e.paused) { const r = s.rules.find(x => x.id === e.rule); log('Sijill', 'First check of the new rule “' + (r ? r.name : e.rule) + '”: ' + Object.keys(e.per).reduce((a, k) => a + e.per[k], 0) + ' issues found. Owners notified.'); } });
+      let fixedGen = 0;
+      Object.keys(this.base()).forEach(sc => { const a = this.gen(sc, s.day), b = this.gen(sc, nd); fixedGen += (a.n + a.u) - (b.n + b.u); });
+      log('Sijill', 'Night check (' + this.DAYS()[nd] + '): across the five schools, owners fixed ' + fixedGen + ' more issues. Each was checked again and closed.' + (nd === 3 ? ' School E is fixing more slowly than the others.' : ''));
+      return { day: nd, iss: iss, snaps: snaps, activity: cur.activity, tick: cur.tick };
+    });
+    this.say('Moved to ' + this.DAYS()[s0.day + 1] + '. Owners fixed issues overnight; reminders and follow-ups went out where needed.');
+  }
+
+  act(id, patch, who, what, toast) {
+    this.setState(s => { const iss = Object.assign({}, s.iss, { [id]: Object.assign({}, s.iss[id], patch) }); return Object.assign({ iss: iss, dlg: null }, this.push(s, who, what, this.defs(s)[id].file)); });
+    if (toast) this.say(toast);
+  }
+  fixIt(id) { const d = this.defs(this.state)[id]; this.act(id, { status: 'fixed' }, d.owner, 'Fixed “' + d.title.toLowerCase() + '”. Sijill checked again: the file now follows ' + d.rule + '.', 'Checked again: fixed. Thank you. Your school’s score goes up.'); }
+  nudge(id) { const d = this.defs(this.state)[id]; this.act(id, { nudged: true }, this.me(), 'Followed up in person with ' + d.owner + ' about “' + d.title.toLowerCase() + '”.', 'Follow-up recorded. Press “Next day” to see the result.'); }
+  keepRule(id) { const d = this.defs(this.state)[id]; this.act(id, { status: 'reminded', found: this.state.day, note: '' }, this.me(), 'Kept the rule for “' + d.title.toLowerCase() + '” and reminded ' + d.owner + '. The decision was saved to improve the checker.', 'Owner reminded.'); }
+  endException(id) { const d = this.defs(this.state)[id]; this.act(id, { status: 'told', found: Math.max(1, this.state.day), reason: '', until: '' }, this.me(), 'Ended the exception for “' + d.title.toLowerCase() + '”. The rule applies again and ' + d.owner + ' was notified.', 'Exception ended.'); }
+
+  classify(id, choice, newIssue, text) {
+    this.setState(s => {
+      const iss = Object.assign({}, s.iss, { [id]: Object.assign({}, s.iss[id], { status: 'fixed', choice: choice }) });
+      if (newIssue) iss[newIssue] = { status: 'told', found: s.day };
+      let cur = Object.assign({}, s);
+      cur = Object.assign(cur, this.push(cur, this.me(), text + ' The answer was saved to improve the checker.', this.defs(s)[id].file));
+      if (newIssue) cur = Object.assign(cur, this.push(cur, 'Sijill', 'New issue for Sara Mansour: ' + this.defs(s)[newIssue].title.toLowerCase() + '. Message sent.', this.defs(s)[newIssue].file));
+      return { iss: iss, activity: cur.activity, tick: cur.tick };
+    });
+    this.say(newIssue ? 'Saved. Sara has been sent the steps to fix it.' : 'Saved. This file needs no action.');
+  }
+
+  personFollowUp(name) {
+    const s0 = this.state, D = this.defs(s0);
+    const ids = Object.keys(s0.iss).filter(k => D[k].owner === name && ['told', 'reminded', 'escalated'].indexOf(s0.iss[k].status) >= 0 && !s0.iss[k].nudged);
+    if (!ids.length) { this.say('Nothing open to follow up.'); return; }
+    this.setState(s => { const iss = Object.assign({}, s.iss); ids.forEach(k => { iss[k] = Object.assign({}, iss[k], { nudged: true }); }); return Object.assign({ iss: iss }, this.push(s, this.me(), 'Followed up in person with ' + name + ' about ' + ids.length + ' open issue' + (ids.length === 1 ? '' : 's') + '.', D[ids[0]].file)); });
+    this.say('Follow-up recorded. Press “Next day” to see the result.');
+  }
+
+  bulkFollowUp() {
+    const s0 = this.state, D = this.defs(s0);
+    const ids = Object.keys(s0.iss).filter(k => D[k].school === 'School B' && s0.iss[k].status === 'escalated' && !s0.iss[k].nudged);
+    if (!ids.length) { this.say('No issues need follow-up right now.'); return; }
+    this.setState(s => { const iss = Object.assign({}, s.iss); ids.forEach(k => { iss[k] = Object.assign({}, iss[k], { nudged: true }); }); return Object.assign({ iss: iss }, this.push(s, this.me(), 'Followed up with everyone who has an issue needing follow-up (' + ids.length + ').')); });
+    this.say('Follow-up recorded for ' + ids.length + ' issue' + (ids.length === 1 ? '' : 's') + '.');
+  }
+
+  cfg(patch, what, toast) {
+    this.setState(s => Object.assign(typeof patch === 'function' ? patch(s) : patch, this.push(s, this.me(), what, undefined, 'config')));
+    if (toast) this.say(toast);
+  }
+  adminOnly() { if (this.state.role !== 'it') { this.say('Only IT can change this.'); return false; } return true; }
+
+  impact(dr, s) {
+    const all = dr.types.indexOf('All types') >= 0, any = dr.sens.indexOf('Any') >= 0;
+    const base = s.types.filter(t => (all || dr.types.indexOf(t.name) >= 0) && (any || dr.sens.indexOf(t.sens) >= 0)).reduce((a, t) => a + t.count, 0);
+    return Math.round(base * (this.RATIO()[dr.check] || 0.1));
+  }
+
+  openRule(id) {
+    const s = this.state;
+    const r = id ? s.rules.find(x => x.id === id) : null;
+    const nid = 'R' + (s.rules.reduce((a, x) => Math.max(a, parseInt(x.id.slice(1), 10)), 0) + 1);
+    const d = r ? Object.assign({}, r, { en: r.en.join('\n'), ar: r.ar.join('\n'), isNew: false }) : { id: nid, name: '', why: '', check: 'location', types: ['Consent form'], sens: ['Any'], sev: 'normal', remind: s.msg.remind, en: '', ar: '', status: 'draft', version: 0, isNew: true };
+    this.setState({ draft: d, screen: 'ruleEdit' });
+  }
+
+  saveRule(on) {
+    if (!this.adminOnly()) return;
+    const s0 = this.state, d = s0.draft;
+    if (!d.name.trim() || !d.en.trim()) { this.say('Add a rule name and at least one fix step in English.'); return; }
+    const rule = { id: d.id, name: d.name.trim(), why: d.why.trim() || 'It keeps school files safe and easy to find.', check: d.check, types: d.types.length ? d.types : ['All types'], sens: d.sens.length ? d.sens : ['Any'], sev: d.sev, remind: d.remind, en: d.en.split('\n').map(x => x.trim()).filter(Boolean), ar: d.ar.split('\n').map(x => x.trim()).filter(Boolean), status: on ? 'active' : 'draft', version: (d.version || 0) + 1 };
+    const est = this.impact(rule, s0);
+    this.setState(s => {
+      const rules = d.isNew ? s.rules.concat([rule]) : s.rules.map(x => x.id === rule.id ? rule : x);
+      let extra = s.extra;
+      if (on && d.isNew) {
+        const per = {}; const B = this.base();
+        Object.keys(B).forEach(k => { per[k] = Math.round(est * B[k].files / 512); });
+        extra = extra.concat([{ rule: rule.id, day0: s.day === 0 ? 1 : s.day + 1, per: per, paused: false }]);
+      }
+      return Object.assign({ rules: rules, extra: extra, draft: null, screen: 'rules' }, this.push(s, this.me(), (d.isNew ? 'Added rule ' : 'Updated rule ') + rule.id + ' “' + rule.name + '” (version ' + rule.version + ', ' + (on ? 'turned on' : 'saved as draft') + ').' + (on ? ' It applies from the next nightly check.' : ''), undefined, 'config'));
+    });
+    this.say(on ? 'Rule saved and turned on. It applies from tonight’s check.' : 'Rule saved as a draft. It does nothing until you turn it on.');
+  }
+
+  toggleRule(id) {
+    if (!this.adminOnly()) return;
+    this.setState(s => {
+      const r = s.rules.find(x => x.id === id);
+      const on = r.status !== 'active';
+      const D = this.defs(s);
+      const iss = Object.assign({}, s.iss);
+      Object.keys(iss).forEach(k => { if (D[k] && D[k].rule === id) { if (!on && this.isOpen(iss[k])) iss[k] = Object.assign({}, iss[k], { status: 'paused', prev: iss[k].status }); else if (on && iss[k].status === 'paused') iss[k] = Object.assign({}, iss[k], { status: 'told', found: Math.max(1, s.day) }); } });
+      const extra = s.extra.map(e => e.rule === id ? Object.assign({}, e, { paused: !on }) : e);
+      return Object.assign({ rules: s.rules.map(x => x.id === id ? Object.assign({}, x, { status: on ? 'active' : 'paused' }) : x), iss: iss, extra: extra }, this.push(s, this.me(), (on ? 'Turned on rule ' : 'Paused rule ') + id + ' “' + r.name + '”.' + (on ? ' Its issues are open again.' : ' Its open issues are on hold and no messages are sent.'), undefined, 'config'));
+    });
+  }
+
+  deleteRule(id) {
+    this.setState(s => {
+      const r = s.rules.find(x => x.id === id), D = this.defs(s), iss = Object.assign({}, s.iss);
+      let n = 0;
+      Object.keys(iss).forEach(k => { if (D[k] && D[k].rule === id && (this.isOpen(iss[k]) || iss[k].status === 'paused')) { iss[k] = Object.assign({}, iss[k], { status: 'withdrawn' }); n += 1; } });
+      return Object.assign({ rules: s.rules.filter(x => x.id !== id), iss: iss, extra: s.extra.filter(e => e.rule !== id), dlg: null }, this.push(s, this.me(), 'Deleted rule ' + id + ' “' + r.name + '”. ' + n + ' open issue' + (n === 1 ? ' was' : 's were') + ' closed.', undefined, 'config'));
+    });
+    this.say('Rule deleted.');
+  }
+
+  savePerson(dl) {
+    this.setState(s => {
+      const p = s.people.find(x => x.id === dl.id);
+      const np = Object.assign({}, p, { role: dl.role, site: dl.site, status: dl.status });
+      let custom = s.custom, customFiles = s.customFiles, iss = s.iss;
+      let cur = Object.assign({}, s, { people: s.people.map(x => x.id === p.id ? np : x), dlg: null });
+      const changes = [];
+      if (p.role !== np.role) changes.push('role ' + s.roleLabels[p.role] + ' → ' + s.roleLabels[np.role]);
+      if (p.site !== np.site) changes.push('site ' + p.site + ' → ' + np.site);
+      if (p.status !== np.status) changes.push('status ' + p.status + ' → ' + np.status);
+      cur = Object.assign(cur, this.push(cur, this.me(), 'Updated ' + p.name + ': ' + (changes.join('; ') || 'no change') + '.', undefined, 'config'));
+      const iid = 'lv-' + p.id, fid = 'f-' + p.id;
+      if (np.status === 'Leaving' && p.status !== 'Leaving' && p.myDrive > 0 && !custom[iid] && np.site !== 'EAA Central') {
+        const r8 = s.rules.find(r => r.id === 'R8');
+        customFiles = Object.assign({}, customFiles, { [fid]: { name: p.myDrive + ' school files in ' + p.name + '’s My Drive', type: 'Several files', sens: 'Internal', school: np.site, site: np.site, owner: p.name, conf: '—', summary: 'School files that exist only in a personal My Drive.', evidence: ['The owner is now marked as leaving', p.myDrive + ' of the files in this My Drive are school documents'], loc: 'My Drive (' + p.name + ')', share: 'Only the owner', issues: [iid] } });
+        custom = Object.assign({}, custom, { [iid]: { file: fid, rule: 'R8', sev: 'normal', owner: p.name, school: np.site, title: 'School files in a leaving teacher’s My Drive', why: p.name.split(' ')[0] + ' is leaving. ' + p.myDrive + ' school files are only in a personal My Drive.', whyAr: 'ستغادرين قريبًا، وهناك ملفات مدرسية موجودة فقط في مساحتك الشخصية.', steps: r8 ? r8.en : [], ar: r8 ? r8.ar : [] } });
+        if (s.day > 0) iss = Object.assign({}, iss, { [iid]: { status: 'told', found: s.day } });
+        cur = Object.assign(cur, this.push(cur, 'Sijill', p.name + ' is now leaving: ' + p.myDrive + ' school files found in their My Drive. They were sent the steps to move them (rule R8).', fid));
+      }
+      return { people: cur.people, dlg: null, custom: custom, customFiles: customFiles, iss: iss, activity: cur.activity, tick: cur.tick };
+    });
+    this.say('Saved.');
+  }
+
+  okDialog() {
+    const s = this.state, dl = s.dlg;
+    if (!dl) return;
+    if (dl.kind === 'dispute' || dl.kind === 'help') {
+      if (!dl.text.trim()) { this.say('Please add a short note first.'); return; }
+      const d = this.defs(s)[dl.id];
+      this.act(dl.id, { status: dl.kind === 'help' ? 'help' : 'disputed', note: dl.text.trim() }, d.owner, (dl.kind === 'help' ? 'Asked for help with “' : 'Said “This looks wrong” on “') + d.title.toLowerCase() + '”: ' + dl.text.trim(), 'Sent to your coordinator.');
+    } else if (dl.kind === 'exception') {
+      if (!dl.text.trim()) { this.say('Please give a reason.'); return; }
+      const d = this.defs(s)[dl.id];
+      this.act(dl.id, { status: 'exception', reason: dl.text.trim(), until: dl.until, by: this.me() }, this.me(), 'Allowed an exception for “' + d.title.toLowerCase() + '” until ' + dl.until.toLowerCase() + '. Reason: ' + dl.text.trim(), 'Exception allowed and recorded.');
+    } else if (dl.kind === 'person') { this.savePerson(dl); }
+    else if (dl.kind === 'deleteRule') { this.deleteRule(dl.id); }
+    else if (dl.kind === 'site') {
+      if (!dl.name.trim()) { this.say('Give the site a name.'); return; }
+      if (dl.mode === 'add') this.cfg(st => ({ sites: st.sites.concat([{ name: dl.name.trim(), kind: 'School', lead: dl.lead, reviewer: dl.reviewer, drives: 0, counted: dl.counted, removed: false }]), dlg: null }), 'Added site “' + dl.name.trim() + '”. Its shared drives still need to be linked.', 'Site added. It shows as “Waiting for first check” until its drives are linked.');
+      else this.cfg(st => ({ sites: st.sites.map(x => x.name === dl.original ? Object.assign({}, x, { lead: dl.lead, reviewer: dl.reviewer, counted: dl.counted }) : x), dlg: null }), 'Updated site “' + dl.original + '”.', 'Site updated.');
+    } else if (dl.kind === 'removeSite') { this.cfg(st => ({ sites: st.sites.map(x => x.name === dl.name ? Object.assign({}, x, { removed: true }) : x), dlg: null }), 'Removed site “' + dl.name + '”. Its history stays in the activity log.', 'Site removed.'); }
+    else if (dl.kind === 'disconnect') { this.cfg({ connected: false, dlg: null }, 'Disconnected Google Workspace. Checks and messages stopped.', 'Disconnected. Nothing is being checked now.'); }
+  }
+
+  renderVals() {
+    const s = this.state, role = s.role, rk = this.ROLE()[role], meName = this.ME()[role];
+    const D = this.defs(s), F = this.files(s), DAYS = this.DAYS(), RL = s.roleLabels;
+    const person = s.people.find(p => p.name === meName) || s.people[0];
+    const SCLS = { Restricted: 'b-restricted', Confidential: 'b-confidential', Internal: 'b-internal', Public: 'b-public', 'Needs review': 'b-watch' };
+    const ids = Object.keys(s.iss);
+    const open = id => this.isOpen(s.iss[id]);
+    const bIds = ids.filter(id => D[id] && D[id].school === 'School B');
+    const needsMe = bIds.filter(id => ['person', 'disputed', 'help', 'escalated'].indexOf(s.iss[id].status) >= 0);
+    const myIds = ids.filter(id => D[id] && D[id].owner === meName && !D[id].person);
+    const myOpen = myIds.filter(id => ['told', 'reminded', 'escalated'].indexOf(s.iss[id].status) >= 0);
+    const siteWord = s.siteLabel.toLowerCase() + 's';
+
+    const NAV = { ed: ['overview', 'exceptions', 'rules', 'activity', 'help'], coord: ['followup', 'site', 'mine', 'people', 'exceptions', 'activity', 'help'], principal: ['site', 'exceptions', 'mine', 'activity', 'help'], it: ['overview', 'rules', 'people', 'settings', 'activity', 'help'], teacher: ['mine', 'explained', 'help'] };
+    const LABEL = { overview: 'Overview', followup: 'Follow-up', site: 'My ' + s.siteLabel.toLowerCase(), mine: 'My files', explained: 'The rules', exceptions: 'Exceptions', rules: 'Rules', people: 'People', settings: 'Settings', activity: 'Activity log', help: 'Help' };
+    const roles = [['ed', RL.leadership], ['coord', RL.reviewer], ['principal', RL.lead], ['it', RL.admin], ['teacher', RL.staff]].map(r => ({ label: r[1] + ' (' + this.ME()[r[0]].split(' ')[0] + ')', cls: r[0] === role ? 'demo-on' : '', pick: () => this.setRole(r[0]) }));
+    const sub = ['file', 'email', 'ruleEdit', 'prefs'];
+    const activeNav = sub.indexOf(s.screen) >= 0 ? (s.screen === 'ruleEdit' ? 'rules' : s.back) : s.screen;
+    const ICON = { overview: 'M3 11.5 12 4l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z', followup: 'M20 12a8 8 0 1 1-2.4-5.7M20 4v4.5h-4.5', site: 'M4 21V6a1 1 0 0 1 1-1h8a1 1 0 0 1 1 1v15M14 10h5a1 1 0 0 1 1 1v10M3 21h18M8 9h2M8 13h2M8 17h2', mine: 'M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z', explained: 'M12 3 4.5 6v5.5c0 4.6 3.2 8 7.5 9.5 4.3-1.5 7.5-4.9 7.5-9.5V6zM9 12l2.2 2.2L15.5 10', rules: 'M12 3 4.5 6v5.5c0 4.6 3.2 8 7.5 9.5 4.3-1.5 7.5-4.9 7.5-9.5V6zM9 12l2.2 2.2L15.5 10', exceptions: 'M5 21V4M5 4h12l-2.5 4L17 12H5', people: 'M16 20v-1.5a3.5 3.5 0 0 0-3.5-3.5h-5A3.5 3.5 0 0 0 4 18.5V20M10 11a3.2 3.2 0 1 0 0-6.4 3.2 3.2 0 0 0 0 6.4zM20 20v-1.5a3.5 3.5 0 0 0-2.6-3.4M15.5 4.8a3.2 3.2 0 0 1 0 6', settings: 'M4 7h9M17 7h3M4 17h3M11 17h9M13 4.5v5M7 14.5v5', activity: 'M12 7.5V12l3 2M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0', help: 'M9.2 9.2a3 3 0 1 1 4.4 2.7c-.9.5-1.6 1-1.6 2.1M12 17.5h.01M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0' };
+    const nav = NAV[role].map(k => { const c = k === 'followup' ? needsMe.length : (k === 'mine' ? myOpen.length : 0); return { label: LABEL[k], icon: ICON[k], sep: k === 'activity', cls: k === activeNav ? 'nav-on' : '', go: () => this.setState({ screen: k, siteView: k === 'site' ? 'School B' : s.siteView }), hasCount: c > 0, count: c }; });
+
+    // scores
+    const live = this.scores(s, s.day);
+    const statusOf = v => v >= 85 ? ['Good', 'b-good', '#12A66E'] : (v >= 70 ? ['Watch', 'b-watch', '#F2A20C'] : ['Needs attention', 'b-bad', '#8A1538']);
+    const trendFor = n => { const t = []; for (let d = 1; d <= s.day; d++) { const src = d === s.day ? live[n] : (s.snaps[d] || {})[n]; if (!src || src.score === null) continue; const v = src.score; t.push({ label: DAYS[d] + ': ' + v, style: { height: Math.max(4, Math.round(v * 0.4)) + 'px', background: statusOf(v)[2] } }); } return t; };
+    const schoolNames = Object.keys(live);
+    const tot = k => schoolNames.reduce((a, n) => a + (live[n][k] || 0), 0);
+    const kv = (v, bad) => ({ fontSize: '30px', fontWeight: 700, marginTop: '6px', color: bad && v > 0 ? 'var(--brand-700)' : 'var(--ink)' });
+    const myDriveCount = Object.keys(this.base()).reduce((a, n) => a + (s.day > 0 ? Math.round(this.gen(n, s.day).n * 0.3) : 0), 0) + ['iss3', 'iss8'].filter(open).length;
+    const ov = {
+      siteWord: siteWord, siteWordCap: s.siteLabel + 's',
+      before: s.day === 0, after: s.day > 0, canCheck: s.day === 0 && (role === 'ed' || role === 'it'),
+      beforeHint: role === 'ed' || role === 'it' ? 'Press “Run the first check” to start. Nothing will be changed; owners will be told what to fix.' : 'IT or leadership starts the first check.',
+      sub: s.day === 0 ? 'Sunday morning. Sijill is connected with read-only access but has not checked anything yet.' : DAYS[s.day] + '. Scores rise only as people fix their files. Use “Next day” in the demo controls to see the week unfold.',
+      kpis: [],
+      rows: s.sites.filter(x => x.kind === 'School' && !x.removed).map(x => { const r = live[x.name] || { score: null, open: 0, urgent: 0, esc: 0, fixed: 0 }; const has = r.score !== null && r.score !== undefined; const st = statusOf(r.score || 0); return { name: x.name, has: has, none: !has, score: r.score, status: st[0], cls: st[1], bar: { width: (r.score || 0) + '%', height: '100%', background: st[2] }, open: has ? r.open : '—', urgent: has ? r.urgent : '—', esc: has ? r.esc : '—', fixed: has ? r.fixed : '—', trend: has ? trendFor(x.name) : [], go: () => this.setState({ screen: 'site', siteView: x.name }) }; }),
+      urgentList: ids.filter(id => open(id) && D[id].sev === 'urgent').map(id => ({ title: D[id].title, school: D[id].school, owner: D[id].owner, status: this.statusLabel(s.iss[id])[0], file: F[D[id].file].name, open: () => this.openFile(D[id].file) })),
+      weeklyLabel: s.weekly ? 'Emailed to leadership every Sunday: On' : 'Emailed to leadership every Sunday: Off'
+    };
+    ov.noUrgent = ov.urgentList.length === 0;
+
+    // ---------- new overview components (real data from the simulated week) ----------
+    const dayVal = (d, n, key) => { const src = d === s.day ? live[n] : (s.snaps[d] || {})[n]; return src && src[key] !== undefined && src[key] !== null ? src[key] : null; };
+    const series = key => { const a = []; for (let d = 1; d <= s.day; d++) a.push(schoolNames.reduce((acc, n) => acc + (dayVal(d, n, key) || 0), 0)); return a; };
+    const avgSeries = () => { const a = []; for (let d = 1; d <= s.day; d++) { const v = schoolNames.map(n => dayVal(d, n, 'score')).filter(x => x !== null); if (v.length) a.push(v.reduce((x, y) => x + y, 0) / v.length); } return a; };
+    const spark = arr => { if (arr.length < 2) return ''; const W = 110, H = 34, lo = Math.min.apply(null, arr), hi = Math.max.apply(null, arr), span = (hi - lo) || 1; return arr.map((v, i) => (i ? 'L' : 'M') + (i / (arr.length - 1) * W).toFixed(1) + ' ' + (H - 4 - ((v - lo) / span) * (H - 8)).toFixed(1)).join(' '); };
+    const scoreNow = schoolNames.map(n => live[n].score).filter(v => v !== null && v !== undefined);
+    const avgNow = scoreNow.length ? Math.round(scoreNow.reduce((x, y) => x + y, 0) / scoreNow.length) : 0;
+    const healthSt = statusOf(avgNow);
+    const totOpen = tot('open'), totUrgent = tot('urgent'), filesTotal = 512;
+    const mk = (label, value, foot, tone, icon, arr) => ({ label: label, value: value, foot: foot, tone: 't-' + tone, icon: icon, spark: spark(arr), hasSpark: arr.length >= 2, sparkCls: 's-' + tone });
+    ov.kpis = [
+      mk('Files checked', filesTotal.toLocaleString('en'), 'in shared drives and My Drives', 'slate', 'M7 3h7l5 5v13H7zM14 3v5h5M10 13h6M10 17h6', []),
+      mk('Open issues', totOpen, totUrgent + ' urgent · ' + (totOpen - totUrgent) + ' normal', 'brand', 'M12 4 3 20h18zM12 10v4.5M12 17.5h.01', series('open')),
+      mk('Network health', avgNow + '%', healthSt[0] + ' · average school score', 'green', 'M12 3 4.5 6v5.5c0 4.6 3.2 8 7.5 9.5 4.3-1.5 7.5-4.9 7.5-9.5V6zM9 12l2.2 2.2L15.5 10', avgSeries()),
+      mk('Pending follow-ups', tot('esc'), 'still open after a reminder', 'slate', 'M12 7.5V12l3 2M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0', series('esc')),
+      mk('Fixed by staff', tot('fixed'), 'checked again and closed', 'green', 'M5 12.5l4.5 4.5L19 7.5', series('fixed')),
+      mk('Files in personal My Drives', myDriveCount, 'rule R1: school files belong in shared drives', 'amber', 'M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z', [])
+    ];
+
+    // school performance tiles
+    ov.tiles = s.sites.filter(x => x.kind === 'School' && !x.removed).map(x => {
+      const r = live[x.name] || {}, has = r.score !== null && r.score !== undefined, st = statusOf(r.score || 0);
+      const arr = []; for (let d = 1; d <= s.day; d++) { const v = dayVal(d, x.name, 'score'); if (v !== null) arr.push(v); }
+      const b = this.base()[x.name];
+      return { name: x.name, score: has ? r.score + '%' : '—', dot: { background: has ? st[2] : '#C5C9D6' }, bar: { width: (has ? r.score : 0) + '%', background: st[2] }, files: b ? b.files : 0, spark: spark(arr), hasSpark: arr.length >= 2, sparkCls: has ? (r.score >= 85 ? 's-green' : (r.score >= 70 ? 's-amber' : 's-brand')) : 's-slate', go: () => this.setState({ screen: 'site', siteView: x.name }) };
+    });
+
+    // issues trend (open and urgent across the school days so far)
+    const openArr = series('open'), urgArr = series('urgent'), days = openArr.length;
+    if (days >= 2) {
+      const X0 = 24, X1 = 316, Y0 = 14, Y1 = 186, peak = Math.max(4, Math.ceil(Math.max.apply(null, openArr) / 10) * 10);
+      const px = i => X0 + (i / (days - 1)) * (X1 - X0), py = v => Y1 - (v / peak) * (Y1 - Y0);
+      const line = a => a.map((v, i) => (i ? 'L' : 'M') + px(i).toFixed(1) + ' ' + py(v).toFixed(1)).join(' ');
+      const first = openArr[0] || 1, change = Math.round((openArr[days - 1] - openArr[0]) / first * 100);
+      ov.trend = { has: true, none: false, total: line(openArr), urgent: line(urgArr), area: line(openArr) + ' L' + X1 + ' ' + Y1 + ' L' + X0 + ' ' + Y1 + ' Z',
+        xl: openArr.map((v, i) => ({ t: DAYS[i + 1] })), dots: openArr.map((v, i) => ({ x: px(i).toFixed(1), y: py(v).toFixed(1) })),
+        yl: [0, 1, 2, 3].map(k => { const v = Math.round(peak * k / 3); return { y: py(v).toFixed(1), style: { top: (py(v) / 200 * 100).toFixed(2) + '%' }, t: v }; }),
+        delta: (change <= 0 ? '↓ ' : '↑ ') + change + '%', deltaCls: change <= 0 ? 'good' : 'bad' };
+    } else { ov.trend = { has: false, none: true, yl: [], xl: [], dots: [] }; }
+
+    // critical alerts, recent issues, compliance donut, quick actions
+    ov.alertCount = ov.urgentList.length;
+    const ruleName = rid => { const r = s.rules.find(x => x.id === rid); return r ? r.name : rid; };
+    ov.recent = ids.filter(id => D[id]).map(id => ({ id: id, d: D[id], x: s.iss[id], open: open(id) }))
+      .sort((a, b) => (b.open - a.open) || ((b.d.sev === 'urgent') - (a.d.sev === 'urgent'))).slice(0, 6)
+      .map(r => { const sl = this.statusLabel(r.x); return { id: 'SJL-' + (1000 + (parseInt(r.id.replace(/\D/g, ''), 10) || 0)), file: F[r.d.file].name, school: r.d.school, rule: ruleName(r.d.rule), sev: r.d.sev === 'urgent' ? 'Urgent' : 'Normal', sevCls: r.d.sev === 'urgent' ? 'b-urgent' : 'b-normal', status: sl[0], scls: sl[1], open: () => this.openFile(r.d.file) }; });
+    const pct = v => (Math.round(v / filesTotal * 1000) / 10).toFixed(1) + '%';
+    const nNormal = Math.max(0, totOpen - totUrgent), nCompliant = Math.max(0, filesTotal - totOpen), CIRC = 2 * Math.PI * 52;
+    let acc = 0;
+    ov.donut = { center: pct(nCompliant), segs: [['Compliant', nCompliant, '#12A66E'], ['Needs attention', nNormal, '#F2A20C'], ['Critical', totUrgent, '#8A1538']].map(g => { const len = g[1] / filesTotal * CIRC, o = { label: g[0], pct: pct(g[1]), dot: { background: g[2] }, style: { stroke: g[2], strokeDasharray: len.toFixed(2) + ' ' + (CIRC - len).toFixed(2), strokeDashoffset: (-acc).toFixed(2) } }; acc += len; return o; }) };
+    ov.quick = [
+      { label: 'Run on-demand scan', icon: 'M20 12a8 8 0 1 1-2.4-5.7M20 4v4.5h-4.5', go: () => this.say('In the real system this starts a full check now. In this demo use “Next day” to move through the week.') },
+      { label: 'Export report', icon: 'M12 4v10M8 10.5l4 4 4-4M5 19h14', go: () => this.say('In the real system this downloads a one-page PDF report.') },
+      { label: 'Manage exceptions', icon: 'M12 3 4.5 6v5.5c0 4.6 3.2 8 7.5 9.5 4.3-1.5 7.5-4.9 7.5-9.5V6zM9 12l2.2 2.2L15.5 10', go: () => this.go('exceptions') },
+      { label: 'View audit log', icon: 'M12 7.5V12l3 2M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0', go: () => this.go('activity') }
+    ];
+
+    // fix duplicate key: open count vs open handler
+    ov.rows = ov.rows.map(r => r);
+    const accuracy = [{ label: 'Restricted files reported as fine', target: '0' }, { label: 'Real problems caught', target: '95%+' }, { label: 'Alerts that were real', target: '85%+' }, { label: 'Document type correct', target: '90%+' }];
+
+    // site page
+    const sv = s.siteView, sr = live[sv] || { score: null, open: 0, urgent: 0, esc: 0, fixed: 0 }, sst = statusOf(sr.score || 0);
+    const W = { R1: 0.28, R2: 0.1, R3: 0.02, R4: 0.3, R5: 0.12, R6: 0.06, R7: 0.07, R8: 0.05 };
+    const activeRules = s.rules.filter(r => r.status === 'active');
+    const maxN = Math.max(1, sr.open);
+    const byRule = activeRules.map(r => { const n = Math.round(sr.open * (W[r.id] || 0.04)); return { id: r.id, name: r.name, n: n, bar: { width: Math.round(n / maxN * 100) + '%', height: '100%', background: 'var(--brand)' } }; });
+    const detail = bIds.filter(open).map(id => { const sl = this.statusLabel(s.iss[id]); return { title: D[id].title, urgent: D[id].sev === 'urgent', file: F[D[id].file].name, owner: D[id].owner, status: sl[0], scls: sl[1], open: () => this.openFile(D[id].file) }; });
+    const st = {
+      name: sv, canBack: role === 'ed' || role === 'it', ready: s.day > 0 && sr.score !== null,
+      sub: s.day === 0 ? 'Not checked yet. Progress appears after the first check.' : (sr.score === null ? 'Waiting for first check: this site’s shared drives are not linked yet.' : (sv === 'School B' ? 'Principal’s view: read-only. The coordinator follows up; staff fix their own files.' : 'Summary for this site. Its coordinator follows up on open issues.')),
+      score: sr.score, status: sst[0], cls: sst[1], trend: trendFor(sv),
+      counts: [{ label: 'Open issues', value: sr.open, tone: 't-brand', icon: 'M12 4 3 20h18zM12 10v4.5M12 17.5h.01', foot: 'waiting for their owners' }, { label: 'Urgent', value: sr.urgent, tone: 't-amber', icon: 'M13 3 5 13.5h6L10 21l8-10.5h-6z', foot: 'owner and coordinator told' }, { label: 'Need follow-up', value: sr.esc, tone: 't-slate', icon: 'M12 7.5V12l3 2M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0', foot: 'still open after a reminder' }, { label: 'Fixed so far', value: sr.fixed, tone: 't-green', icon: 'M5 12.5l4.5 4.5L19 7.5', foot: 'checked again and closed' }],
+      byRule: byRule, hasDetail: sv === 'School B', rows: detail, noRows: detail.length === 0,
+      note: sv === 'School B' ? 'The other ' + Math.max(0, sr.open - detail.length) + ' open issues are routine ones waiting for their owners. They appear in detail if they need follow-up.' : 'The demo follows School B in detail; other sites show totals.'
+    };
+
+    // follow-up
+    const FILTERS = [['open', 'All open'], ['decide', 'Needs me'], ['urgent', 'Urgent'], ['closed', 'Closed']];
+    const q = s.search.trim().toLowerCase();
+    let list = bIds.filter(id => {
+      const x = s.iss[id].status;
+      if (s.filter === 'open' && !open(id)) return false;
+      if (s.filter === 'decide' && ['person', 'disputed', 'help', 'escalated'].indexOf(x) < 0) return false;
+      if (s.filter === 'urgent' && !(open(id) && D[id].sev === 'urgent')) return false;
+      if (s.filter === 'closed' && open(id)) return false;
+      if (q && (D[id].title + ' ' + F[D[id].file].name + ' ' + D[id].owner).toLowerCase().indexOf(q) < 0) return false;
+      return true;
+    });
+    const order = { person: 0, help: 1, disputed: 2, escalated: 3, reminded: 4, told: 5, fixed: 6, exception: 7, paused: 8, withdrawn: 9 };
+    list.sort((a, b) => order[s.iss[a].status] - order[s.iss[b].status]);
+    const canAct = role === 'coord';
+    const fuItems = list.map(id => {
+      const d = D[id], x = s.iss[id], sl = this.statusLabel(x), acts = [];
+      if (canAct && open(id)) {
+        if (id === 'iss5') { acts.push({ label: 'It is a report card (Restricted)', cls: 'btn-primary', fn: () => this.classify('iss5', 'report', 'iss5b', 'Confirmed “Report card scan 7B.pdf” is a report card (Restricted).') }); acts.push({ label: 'It is not a student record', cls: '', fn: () => this.classify('iss5', 'other', null, 'Confirmed “Report card scan 7B.pdf” is not a student record.') }); }
+        else if (id === 'iss6') { acts.push({ label: 'Behaviour notes (Restricted)', cls: 'btn-primary', fn: () => this.classify('iss6', 'behaviour', 'iss6b', 'Classified “notes_final_v3.docx” as behaviour notes (Restricted).') }); acts.push({ label: 'Meeting minutes', cls: '', fn: () => this.classify('iss6', 'minutes', null, 'Classified “notes_final_v3.docx” as meeting minutes.') }); acts.push({ label: 'Not sensitive', cls: '', fn: () => this.classify('iss6', 'none', null, 'Marked “notes_final_v3.docx” as not sensitive.') }); }
+        else if (x.status === 'disputed' || x.status === 'help') {
+          if (x.status === 'help') acts.push({ label: 'I helped – mark as fixed', cls: 'btn-primary', fn: () => this.act(id, { status: 'fixed' }, this.me(), 'Helped ' + d.owner + ' fix “' + d.title.toLowerCase() + '”. Sijill checked again and closed it.', 'Marked as fixed.') });
+          acts.push({ label: x.status === 'help' ? 'Remind the owner' : 'Keep the rule and remind', cls: x.status === 'help' ? '' : 'btn-primary', fn: () => this.keepRule(id) });
+          acts.push({ label: 'Allow an exception', cls: '', fn: () => this.setState({ dlg: { kind: 'exception', id: id, text: '', until: 'End of term' } }) });
+        } else {
+          if (d.owner === meName) acts.push({ label: 'I’ve fixed it', cls: 'btn-primary', fn: () => this.fixIt(id) });
+          else if (!x.nudged) acts.push({ label: 'Mark as followed up', cls: x.status === 'escalated' ? 'btn-primary' : '', fn: () => this.nudge(id) });
+          acts.push({ label: 'Allow an exception', cls: '', fn: () => this.setState({ dlg: { kind: 'exception', id: id, text: '', until: id === 'iss9' ? 'The exam date' : 'End of term' } }) });
+        }
+      }
+      if (!d.person) acts.push({ label: 'View the message', cls: 'btn-quiet', fn: () => this.openEmail(id) });
+      return { title: d.title, urgent: d.sev === 'urgent', status: sl[0] + (x.nudged && open(id) ? ' · followed up' : ''), scls: sl[1], meta: (d.rule === 'Review' ? 'Review' : 'Rule ' + d.rule) + ' · owner: ' + d.owner + ' · found ' + DAYS[x.found], file: F[d.file].name, open: () => this.openFile(d.file), why: d.why, steps: d.steps, hasSteps: d.steps.length > 0, hasNote: !!(x.note || x.reason), note: x.note ? 'Owner’s note: “' + x.note + '”' : (x.reason ? 'Exception: ' + x.reason + ' (until ' + (x.until || '').toLowerCase() + ')' : ''), actions: acts };
+    });
+    const escN = bIds.filter(id => s.iss[id].status === 'escalated' && !s.iss[id].nudged).length;
+    const fu = {
+      sub: s.day === 0 ? 'Nothing yet. Issues appear after the first check.' : 'Issues in School B that need you are at the top: files to review, owners who disagree or asked for help, and issues still open after a reminder. Routine issues stay with their owners. ' + (canAct ? '' : 'Switch the demo to the Coordinator to act on them.'),
+      filters: FILTERS.map(f => ({ label: f[1], cls: s.filter === f[0] ? 'chip-on' : '', pick: () => this.setState({ filter: f[0] }) })),
+      search: s.search, onSearch: e => this.setState({ search: e.target.value }),
+      canBulk: canAct && escN > 0, bulkLabel: 'Mark all ' + escN + ' follow-ups as done', bulk: () => this.bulkFollowUp(),
+      items: fuItems, empty: fuItems.length === 0,
+      emptyTitle: s.day === 0 ? 'The first check has not run yet' : 'Nothing here', emptyText: s.day === 0 ? 'Leadership or IT starts it from the Overview.' : 'Try another filter or clear the search.'
+    };
+
+    // exceptions
+    const exIds = ids.filter(id => s.iss[id].status === 'exception');
+    const ex = { has: exIds.length > 0, empty: exIds.length === 0, rows: exIds.map(id => ({ file: F[D[id].file].name, rule: D[id].rule, reason: s.iss[id].reason, by: s.iss[id].by || '—', until: s.iss[id].until || '—', canEnd: role === 'coord' || role === 'it', end: () => this.endException(id), open: () => this.openFile(D[id].file) })) };
+
+    // my files
+    const myList = myOpen.map(id => {
+      const d = D[id], x = s.iss[id], sl = this.statusLabel(x);
+      return { title: d.title, urgent: d.sev === 'urgent', status: sl[0], scls: sl[1], file: F[d.file].name, why: d.why, steps: d.steps, hasNote: false, note: '', actions: [
+        { label: 'I’ve fixed it', cls: 'btn-primary', fn: () => this.fixIt(id) },
+        { label: 'This looks wrong', cls: '', fn: () => this.setState({ dlg: { kind: 'dispute', id: id, text: '' } }) },
+        { label: 'I need help', cls: '', fn: () => this.setState({ dlg: { kind: 'help', id: id, text: '' } }) },
+        { label: 'Read the full message', cls: 'btn-quiet', fn: () => this.openEmail(id) }
+      ] };
+    });
+    const waiting = myIds.filter(id => ['disputed', 'help'].indexOf(s.iss[id].status) >= 0).map(id => { const d = D[id], x = s.iss[id], sl = this.statusLabel(x); return { title: d.title, urgent: false, status: sl[0], scls: sl[1], file: F[d.file].name, why: d.why, steps: d.steps, hasNote: true, note: 'Waiting for your coordinator. Your note: “' + (x.note || '') + '”', actions: [{ label: 'Read the full message', cls: 'btn-quiet', fn: () => this.openEmail(id) }] }; });
+    const closed = myIds.filter(id => ['fixed', 'exception', 'withdrawn'].indexOf(s.iss[id].status) >= 0).map(id => { const sl = this.statusLabel(s.iss[id]); return { title: D[id].title, file: F[D[id].file].name, status: sl[0], scls: sl[1] }; });
+    const allMine = myList.concat(waiting);
+    const my = { open: allMine, closed: closed, hasClosed: closed.length > 0, nothing: allMine.length === 0, nothingTitle: s.day === 0 ? 'Nothing yet' : 'All your files follow the rules', nothingText: s.day === 0 ? 'Messages arrive after the first check.' : 'Thank you. You will get a message if anything changes.' };
+
+    const explained = activeRules.map(r => ({ id: r.id, name: r.name, why: r.why, todo: r.en.join(' '), urgent: r.sev === 'urgent' }));
+
+    // file
+    const f = F[s.fileId] || F.d1;
+    const fIssues = f.issues.filter(id => s.iss[id]).map(id => { const sl = this.statusLabel(s.iss[id]); return { title: D[id].title, rule: D[id].rule === 'Review' ? 'Review' : 'Rule ' + D[id].rule, status: sl[0], scls: sl[1], hasMsg: !D[id].person, msg: () => this.openEmail(id) }; });
+    const hist = s.activity.filter(a => a.file === s.fileId).map(a => ({ t: a.t, who: a.who, what: a.what }));
+    if (s.day > 0) hist.push({ t: 'Sun 08:05', who: 'Sijill', what: 'Read the file and recorded it as ' + f.type + ' (' + f.sens + '). Confidence: ' + f.conf + '.' });
+    if (!hist.length) hist.push({ t: '—', who: 'Sijill', what: 'Not checked yet.' });
+    const fl = { name: f.name, type: s.day > 0 ? f.type : 'Not checked yet', sens: s.day > 0 ? f.sens : '—', scls: SCLS[f.sens] || 'b-neutral', school: f.school, owner: f.owner, conf: s.day > 0 ? f.conf : '—', summary: f.summary, evidence: f.evidence, hasNote: !!f.note, note: f.note || '', loc: f.loc, share: f.share, issues: fIssues, clean: s.day > 0 && fIssues.every(i => ['Fixed', 'Allowed exception', 'Closed: rule removed'].indexOf(i.status) >= 0), history: hist };
+
+    // email
+    const ei = D[s.emailIssue] || D.iss1, est = s.iss[s.emailIssue], eFile = F[ei.file].name;
+    const ownerRole = Object.keys(this.ME()).find(k => this.ME()[k] === ei.owner);
+    const lang = (ownerRole && s.prefs[ownerRole] && s.prefs[ownerRole].lang) || s.msg.langs;
+    const em = {
+      sub: 'Sent by email from ' + s.msg.sender + '. Language: ' + ({ both: 'English and Arabic', ar: 'Arabic', en: 'English' }[lang]) + ' (the owner’s preference).',
+      sender: s.msg.sender, to: ei.owner, cc: ei.sev === 'urgent' ? (ei.school + ' coordinator') : '—',
+      subject: (ei.sev === 'urgent' ? 'Urgent: ' : 'Please fix: ') + ei.title.toLowerCase() + ' – “' + eFile + '”',
+      hasBanner: !!est && est.status !== 'told', banner: !est ? '' : ({ reminded: 'A reminder was sent because nothing had changed.', escalated: 'Still open after the reminder, so the coordinator will follow up in person.', fixed: 'Fixed. Sijill checked again and closed this issue.', exception: 'The coordinator allowed an exception: ' + (est.reason || ''), disputed: 'The owner said this looks wrong. The coordinator will decide.', help: 'The owner asked for help. The coordinator will get in touch.', paused: 'The rule is paused, so this issue is on hold.', withdrawn: 'The rule was removed, so this issue is closed.' }[est.status] || ''),
+      showEn: lang !== 'ar', showAr: lang !== 'en', both: lang === 'both',
+      en: 'Hello ' + ei.owner.split(' ')[0] + ',\n\nSijill checked “' + eFile + '” against EAA’s file rules and found one thing to fix: ' + ei.title.toLowerCase() + '.\n\nWhy it matters: ' + ei.why + '\n\nHow to fix it (about 2 minutes):\n' + (ei.steps || []).map((x, i) => (i + 1) + '. ' + x).join('\n') + '\n\nSijill has not changed anything. When you have fixed it, press “I’ve fixed it” on your Sijill page, or simply wait: Sijill checks again tonight. If you think this is wrong, or you need help, press the matching button on your Sijill page or reply to this email.',
+      ar: 'مرحبًا،\n\nراجع «سِجِل» الملف «' + eFile + '» وفق قواعد الملفات في المؤسسة، ووجد أمرًا واحدًا يحتاج إلى تصحيح.\n\nلماذا يهم ذلك: ' + (ei.whyAr || '') + '\n\nطريقة التصحيح (دقيقتان تقريبًا):\n' + (ei.ar || []).map((x, i) => (i + 1) + '. ' + x).join('\n') + '\n\nلم يغيّر «سِجِل» أي شيء. بعد التصحيح اضغطي «صحّحتُه» في صفحتك على سِجِل، أو انتظري: سيعيد سِجِل الفحص الليلة. إذا رأيتِ أن هذا غير صحيح أو احتجتِ إلى مساعدة، اضغطي الزر المناسب في صفحتك أو ردّي على هذه الرسالة.',
+      actions: [{ label: 'Open the file details', cls: '', fn: () => this.openFile(ei.file) }].concat(ei.owner === meName && est && ['told', 'reminded', 'escalated'].indexOf(est.status) >= 0 ? [{ label: 'I’ve fixed it', cls: 'btn-primary', fn: () => { this.fixIt(s.emailIssue); this.go('mine'); } }] : [])
+    };
+
+    // rules
+    const isAdmin = role === 'it';
+    const ru = {
+      sub: isAdmin ? 'EAA’s rules for school files. Add, change, pause or delete a rule; every change is versioned and logged, and applies from the next nightly check.' : 'EAA’s rules for school files. Only IT can change them.',
+      canEdit: isAdmin, add: () => this.openRule(null),
+      rows: s.rules.map(r => ({ id: r.id, name: r.name, check: this.CHECKS()[r.check], version: r.version, applies: (r.types.indexOf('All types') >= 0 ? 'All document types' : r.types.join(', ')) + ' · ' + (r.sens.indexOf('Any') >= 0 ? 'any sensitivity' : r.sens.join(', ')), sev: r.sev === 'urgent' ? 'Urgent' : 'Normal', sevCls: r.sev === 'urgent' ? 'b-bad' : 'b-neutral', status: { active: 'On', paused: 'Paused', draft: 'Draft' }[r.status], stCls: { active: 'b-good', paused: 'b-watch', draft: 'b-neutral' }[r.status], open: s.day === 0 ? '—' : String(ids.filter(id => D[id] && D[id].rule === r.id && open(id)).length), canEdit: isAdmin, readOnly: !isAdmin, edit: () => this.openRule(r.id), toggle: () => this.toggleRule(r.id), toggleLabel: r.status === 'active' ? 'Pause' : 'Turn on', del: () => this.setState({ dlg: { kind: 'deleteRule', id: r.id } }) }))
+    };
+
+    // rule editor
+    const dr = s.draft || { name: '', why: '', check: 'location', types: [], sens: [], sev: 'normal', remind: 2, en: '', ar: '', isNew: true, id: '' };
+    const setD = patch => this.setState(st => ({ draft: Object.assign({}, st.draft, patch) }));
+    const toggleIn = (arr, v, allKey) => { if (v === allKey) return [allKey]; const a = arr.filter(x => x !== allKey); return a.indexOf(v) >= 0 ? a.filter(x => x !== v) : a.concat([v]); };
+    const enSteps = dr.en.split('\n').map(x => x.trim()).filter(Boolean), arSteps = dr.ar.split('\n').map(x => x.trim()).filter(Boolean);
+    const estN = this.impact({ types: dr.types.length ? dr.types : ['All types'], sens: dr.sens.length ? dr.sens : ['Any'], check: dr.check }, s);
+    const rd = {
+      title: dr.isNew ? 'Add a rule' : 'Rule ' + dr.id + (isAdmin ? ': edit' : ''), sub: dr.isNew ? 'Write it in plain words. You can save it as a draft and turn it on later.' : 'Currently version ' + dr.version + '. Saving creates version ' + ((dr.version || 0) + 1) + '.',
+      name: dr.name, why: dr.why, en: dr.en, ar: dr.ar,
+      onName: e => setD({ name: e.target.value }), onWhy: e => setD({ why: e.target.value }), onEn: e => setD({ en: e.target.value }), onAr: e => setD({ ar: e.target.value }),
+      checks: Object.keys(this.CHECKS()).map(k => ({ label: this.CHECKS()[k], cls: dr.check === k ? 'chip-on' : '', pick: () => setD({ check: k }) })),
+      types: ['All types'].concat(s.types.map(t => t.name)).map(n => ({ label: n, cls: dr.types.indexOf(n) >= 0 ? 'chip-on' : '', pick: () => setD({ types: toggleIn(dr.types, n, 'All types') }) })),
+      sens: ['Any'].concat(this.SENS()).map(n => ({ label: n, cls: dr.sens.indexOf(n) >= 0 ? 'chip-on' : '', pick: () => setD({ sens: toggleIn(dr.sens, n, 'Any') }) })),
+      sev: [['normal', 'Normal'], ['urgent', 'Urgent']].map(o => ({ label: o[1], cls: dr.sev === o[0] ? 'seg-on' : '', pick: () => setD({ sev: o[0] }) })),
+      remind: [1, 2, 3, 5].map(n => ({ label: n + (n === 1 ? ' day' : ' days'), cls: dr.remind === n ? 'seg-on' : '', pick: () => setD({ remind: n }) })),
+      impact: 'About ' + estN + ' files', impactText: 'would break this rule today across the five schools, based on the document types found. Each owner would get one message.',
+      msgSubject: (dr.sev === 'urgent' ? 'Urgent: ' : 'Please fix: ') + (dr.name || '[rule name]').toLowerCase(),
+      msgEn: 'Why it matters: ' + (dr.why || '[why it matters]') + '\n\nHow to fix it:\n' + (enSteps.length ? enSteps.map((x, i) => (i + 1) + '. ' + x).join('\n') : '[steps in English]'),
+      msgAr: 'طريقة التصحيح:\n' + (arSteps.length ? arSteps.map((x, i) => (i + 1) + '. ' + x).join('\n') : '[الخطوات بالعربية]'),
+      canEdit: isAdmin, readOnly: !isAdmin, saveOn: () => this.saveRule(true), saveDraft: () => this.saveRule(false), saveOnLabel: dr.isNew ? 'Save and turn on' : 'Save changes', cancel: () => this.setState({ draft: null, screen: 'rules' })
+    };
+
+    // people
+    const isCoord = role === 'coord';
+    const pq = s.pSearch.trim().toLowerCase();
+    const prow = s.people.filter(p => (s.pSite === 'all' || p.site === s.pSite) && (!pq || (p.name + ' ' + p.email).toLowerCase().indexOf(pq) >= 0)).map(p => {
+      const po = ids.filter(id => D[id] && D[id].owner === p.name && ['told', 'reminded', 'escalated'].indexOf(s.iss[id].status) >= 0);
+      const acts = [];
+      if (isAdmin) acts.push({ label: 'Edit', cls: '', fn: () => this.setState({ dlg: { kind: 'person', id: p.id, role: p.role, site: p.site, status: p.status } }) });
+      if (isAdmin && p.status === 'New') acts.push({ label: 'Send welcome', cls: 'btn-primary', fn: () => this.cfg(st => ({ people: st.people.map(x => x.id === p.id ? Object.assign({}, x, { status: 'Active' }) : x) }), 'Sent ' + p.name + ' the welcome message with the rules and a link to the staff introduction.', 'Welcome message sent.') });
+      if (isCoord && p.site === 'School B' && po.length && p.name !== meName) acts.push({ label: 'Mark as followed up', cls: '', fn: () => this.personFollowUp(p.name) });
+      return { name: p.name + (p.title ? ' · ' + p.title : ''), email: p.email, site: p.site, role: RL[p.role], status: p.status === 'New' ? 'New: welcome not sent' : p.status, scls: { Active: 'b-good', Leaving: 'b-watch', Left: 'b-neutral', New: 'b-internal' }[p.status], myDrive: s.day > 0 ? String(p.myDrive) : '—', open: s.day > 0 ? String(po.length) : '—', actions: acts };
+    });
+    const pp = {
+      sub: isAdmin ? 'Everyone in Sijill, with their site, role and status. Change a role or mark someone as leaving; leaving staff are asked to move their school files.' : 'Staff at your site, and who has issues open. Follow up in person and record it here.',
+      isAdmin: isAdmin, sync: () => this.cfg({}, 'Synced people from Google Workspace: 124 staff, no changes.', 'Synced: no changes since the last sync.'),
+      search: s.pSearch, onSearch: e => this.setState({ pSearch: e.target.value }),
+      sites: ['all'].concat(s.sites.filter(x => !x.removed).map(x => x.name)).map(n => ({ label: n === 'all' ? 'All sites' : n, cls: s.pSite === n ? 'chip-on' : '', pick: () => this.setState({ pSite: n }) })),
+      rows: prow, none: prow.length === 0, shown: prow.length
+    };
+
+    // settings
+    const T = [['connection', 'Connection'], ['sites', 'Sites and folders'], ['roles', 'Roles'], ['types', 'Document types'], ['messages', 'Messages'], ['privacy', 'Privacy and data']];
+    const segs = (opts, cur, set) => opts.map(o => ({ label: o[1], cls: cur === o[0] ? 'seg-on' : '', pick: set(o[0]) }));
+    const scans = [];
+    for (let d = 1; d <= s.day; d++) scans.unshift({ when: DAYS[d] + ' 02:00', type: d === 1 ? 'First full check' : 'Nightly full check', files: '512', note: d === 1 ? '2 password-protected files skipped and sent to review' : 'No errors' });
+    const se = {
+      tabs: T.map(t => ({ label: t[1], cls: s.tab === t[0] ? 'tab-on' : '', sel: s.tab === t[0] ? 'true' : 'false', pick: () => this.setState({ tab: t[0] }) })),
+      is: { connection: s.tab === 'connection', sites: s.tab === 'sites', roles: s.tab === 'roles', types: s.tab === 'types', messages: s.tab === 'messages', privacy: s.tab === 'privacy' },
+      conn: { status: s.connected ? 'Connected (read-only)' : 'Disconnected', cls: s.connected ? 'b-good' : 'b-bad', on: s.connected, off: !s.connected, last: s.day > 0 ? DAYS[s.day] + ' 02:00 · 512 files' : 'Not run yet',
+        test: () => this.say(s.connected ? 'Connection works. A test write was refused, as expected: access is read-only.' : 'Not connected.'),
+        run: () => { if (!s.connected) { this.say('Reconnect first.'); return; } if (s.day === 0) this.runCheck(); else { this.cfg({}, 'Ran a full check by hand: 512 files, nothing new since the last check.'); this.say('Check finished: nothing new since the last check.'); } },
+        disconnect: () => this.setState({ dlg: { kind: 'disconnect' } }), reconnect: () => this.cfg({ connected: true }, 'Reconnected Google Workspace with read-only access.', 'Reconnected. Checks will resume tonight.') },
+      scans: scans, noScans: scans.length === 0,
+      siteLabel: s.siteLabel, onSiteLabel: e => this.setState({ siteLabel: e.target.value || 'Site' }),
+      addSite: () => this.setState({ dlg: { kind: 'site', mode: 'add', name: '', lead: '—', reviewer: '—', counted: true } }),
+      sites: s.sites.filter(x => !x.removed).map(x => ({ name: x.name, kind: x.kind, lead: x.lead, reviewer: x.reviewer, drives: x.drives || 'Not linked', counted: x.counted ? 'Yes' : 'No', canRemove: x.kind !== 'Head office', edit: () => this.setState({ dlg: { kind: 'site', mode: 'edit', original: x.name, name: x.name, lead: x.lead, reviewer: x.reviewer, counted: x.counted } }), remove: () => this.setState({ dlg: { kind: 'removeSite', name: x.name } }) })),
+      folders: s.folders.map(n => ({ name: n, remove: () => this.cfg(st => ({ folders: st.folders.filter(x => x !== n) }), 'Removed the standard folder “' + n + '”.', 'Folder removed from the standard structure.') })),
+      newFolder: s.newFolder, onNewFolder: e => this.setState({ newFolder: e.target.value }),
+      addFolder: () => { const n = s.newFolder.trim(); if (!n) { this.say('Type a folder name first.'); return; } this.cfg(st => ({ folders: st.folders.concat([n]), newFolder: '' }), 'Added the standard folder “' + n + '”.', 'Folder added.'); },
+      roles: [['admin', 'Sets up Sijill: connection, sites, rules, people and settings. Sees everything.', 'sijill-it@demo-eaa.test'], ['leadership', 'Sees all sites, scores, reports, rules and exceptions. Read-only.', 'sijill-leadership@demo-eaa.test'], ['lead', 'Sees their own site’s progress and exceptions. Read-only.', 'principals@demo-eaa.test'], ['reviewer', 'Follows up on their site’s issues: reviews unclear files, allows exceptions, records follow-ups.', 'coordinators@demo-eaa.test'], ['staff', 'Gets messages about their own files and marks fixes.', 'All other staff']].map(r => ({ key: r[0], label: RL[r[0]], can: r[1], group: r[2], n: r[0] === 'staff' ? '107' : String(s.people.filter(p => p.role === r[0]).length), onLabel: e => { const v = e.target.value; this.setState(st => ({ roleLabels: Object.assign({}, st.roleLabels, { [r[0]]: v || st.roleLabels[r[0]] }) })); } })),
+      types: s.types.map(t => ({ name: t.name, count: t.count, opts: this.SENS().map(o => ({ label: o, cls: t.sens === o ? 'seg-on' : '', pick: () => this.cfg(st => ({ types: st.types.map(x => x.name === t.name ? Object.assign({}, x, { sens: o }) : x) }), 'Set the default sensitivity of “' + t.name + '” to ' + o + '.') })) })),
+      newType: s.newType, onNewType: e => this.setState({ newType: e.target.value }),
+      newTypeSens: this.SENS().map(o => ({ label: o, cls: s.newTypeSens === o ? 'seg-on' : '', pick: () => this.setState({ newTypeSens: o }) })),
+      addType: () => { const n = s.newType.trim(); if (!n) { this.say('Type a document type first.'); return; } this.cfg(st => ({ types: st.types.concat([{ name: n, sens: st.newTypeSens, count: 0 }]), newType: '' }), 'Added the document type “' + n + '” (' + s.newTypeSens + ').', 'Document type added.'); },
+      msg: {
+        langs: segs([['both', 'English and Arabic'], ['ar', 'Arabic'], ['en', 'English']], s.msg.langs, v => () => this.cfg(st => ({ msg: Object.assign({}, st.msg, { langs: v }) }), 'Set the default message language.')),
+        delivery: segs([['each', 'One message per issue'], ['daily', 'One daily summary']], s.msg.delivery, v => () => this.cfg(st => ({ msg: Object.assign({}, st.msg, { delivery: v }) }), 'Changed how messages are sent by default.')),
+        quiet: segs([['on', 'On'], ['off', 'Off']], s.msg.quiet, v => () => this.cfg(st => ({ msg: Object.assign({}, st.msg, { quiet: v }) }), 'Turned quiet hours ' + v + '.')),
+        remind: segs([[1, '1 day'], [2, '2 days'], [3, '3 days'], [5, '5 days']], s.msg.remind, v => () => this.cfg(st => ({ msg: Object.assign({}, st.msg, { remind: v }) }), 'Set the default reminder time for new rules to ' + v + ' days.')),
+        sender: s.msg.sender, onSender: e => { const v = e.target.value; this.setState(st => ({ msg: Object.assign({}, st.msg, { sender: v }) })); }
+      },
+      keep: segs([['1 year', '1 year'], ['2 years', '2 years'], ['5 years', '5 years']], s.keep, v => () => this.cfg({ keep: v }, 'Set the activity log to be kept for ' + v + '.')),
+      downloadLog: () => this.say('In the real system this downloads the full activity log as a CSV file.')
+    };
+
+    // activity
+    const acFilters = [['all', 'Everything'], ['sijill', 'Sijill'], ['person', 'People'], ['config', 'Settings changes']].map(f => ({ label: f[1], cls: s.aFilter === f[0] ? 'chip-on' : '', pick: () => this.setState({ aFilter: f[0] }) }));
+    const log = s.activity.filter(a => s.aFilter === 'all' || a.kind === s.aFilter).map(a => ({ t: a.t, who: a.who, what: a.what, hasFile: !!a.file && !!F[a.file], open: () => this.openFile(a.file) }));
+
+    // prefs
+    const myPref = s.prefs[role] || {};
+    const setPref = patch => this.setState(st => ({ prefs: Object.assign({}, st.prefs, { [role]: Object.assign({}, st.prefs[role] || {}, patch) }) }));
+    const pr = {
+      langs: [['both', 'English and Arabic'], ['ar', 'Arabic'], ['en', 'English']].map(o => ({ label: o[1], cls: (myPref.lang || s.msg.langs) === o[0] ? 'seg-on' : '', pick: () => { setPref({ lang: o[0] }); this.say('Saved.'); } })),
+      delivery: [['each', 'One message per issue'], ['daily', 'One daily summary']].map(o => ({ label: o[1], cls: (myPref.delivery || s.msg.delivery) === o[0] ? 'seg-on' : '', pick: () => { setPref({ delivery: o[0] }); this.say('Saved.'); } }))
+    };
+
+    const faq = [
+      { q: 'Will Sijill change or move my files?', a: 'No. Sijill can only read. It tells you what to fix and how; you make the change yourself in Google Drive.' },
+      { q: 'Which files does it look at?', a: 'School files in your EAA Google account: shared drives and your My Drive. It cannot see personal email, phones, laptops, USB sticks or WhatsApp.' },
+      { q: 'What if Sijill is wrong?', a: 'Press “This looks wrong” and add a short note. Your coordinator decides, and the answer helps Sijill get better.' },
+      { q: 'How many messages will I get?', a: 'Only when one of your files breaks a rule, plus one reminder if nothing changes. You can choose a single daily summary in My preferences.' },
+      { q: 'Is there a score for me?', a: 'No. Scores are for schools, not people. Coordinators see which issues are open so they can help.' }
+    ];
+
+    // notifications
+    let items = [];
+    if (s.signedIn && s.day > 0) {
+      if (role === 'teacher') items = myOpen.map(id => ({ title: (s.iss[id].status === 'reminded' ? 'Reminder: ' : 'To fix: ') + D[id].title, text: F[D[id].file].name, go: () => this.go('mine') }));
+      if (role === 'coord') items = needsMe.map(id => ({ title: this.statusLabel(s.iss[id])[0] + ': ' + D[id].title, text: D[id].owner + ' · ' + F[D[id].file].name, go: () => this.setState({ screen: 'followup', filter: 'decide', notifOpen: false }) }));
+      if (role === 'principal') items = [{ title: 'School B file health score: ' + live['School B'].score, text: DAYS[s.day] + ' · ' + statusOf(live['School B'].score)[0], go: () => this.go('site') }];
+      if (role === 'ed') items = ids.filter(id => open(id) && D[id].sev === 'urgent').map(id => ({ title: 'Urgent: ' + D[id].title, text: D[id].school + ' · ' + D[id].owner, go: () => this.openFile(D[id].file) })).concat(s.day >= 2 ? [{ title: 'Weekly report ready', text: 'All five schools', go: () => this.go('overview') }] : []);
+      if (role === 'it') items = [{ title: '2 files skipped in the first check', text: 'Password-protected; sent to review', go: () => this.setState({ screen: 'settings', tab: 'connection', notifOpen: false }) }];
+    }
+    if (role === 'it' && !s.connected) items = [{ title: 'Sijill is disconnected', text: 'No checks are running', go: () => this.setState({ screen: 'settings', tab: 'connection', notifOpen: false }) }].concat(items);
+    const seen = s.seen[role] || 0;
+    const unread = Math.max(0, items.length - seen);
+    const notif = { open: s.notifOpen, items: items, empty: items.length === 0, has: unread > 0, count: unread, markRead: () => this.setState(st => ({ seen: Object.assign({}, st.seen, { [role]: items.length }) })) };
+
+    // dialog
+    let dlg = { open: false, title: '', text: '', hasText: false, hasName: false, groups: [], okLabel: 'OK', okCls: 'btn-primary', textVal: '', textLabel: '', textHint: '' };
+    const dl = s.dlg;
+    const setDl = patch => this.setState(st => ({ dlg: Object.assign({}, st.dlg, patch) }));
+    if (dl) {
+      const base = { open: true, cancel: () => this.setState({ dlg: null }), ok: () => this.okDialog(), onText: e => setDl({ text: e.target.value }), textVal: dl.text || '', onName: e => setDl({ name: e.target.value }), nameVal: dl.name || '', hasText: false, hasName: false, groups: [], okCls: 'btn-primary', textLabel: '', textHint: '' };
+      const chipGroup = (label, opts, cur, key) => ({ label: label, opts: opts.map(o => ({ label: o, cls: cur === o ? 'chip-on' : '', pick: () => setDl({ [key]: o }) })) });
+      const peopleAt = (site, roleKey) => ['—'].concat(s.people.filter(p => p.role === roleKey).map(p => p.name));
+      if (dl.kind === 'dispute') dlg = Object.assign(base, { title: 'This looks wrong', text: 'Tell your coordinator why. They will decide, and the answer helps Sijill improve.', hasText: true, textLabel: 'Your note', textHint: 'For example: this is a blank template, there is no student data in it.', okLabel: 'Send to my coordinator' });
+      else if (dl.kind === 'help') dlg = Object.assign(base, { title: 'I need help', text: 'Your coordinator will get in touch to help you fix it.', hasText: true, textLabel: 'What do you need help with?', textHint: 'For example: I cannot find the Student Records folder.', okLabel: 'Ask for help' });
+      else if (dl.kind === 'exception') dlg = Object.assign(base, { title: 'Allow an exception', text: 'The file can stay as it is until the end date. After that, the rule applies again.', hasText: true, textLabel: 'Reason (required)', textHint: 'For example: the external moderator needs access until the exam.', groups: [chipGroup('Until', ['The exam date', '30 days from now', 'End of term', 'No end date'], dl.until, 'until')], okLabel: 'Allow exception' });
+      else if (dl.kind === 'person') { const p = s.people.find(x => x.id === dl.id); dlg = Object.assign(base, { title: 'Edit ' + p.name, text: 'Normally this comes from Google Workspace groups. A change here overrides it until the next change in Workspace.', groups: [chipGroup('Role', Object.keys(RL).map(k => RL[k]), RL[dl.role], 'roleLabel'), chipGroup('Site', s.sites.filter(x => !x.removed).map(x => x.name), dl.site, 'site'), chipGroup('Status', ['Active', 'Leaving', 'Left'], dl.status, 'status')], okLabel: 'Save' }); dlg.groups[0].opts = Object.keys(RL).map(k => ({ label: RL[k], cls: dl.role === k ? 'chip-on' : '', pick: () => setDl({ role: k }) })); }
+      else if (dl.kind === 'deleteRule') { const r = s.rules.find(x => x.id === dl.id); const n = ids.filter(id => D[id] && D[id].rule === dl.id && (open(id) || s.iss[id].status === 'paused')).length; dlg = Object.assign(base, { title: 'Delete rule ' + dl.id + '?', text: '“' + r.name + '” will stop being checked. ' + n + ' open issue' + (n === 1 ? '' : 's') + ' will be closed and owners will get no more messages about ' + (n === 1 ? 'it' : 'them') + '. To stop it for now instead, use Pause.', okLabel: 'Delete rule', okCls: 'btn-danger' }); }
+      else if (dl.kind === 'site') dlg = Object.assign(base, { title: dl.mode === 'add' ? 'Add a site' : 'Edit ' + dl.original, text: dl.mode === 'add' ? 'After adding it, link its shared drives so Sijill can check them.' : 'Choose who leads this site and who follows up on its issues.', hasName: dl.mode === 'add', groups: [chipGroup(RL.lead, peopleAt(null, 'lead'), dl.lead, 'lead'), chipGroup(RL.reviewer, peopleAt(null, 'reviewer'), dl.reviewer, 'reviewer'), { label: 'Count in scores', opts: [['Yes', true], ['No', false]].map(o => ({ label: o[0], cls: dl.counted === o[1] ? 'chip-on' : '', pick: () => setDl({ counted: o[1] }) })) }], okLabel: dl.mode === 'add' ? 'Add site' : 'Save' });
+      else if (dl.kind === 'removeSite') dlg = Object.assign(base, { title: 'Remove ' + dl.name + '?', text: 'Sijill will stop checking this site and it will disappear from scores. Its history stays in the activity log. Files in Google Drive are not touched.', okLabel: 'Remove site', okCls: 'btn-danger' });
+      else if (dl.kind === 'disconnect') dlg = Object.assign(base, { title: 'Disconnect Google Workspace?', text: 'Sijill will stop checking files and sending messages until you reconnect. Nothing in Google Drive changes.', okLabel: 'Disconnect', okCls: 'btn-danger' });
+    }
+
+    // guide
+    const G = [
+      ['ed', 'signin', 'Sign in', 'Staff sign in with their Google account; nobody signs up.'],
+      ['ed', 'overview', 'First check', 'Run the first check: 512 files read, owners notified.'],
+      ['ed', 'file', 'Something urgent', 'A health list shared outside EAA: owner and coordinator told at once.', 'd5'],
+      ['teacher', 'mine', 'Sara’s messages', 'Read a message; fix one; say another looks wrong.'],
+      ['ed', 'file', 'Not fooled', 'A worksheet that says “grade 5” raises nothing.', 'd6'],
+      ['coord', 'followup', 'The coordinator’s list', 'Review the scan, classify the notes, allow the exam exception.'],
+      ['it', 'rules', 'IT adds a rule', 'Add a rule for consent forms and see its impact first.'],
+      ['it', 'people', 'Someone is leaving', 'Mark Mona Ali as leaving: she is asked to move her files.'],
+      ['ed', 'overview', 'Play the week', 'Press “Next day” until Thursday: reminders, follow-ups, fixes.'],
+      ['principal', 'site', 'The principal’s view', 'School B’s week, without lifting a finger.']
+    ];
+    const guide = G.map((g, i) => ({ n: i + 1, title: g[2], hint: g[3], cls: role === g[0] && s.screen === g[1] && (!g[4] || s.fileId === g[4]) ? 'guide-on' : '', go: () => this.setState(st => ({ role: g[0], signedIn: g[1] === 'signin' ? false : true, screen: g[1], fileId: g[4] || st.fileId, back: g[1] === 'file' ? 'overview' : st.back, siteView: 'School B', notifOpen: false, userMenu: false, dlg: null })) }));
+
+
+    const hour = new Date().getHours();
+    const firstName = meName.split(' ')[0];
+    const shell = {
+      dir: s.rtl ? 'rtl' : 'ltr', greeting: hour < 12 ? 'Good morning' : (hour < 18 ? 'Good afternoon' : 'Good evening'),
+      langArCls: s.rtl ? 'on' : '', langEnCls: s.rtl ? '' : 'on',
+      setAr: () => this.setState({ rtl: true }), setEn: () => this.setState({ rtl: false }),
+      sys: { cls: s.connected ? '' : 'off', label: s.connected ? 'System Operational' : 'Disconnected', sub: s.connected ? (s.day > 0 ? 'Last scan: 02:14 AM' : 'No scan yet') : 'No checks running' },
+      dockCls: (s.signedIn ? '' : 'so') + (s.dockMin ? ' min' : ''), dockOpen: !s.dockMin, dockLabel: s.dockMin ? 'Show ▴' : 'Hide ▾',
+      toggleDock: () => this.setState(st => ({ dockMin: !st.dockMin })),
+      globalSearch: e => {
+        e.preventDefault(); const q = ((e.target.elements.q || {}).value || '').trim(); if (!q) return;
+        if (role === 'coord') this.setState({ screen: 'followup', search: q, filter: 'all' });
+        else if (role === 'it') this.setState({ screen: 'people', pSearch: q });
+        else this.say('In this prototype, search works from Follow-up (coordinator) and People (IT).');
+      }
+    };
+
+    return {
+      ...shell, roles: roles, nav: nav, dayName: DAYS[s.day], signedIn: s.signedIn, disconnected: s.signedIn && !s.connected,
+      me: { name: meName, first: firstName, initials: meName.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase(), email: person.email, roleLabel: RL[rk], site: person.site },
+      signInAs: meName + ' (' + RL[rk] + ')',
+      is: { signin: !s.signedIn, overview: s.signedIn && s.screen === 'overview', site: s.signedIn && s.screen === 'site', followup: s.signedIn && s.screen === 'followup', exceptions: s.signedIn && s.screen === 'exceptions', mine: s.signedIn && s.screen === 'mine', explained: s.signedIn && s.screen === 'explained', file: s.signedIn && s.screen === 'file', email: s.signedIn && s.screen === 'email', rules: s.signedIn && s.screen === 'rules', ruleEdit: s.signedIn && s.screen === 'ruleEdit', people: s.signedIn && s.screen === 'people', settings: s.signedIn && s.screen === 'settings', activity: s.signedIn && s.screen === 'activity', prefs: s.signedIn && s.screen === 'prefs', help: s.signedIn && s.screen === 'help' },
+      ov: ov, accuracy: accuracy, st: st, fu: fu, ex: ex, my: my, explained: explained, fl: fl, em: em, ru: ru, rd: rd, pp: pp, se: se, acFilters: acFilters, log: log, pr: pr, faq: faq, notif: notif, dlg: dlg, guide: guide,
+      userMenuOpen: s.userMenu, guideOpen: s.guideOpen, guideLabel: s.guideOpen ? 'Hide guide' : 'Demo guide', toast: s.toast, hasToast: !!s.toast,
+      signIn: () => { this.setState(st => ({ signedIn: true, screen: this.home(st.role) })); this.say('Signed in as ' + meName + '.'); },
+      signOut: () => this.setState({ signedIn: false, screen: 'signin', userMenu: false }),
+      toggleNotif: () => this.setState(st => ({ notifOpen: !st.notifOpen, userMenu: false })),
+      toggleUser: () => this.setState(st => ({ userMenu: !st.userMenu, notifOpen: false })),
+      goPrefs: () => this.setState(st => ({ screen: 'prefs', userMenu: false, back: st.screen })), goHelp: () => this.go('help'), goOverview: () => this.go('overview'),
+      runCheck: () => this.runCheck(), nextDay: () => this.nextDay(),
+      downloadReport: () => this.say('In the real system this downloads a one-page PDF report.'), downloadLog: () => this.say('In the real system this downloads the activity log as a CSV file.'),
+      toggleWeekly: () => this.cfg(st => ({ weekly: !st.weekly }), 'Turned the weekly leadership email ' + (s.weekly ? 'off' : 'on') + '.', 'Saved.'),
+      contactCoord: () => this.say('In the real system this opens an email to your coordinator.'),
+      goBack: () => this.setState(st => ({ screen: st.back && sub.indexOf(st.back) < 0 ? st.back : this.home(role) })),
+      toggleGuide: () => this.setState(st => ({ guideOpen: !st.guideOpen })),
+      reset: () => { this.setState(this.fresh()); this.say('Demo reset to Sunday morning.'); }
+    };
+  }
+}
+</script>
+</x-dc>
+</body></html>
