@@ -52,6 +52,8 @@ public interface IssueRepository extends JpaRepository<Issue, UUID> {
 
     long countBySiteIdAndStatus(UUID siteId, IssueStatus status);
 
+    List<Issue> findBySiteIdAndSeverityAndStatusInOrderByOpenedAtDesc(UUID siteId, Severity severity, Collection<IssueStatus> statuses);
+
     /** Open-issue counts for every school at once: rows of (siteId, severity, count). */
     @Query("""
             select i.siteId, i.severity, count(i) from Issue i

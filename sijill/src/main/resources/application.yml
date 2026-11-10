@@ -17,6 +17,19 @@ spring:
   # Staff sign in with their own school account; Sijill has no passwords. Add one registration and the
   # app switches from the development form login to OIDC automatically (see SecurityConfig).
   #
+  # Testing with Google (Cloud Console OAuth client, redirect URI http://localhost:8080/login/oauth2/code/google).
+  # Set GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET in the environment; with them set, OIDC replaces form login.
+  # Google is a built-in Spring provider, so no issuer-uri is needed.
+  security:
+    oauth2:
+      client:
+        registration:
+          google:
+            client-id: ${GOOGLE_CLIENT_ID}
+            client-secret: ${GOOGLE_CLIENT_SECRET}
+            scope: openid,email,profile,https://www.googleapis.com/auth/drive.readonly
+
+  # Generic OIDC alternative (replaces the block above for a non-Google provider):
   # security:
   #   oauth2:
   #     client:
@@ -41,15 +54,53 @@ logging:
     level: "%5p [%X{correlationId:-}]"
 
 sijill:
+  # ---- Google Drive connector (personal-account test mode) ----
+  # Reads the Drives of the accounts below, read-only (drive.readonly). Each one must sign in to Sijill once, must be a
+  # Google test user, and must be in extra-people so issues reach it. A check fails while a listed account has not signed in.
+  google:
+    drive:
+      enabled: true
+      accounts:
+        - voltagezax@gmail.com
+      root-folder-id: ${GOOGLE_DRIVE_ROOT_FOLDER_ID:root}   # root = each account's whole My Drive, or set one folder's ID
+      max-files: 5000             # a Drive with more files makes the check fail instead of reading part of it
+      drive-type: SHARED          # the test folder stands in for a school shared drive (rule R1)
+      # internal-emails: []       # addresses treated as inside the network; everyone else counts as outside
+      # internal-domains: []
+  signin:
+    # A member of a school's own Google Workspace (Google reports the domain) signs in without approval, as a Teacher,
+    # once the school's first check has run. Personal Gmail accounts never qualify. false = School IT must add everyone.
+    auto-provision: true
+  scoring:
+    allow-head-office: true   # test setup with only a head office: lets Leadership include it in the school scores (SRS 11.2 says it is normally unscored)
   jobs:
     enabled: true        # false switches off every scheduled job (nightly check, reminders, message delivery)
   # First start-up only: creates the organisation and the first Leadership person so somebody can sign in.
   # Does nothing once an organisation exists. Uncomment and fill in for a new installation.
   #
-  # bootstrap:
-  #   enabled: true
-  #   org-name: Example School Network
-  #   head-office-name: Head Office
-  #   head-office-domain: example.edu
-  #   admin-email: first.leader@example.edu
-  #   admin-name: First Leader
+  # Local testing with a personal Gmail account: sign-in only accepts e-mail domains that belong to a site,
+  # so the head-office domain is gmail.com. Remove this block for a real school installation.
+  bootstrap:
+    enabled: true
+    org-name: Sijill Test Network
+    head-office-name: Head Office
+    head-office-domain: gmail.com
+    admin-email: abdalwahabeltahir@gmail.com
+    admin-name: Abdalwahab Eltahir
+    extra-people:           # added at start-up if missing (second test account)
+      - email: zorg2side@gmail.com
+        name: Test Teacher
+        role: TEACHER
+      - email: voltagezax@gmail.com
+        name: Voltage Teacher
+        role: TEACHER
+      - email: user4school123@gmail.com
+        name: User 4 School
+        role: TEACHER
+      - email: saintkay123@gmail.com
+        name: Saint Kay
+        role: COORDINATOR
+      # A student of the school portal (then enrol them in a section under Academic setup):
+      # - email: a.student@gmail.com
+      #   name: A Student
+      #   role: STUDENT

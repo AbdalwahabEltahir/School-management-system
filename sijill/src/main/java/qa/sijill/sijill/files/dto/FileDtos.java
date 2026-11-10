@@ -71,9 +71,9 @@ public final class FileDtos {
 
     /** The coordinator's answer for an unclear file. */
     public record ClassifyRequest(@NotBlank String docType, UUID subjectId, @NotNull Sensitivity sensitivity,
-                                  boolean hasStudentData, boolean hasHealthData) {
+                                  boolean hasStudentData, boolean hasHealthData, java.time.LocalDate examDate) {
         public ClassificationService.ClassifyCommand toCommand() {
-            return new ClassificationService.ClassifyCommand(docType, subjectId, sensitivity, hasStudentData, hasHealthData);
+            return new ClassificationService.ClassifyCommand(docType, subjectId, sensitivity, hasStudentData, hasHealthData, examDate);
         }
     }
 }

@@ -49,8 +49,8 @@ public class OrganisationSetupService {
         headOffice.setOrgId(org.getId());
         headOffice.setName(headOfficeName);
         headOffice.setDomain(headOfficeDomain.toLowerCase());
-        headOffice.setHeadOffice(true);
-        headOffice.setScored(false); // the head office is not scored (11.2)
+        headOffice.setHeadOffice(false);   // the first workspace is simply a school
+        headOffice.setScored(true);
         sites.save(headOffice);
 
         Person admin = new Person();

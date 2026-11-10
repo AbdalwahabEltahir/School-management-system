@@ -100,10 +100,10 @@ public class SettingsService {
         return subjects.findBySiteIdOrderByName(user.siteId());
     }
 
-    /** Adds a subject, or changes its name/coordinator when {@code subjectId} is given. School IT only. */
+    /** Adds a subject, or changes its name/coordinator when {@code subjectId} is given. The coordinator only. */
     @Transactional
     public Subject saveSubject(CurrentUser user, UUID subjectId, String name, UUID coordinatorId) {
-        policy.requireRole(user, Role.SCHOOL_IT);
+        policy.requireRole(user, Role.COORDINATOR);
         Subject subject;
         if (subjectId == null) {
             if (name == null || name.isBlank()) {
@@ -141,7 +141,7 @@ public class SettingsService {
      */
     @Transactional
     public DocType saveDocType(CurrentUser user, String name, Sensitivity sensitivity) {
-        policy.requireRole(user, Role.SCHOOL_IT);
+        policy.requireRole(user, Role.COORDINATOR);
         if (name == null || name.isBlank() || sensitivity == null) {
             throw new BadRequestException("Please give the type a name and a sensitivity.");
         }
@@ -163,7 +163,7 @@ public class SettingsService {
     /** Marks a type as trusted once it has labelled examples. */
     @Transactional
     public DocType trustDocType(CurrentUser user, UUID docTypeId) {
-        policy.requireRole(user, Role.SCHOOL_IT);
+        policy.requireRole(user, Role.COORDINATOR);
         DocType type = docTypes.findById(docTypeId).filter(d -> d.getOrgId().equals(user.orgId()))
                 .orElseThrow(() -> new NotFoundException("The document type"));
         type.setTrusted(true);

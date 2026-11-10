@@ -44,7 +44,7 @@ public class ClassificationService {
 
     /** A coordinator's answer for an unclear file. */
     public record ClassifyCommand(String docType, UUID subjectId, Sensitivity sensitivity,
-                                  boolean hasStudentData, boolean hasHealthData) {}
+                                  boolean hasStudentData, boolean hasHealthData, java.time.LocalDate examDate) {}
 
     private final SchoolFileRepository files;
     private final FileProfileRepository profiles;
@@ -73,6 +73,9 @@ public class ClassificationService {
         profile.getEvidence().clear();
         profile.getEvidence().addAll(c.evidence() == null ? List.of() : c.evidence());
         profiles.save(profile);
+        if (c.examDate() != null && file.getExamDate() == null) {
+            file.setExamDate(c.examDate()); // a date set by a coordinator is never overwritten by the checker
+        }
         file.setSensitivity(profile.getSensitivity());
         return profile;
     }
@@ -112,6 +115,9 @@ public class ClassificationService {
         profile.setSensitivity(cmd.sensitivity());
         profile.setHasStudentData(cmd.hasStudentData());
         profile.setHasHealthData(cmd.hasHealthData());
+        if (cmd.examDate() != null) {
+            file.setExamDate(cmd.examDate());
+        }
         profile.setConfidence(1.0);
         profile.setNeedsReview(false);
         profile.setClassifiedBy(user.personId());

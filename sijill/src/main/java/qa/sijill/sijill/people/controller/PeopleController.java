@@ -33,6 +33,12 @@ public class PeopleController {
         return people.list(user).stream().map(PeopleDtos.PersonView::from).toList();
     }
 
+    /** School IT adds a person so they can sign in with their own account. */
+    @PostMapping
+    public PeopleDtos.PersonView add(CurrentUser user, @Valid @RequestBody PeopleDtos.AddPersonRequest request) {
+        return PeopleDtos.PersonView.from(people.add(user, request.email(), request.name(), request.role(), request.subjectId()));
+    }
+
     /** School IT changes role, status, subject or the generic-account flag (an override). */
     @PatchMapping("/{personId}")
     public PeopleDtos.PersonView update(CurrentUser user, @PathVariable UUID personId,

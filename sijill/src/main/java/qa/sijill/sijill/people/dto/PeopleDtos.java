@@ -51,6 +51,8 @@ public final class PeopleDtos {
         }
     }
 
+    public record AddPersonRequest(@NotBlank String email, @NotBlank String name, @NotNull Role role, UUID subjectId) {}
+
     public record FollowUpRequest(String note) {}
 
     public record RoleGroupRequest(@NotBlank String directoryGroup, @NotNull Role role) {}

@@ -40,6 +40,12 @@ public class DashboardController {
         return scores.overview(user);
     }
 
+    /** The open urgent issues behind the "Urgent" tile (school, rule and age only: no file names). */
+    @GetMapping("/urgent-issues")
+    public List<ScoreService.UrgentIssue> urgentIssues(CurrentUser user) {
+        return scores.urgentIssues(user);
+    }
+
     /** A school's score, with a daily trend (default 30 days). */
     @GetMapping("/sites/{siteId}/score")
     public DashboardDtos.SiteScoreView score(CurrentUser user, @PathVariable UUID siteId,

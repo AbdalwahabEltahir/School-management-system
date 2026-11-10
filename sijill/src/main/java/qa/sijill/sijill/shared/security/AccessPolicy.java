@@ -85,7 +85,7 @@ public class AccessPolicy {
         return switch (user.role()) {
             case COORDINATOR -> coordinatesSubject(user, scope.siteId(), scope.subjectId());
             case PRINCIPAL -> sameSite(user, scope.siteId());
-            case TEACHER, SCHOOL_IT, LEADERSHIP -> false;
+            case TEACHER, SCHOOL_IT, LEADERSHIP, STUDENT -> false;
         };
     }
 

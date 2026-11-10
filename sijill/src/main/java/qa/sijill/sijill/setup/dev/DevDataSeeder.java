@@ -13,6 +13,20 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
+import java.time.ZoneId;
+import java.util.List;
+import java.util.Map;
+import qa.sijill.sijill.academic.dto.AcademicDtos;
+import qa.sijill.sijill.academic.model.AttendanceStatus;
+import qa.sijill.sijill.academic.model.NoticeAudience;
+import qa.sijill.sijill.academic.service.AcademicSetupService;
+import qa.sijill.sijill.academic.service.AttendanceService;
+import qa.sijill.sijill.academic.service.MarksService;
+import qa.sijill.sijill.academic.service.MaterialService;
+import qa.sijill.sijill.academic.service.NoticeService;
+import qa.sijill.sijill.shared.security.CurrentUser;
+import qa.sijill.sijill.shared.util.SchoolCalendar;
 import qa.sijill.sijill.files.model.FilePermission;
 import qa.sijill.sijill.files.model.FileProfile;
 import qa.sijill.sijill.files.model.SchoolFile;
@@ -65,6 +79,11 @@ public class DevDataSeeder implements ApplicationRunner {
     private final FilePermissionRepository permissions;
     private final OrganisationSetupService setup;
     private final RuleEngineService engine;
+    private final AcademicSetupService academic;
+    private final AttendanceService attendance;
+    private final MarksService marks;
+    private final NoticeService notices;
+    private final MaterialService materials;
     private final Clock clock;
 
     @Override
@@ -118,7 +137,59 @@ public class DevDataSeeder implements ApplicationRunner {
         for (SchoolFile f : new SchoolFile[] {marks, contacts, exam, handbook}) {
             engine.evaluateFile(f.getId());
         }
-        log.info("Dev seed created. Sign in at /dev/login (leadership, it, principal, coordinator, teacher).");
+        seedSchoolPortal(org, school, maths, it, coordinator, teacher);
+        log.info("Dev seed created. Sign in at /dev/login (leadership, it, principal, coordinator, teacher, student).");
+    }
+
+    /** A class, its students and teachers, a timetable, marks, a notice and a study material, so both portals have content. */
+    private void seedSchoolPortal(Org org, Site school, Subject maths, Person it, Person coordinator, Person teacher) {
+        Subject english = new Subject();
+        english.setOrgId(org.getId());
+        english.setSiteId(school.getId());
+        english.setName("English");
+        subjects.save(english);
+        Person englishTeacher = person(org, school, "layla.haddad", "Layla Haddad", Role.TEACHER, english);
+        Person amal = person(org, school, "amal.student", "Amal Student", Role.STUDENT, null);
+        Person bader = person(org, school, "bader.student", "Bader Student", Role.STUDENT, null);
+        Person cara = person(org, school, "cara.student", "Cara Student", Role.STUDENT, null);
+
+        CurrentUser admin = new CurrentUser(it.getId(), org.getId(), school.getId(), Role.SCHOOL_IT, null, it.getEmail(), it.getDisplayName());
+        CurrentUser sara = new CurrentUser(teacher.getId(), org.getId(), school.getId(), Role.TEACHER, maths.getId(), teacher.getEmail(), teacher.getDisplayName());
+        // The coordinator creates terms, classes and sections; the teacher sets assessments and grades; IT unlocks and publishes.
+        CurrentUser coord = new CurrentUser(coordinator.getId(), org.getId(), school.getId(), Role.COORDINATOR, coordinator.getSubjectId(), coordinator.getEmail(), coordinator.getDisplayName());
+        LocalDate year = LocalDate.now(clock.withZone(SchoolCalendar.ZONE));
+        academic.saveTerm(coord, 1, "Term 1", year.minusMonths(3), year.plusDays(30));
+        academic.saveTerm(coord, 2, "Term 2", year.plusDays(60), year.plusMonths(5));
+        academic.saveTerm(coord, 3, "Term 3", year.plusMonths(6), year.plusMonths(9));
+        var section = academic.createSection(coord, 7, "B");
+        for (Person s : List.of(amal, bader, cara)) {
+            academic.enrol(coord, section.id(), s.getEmail());
+        }
+        academic.assign(coord, section.id(), maths.getId(), teacher.getId());
+        academic.assign(coord, section.id(), english.getId(), englishTeacher.getId());
+        academic.addLesson(coord, section.id(), maths.getId(), 0, 1, "Room 12");
+        academic.addLesson(coord, section.id(), maths.getId(), 2, 1, "Room 12");
+        academic.addLesson(coord, section.id(), english.getId(), 1, 2, "Room 4");
+        academic.addLesson(coord, section.id(), english.getId(), 3, 2, "Room 4");
+
+        var quiz = marks.create(sara, section.id(), maths.getId(), 1, "Quiz 1", new BigDecimal("40"));
+        marks.enter(sara, quiz.id(), List.of(new AcademicDtos.MarkInput(amal.getId(), new BigDecimal("36"), false),
+                new AcademicDtos.MarkInput(bader.getId(), new BigDecimal("28.5"), false),
+                new AcademicDtos.MarkInput(cara.getId(), new BigDecimal("33"), false)));
+        marks.submit(sara, quiz.id());
+        marks.publish(admin, section.id(), 1);
+        marks.create(sara, section.id(), maths.getId(), 2, "Mid-term exam", new BigDecimal("100")); // still open: the teacher has work to do
+
+        Instant now = Instant.now(clock);
+        notices.create(admin, new AcademicDtos.NoticeRequest("Parent-teacher meetings", "اجتماع أولياء الأمور",
+                "Meetings run next Thursday afternoon. Book a slot through the school.", "تُعقد الاجتماعات يوم الخميس القادم بعد الظهر.",
+                now.minusSeconds(3600), now.plusSeconds(14L * 24 * 3600), NoticeAudience.ALL));
+        materials.add(sara, section.id(), maths.getId(), "Fractions revision notes", "https://drive.google.com/file/d/demo-fractions");
+
+        if (SchoolCalendar.isSchoolDay(LocalDate.now(clock.withZone(SchoolCalendar.ZONE)))) {
+            attendance.record(sara, section.id(), LocalDate.now(clock.withZone(SchoolCalendar.ZONE)),
+                    Map.of(bader.getId(), AttendanceStatus.ABSENT), null);
+        }
     }
 
     private Person person(Org org, Site site, String localPart, String name, Role role, Subject subject) {

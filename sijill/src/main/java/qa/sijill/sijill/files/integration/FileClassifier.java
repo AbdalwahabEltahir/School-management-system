@@ -1,5 +1,6 @@
 package qa.sijill.sijill.files.integration;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
@@ -26,8 +27,9 @@ public interface FileClassifier {
      * The classifier's answer.
      *
      * @param evidence masked evidence lines, e.g. "A table of 28 [NAME] entries next to term marks"
+     * @param examDate the date printed on an exam paper, or null; rule R6 needs it to catch an early leak
      */
     record Classification(String docType, boolean hasStudentData, boolean hasHealthData, Sensitivity sensitivity,
-                          double confidence, List<String> evidence, String modelVersion) {
+                          double confidence, List<String> evidence, String modelVersion, LocalDate examDate) {
     }
 }

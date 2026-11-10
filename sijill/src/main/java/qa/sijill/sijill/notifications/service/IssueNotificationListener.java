@@ -17,6 +17,7 @@ import qa.sijill.sijill.files.repository.FileProfileRepository;
 import qa.sijill.sijill.files.repository.SchoolFileRepository;
 import qa.sijill.sijill.issues.event.IssueEvents;
 import qa.sijill.sijill.issues.model.Incident;
+import qa.sijill.sijill.issues.model.IncidentType;
 import qa.sijill.sijill.issues.model.Issue;
 import qa.sijill.sijill.issues.repository.IncidentRepository;
 import qa.sijill.sijill.issues.repository.IssueRepository;
@@ -46,7 +47,7 @@ import qa.sijill.sijill.shared.util.SchoolCalendar;
  * <pre>
  *  Event                        Owner     Coordinator   Principal   Leadership
  *  Normal issue / reminder      message   list          feed        –
- *  Urgent (R2, R3)              at once   copied        alert       only if Restricted student/health data
+ *  Urgent (R2, R3)              at once   copied        alert       ALERT (school and rule, no file name)
  *  Exam leak, important delete  yes       alert         alert       ALERT
  *  Urgent still open 1 day      reminder  follow-up     alert       ALERT
  * </pre>
@@ -119,12 +120,16 @@ public class IssueNotificationListener {
                         urgent ? "Urgent alert in your school" : "A new file issue in your school"),
                 file.getName(), issue.getId()));
 
-        // Leadership: only for urgent issues on Restricted student or health data.
-        if (urgent && isRestrictedPersonalData(issue.getFileId())) {
+        // Leadership: every urgent issue, by school and rule (never the file name). An exam leak or an important
+        // deletion already raises an incident that alerts Leadership, so it is not announced twice.
+        if (urgent && event.incidentHint() == null) {
+            String where = sites.findById(issue.getSiteId()).map(Site::getName).orElse("") + " · " + version.getName();
+            boolean personal = isRestrictedPersonalData(issue.getFileId());
             leadership(issue.getOrgId()).forEach(l -> bell.send(l, NotificationKind.INCIDENT,
-                    title(l, "تنبيه: ملف مقيّد يحتوي بيانات طلاب أو صحة مكشوف",
-                            "Alert: a Restricted file with student or health data is exposed"),
-                    null, issue.getId()));
+                    personal ? title(l, "تنبيه: ملف مقيّد يحتوي بيانات طلاب أو صحة مكشوف",
+                            "Alert: a Restricted file with student or health data is exposed")
+                            : title(l, "تنبيه عاجل: ملف يحتاج إلى معالجة", "Urgent: a file needs action"),
+                    where, issue.getId()));
         }
     }
 
@@ -217,15 +222,29 @@ public class IssueNotificationListener {
         String ar = "حادثة مهمة: " + incidentTitleAr(incident);
         String en = "Major incident: " + incidentTitleEn(incident);
 
+        // Who is alerted follows the table above, per incident type:
+        //   exam leak, important deletion, 20+ deletions  owner, coordinator, principal, leadership
+        //   urgent still open after a school day          principal, leadership (the owner gets the reminder
+        //                                                  and the coordinator the follow-up as their own messages)
+        //   connection lost over an hour                  principal, leadership and School IT (paged)
+        IncidentType type = incident.getType();
         Map<UUID, Person> audience = new LinkedHashMap<>(); // de-duplicated by person
-        if (incident.getFileId() != null) {
-            files.findById(incident.getFileId()).map(SchoolFile::getOwnerEmail)
-                    .flatMap(email -> email == null ? Optional.<Person>empty() : people.findByEmailIgnoreCase(email))
-                    .ifPresent(o -> audience.put(o.getId(), o));
+        if (type == IncidentType.EXAM_LEAK || type == IncidentType.IMPORTANT_DELETION) {
+            if (incident.getFileId() != null) {
+                files.findById(incident.getFileId()).map(SchoolFile::getOwnerEmail)
+                        .flatMap(email -> email == null ? Optional.<Person>empty() : people.findByEmailIgnoreCase(email))
+                        .ifPresent(o -> audience.put(o.getId(), o));
+            }
         }
-        coordinatorFor(incident.getSiteId(), null).ifPresent(c -> audience.put(c.getId(), c));
+        if (type == IncidentType.EXAM_LEAK || type == IncidentType.IMPORTANT_DELETION || type == IncidentType.BULK_DELETION) {
+            coordinatorFor(incident.getSiteId(), null).ifPresent(c -> audience.put(c.getId(), c));
+        }
         principalFor(incident.getSiteId()).ifPresent(p -> audience.put(p.getId(), p));
         leadership(incident.getOrgId()).forEach(l -> audience.put(l.getId(), l));
+        if (type == IncidentType.CONNECTION_LOST) {
+            people.findBySiteIdAndRoleAndStatusNot(incident.getSiteId(), Role.SCHOOL_IT, PersonStatus.LEFT)
+                    .forEach(it -> audience.put(it.getId(), it));
+        }
 
         audience.values().forEach(p -> bell.send(p, NotificationKind.INCIDENT, title(p, ar, en),
                 incident.getDescription(), incident.getIssueId()));

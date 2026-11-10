@@ -48,6 +48,9 @@ public class RuleQueryService {
      */
     @Transactional(readOnly = true)
     public List<RuleEntry> list(CurrentUser user) {
+        if (user.is(Role.STUDENT)) {
+            throw new qa.sijill.sijill.shared.exception.ForbiddenException("The rules are for school staff.");
+        }
         boolean seesAll = user.isAny(Role.SCHOOL_IT, Role.LEADERSHIP);
         return rules.findVisible(user.orgId(), user.siteId()).stream()
                 .filter(r -> seesAll || r.getStatus() == RuleStatus.ACTIVE)

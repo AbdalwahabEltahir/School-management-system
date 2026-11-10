@@ -104,6 +104,54 @@ public class PeopleService {
 
     // ================================================================== School IT actions
 
+    /** Roles School IT may give a new person. Leadership and School IT accounts are not created from this screen. */
+    private static final List<Role> ADDABLE = List.of(Role.TEACHER, Role.COORDINATOR, Role.PRINCIPAL, Role.STUDENT);
+
+    /**
+     * Adds a person to the user's school so they can sign in with their Google account. Sign-in checks that the
+     * e-mail's domain belongs to a school of the network, so an address from any other domain is refused here
+     * with a clear message instead of failing later at the sign-in page.
+     */
+    @Transactional
+    public Person add(CurrentUser user, String email, String name, Role role, UUID subjectId) {
+        policy.requireRole(user, Role.SCHOOL_IT);
+        String clean = email == null ? "" : email.trim().toLowerCase();
+        if (!clean.matches("[^@\\s]+@[^@\\s]+\\.[^@\\s]+")) {
+            throw new BadRequestException("Please give a valid e-mail address.");
+        }
+        if (name == null || name.isBlank()) {
+            throw new BadRequestException("Please give the person's name.");
+        }
+        if (role == null || !ADDABLE.contains(role)) {
+            throw new BadRequestException("Choose Teacher, Coordinator, Principal or Student.");
+        }
+        String domain = clean.substring(clean.indexOf('@') + 1);
+        boolean knownDomain = sites.findByOrgIdOrderByName(user.orgId()).stream()
+                .anyMatch(s -> s.isActive() && s.getDomain().equalsIgnoreCase(domain));
+        if (!knownDomain) {
+            throw new BadRequestException("Nobody with @" + domain + " can sign in: that domain does not belong to any school of the network.");
+        }
+        if (people.findByEmailIgnoreCase(clean).isPresent()) {
+            throw new ConflictException(clean + " already has an account.");
+        }
+        Person person = new Person();
+        person.setOrgId(user.orgId());
+        person.setSiteId(user.siteId());
+        person.setEmail(clean);
+        person.setDisplayName(name.trim());
+        person.setRole(role);
+        person.setStatus(PersonStatus.ACTIVE);
+        if (subjectId != null) {
+            subjects.findById(subjectId).filter(s -> s.getSiteId().equals(user.siteId()))
+                    .orElseThrow(() -> new BadRequestException("That subject does not belong to this school."));
+            person.setSubjectId(subjectId);
+        }
+        people.save(person);
+        audit.log(person.getOrgId(), person.getSiteId(), ActivityActions.PERSON_ADDED).by(user)
+                .on("Person", person.getId()).change(null, clean + " as " + role).save();
+        return person;
+    }
+
     /** Changes role, status, subject or the generic-account flag by hand (an override, audited). */
     @Transactional
     public Person update(CurrentUser user, UUID personId, UpdateCommand cmd) {

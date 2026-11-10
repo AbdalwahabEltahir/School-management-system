@@ -36,6 +36,10 @@ public class SiteService {
     public record SiteCommand(String name, String domain, Boolean headOffice, Boolean scored,
                               UUID principalId, UUID coordinatorId) {}
 
+    /** Test installations only: lets Leadership score the head office, so a one-site setup has a dashboard. */
+    @org.springframework.beans.factory.annotation.Value("${sijill.scoring.allow-head-office:false}")
+    private boolean allowHeadOfficeScoring;
+
     private final SiteRepository sites;
     private final AuditPublisher audit;
     private final AccessPolicy policy;
@@ -84,7 +88,17 @@ public class SiteService {
         if (cmd.name() != null && !cmd.name().isBlank()) {
             site.setName(cmd.name().trim());
         }
-        if (cmd.scored() != null && !site.isHeadOffice()) {
+        // Leadership may say that the "head office" is really a school (a test setup has only one workspace).
+        // It then counts in the KPIs and the planning review like any school.
+        if (Boolean.FALSE.equals(cmd.headOffice()) && site.isHeadOffice()) {
+            policy.requireRole(user, Role.LEADERSHIP);
+            site.setHeadOffice(false);
+            site.setScored(cmd.scored() == null || cmd.scored());
+        } else if (cmd.scored() != null) {
+            if (site.isHeadOffice() && !allowHeadOfficeScoring) {
+                throw new ConflictException("The head office is not scored. Turn on sijill.scoring.allow-head-office "
+                        + "for a test installation that has no school site yet.");
+            }
             site.setScored(cmd.scored());
         }
         if (cmd.principalId() != null) {

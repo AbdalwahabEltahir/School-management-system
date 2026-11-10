@@ -213,7 +213,15 @@ public class CheckRunService {
     private boolean needsClassification(SchoolFile file) {
         Optional<FileProfile> profile = profiles.findByFileId(file.getId());
         return profile.isEmpty()
-                || (file.getModifiedAt() != null && file.getModifiedAt().isAfter(profile.get().getCreatedAt()));
+                || (file.getModifiedAt() != null && file.getModifiedAt().isAfter(profile.get().getCreatedAt()))
+                || labelledByOlderClassifier(profile.get());
+    }
+
+    /** A file the local classifier labelled with an older rule set is read again; a coordinator's answer never is. */
+    private static boolean labelledByOlderClassifier(FileProfile p) {
+        String v = p.getModelVersion();
+        return p.getClassifiedBy() == null && v != null && v.startsWith("local-rules-")
+                && !v.equals(qa.sijill.sijill.files.integration.LocalFileClassifier.MODEL_VERSION);
     }
 
     /** A full check lists every file; a live file that is missing from it was deleted in the workspace. */

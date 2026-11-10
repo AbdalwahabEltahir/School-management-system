@@ -12,8 +12,8 @@ import java.util.Optional;
  * <b>no write methods</b>: Sijill cannot move, edit, share or delete a file, and the "Test connection"
  * button proves a write is refused (FR-8.2).
  *
- * <p>No implementation is bundled yet. When none is registered the schedulers log a warning and skip
- * their run, so the rest of the application keeps working.
+ * <p>When no implementation is registered the schedulers log a warning and skip their run, so the rest
+ * of the application keeps working. {@code workspace.google.GoogleDriveConnector} is the bundled one.
  */
 public interface WorkspaceConnector {
 
@@ -29,4 +29,13 @@ public interface WorkspaceConnector {
 
     /** The directory: people, their groups and whether their account is suspended. */
     List<WorkspacePerson> getPeople(String domain);
+
+    /**
+     * The file's content, for the classifier (stage 2). Read-only. Empty when the file cannot be read
+     * (too large, locked, unsupported) so a person decides instead. A connector that cannot read
+     * content keeps this default.
+     */
+    default Optional<WorkspaceContent> readContent(String domain, String workspaceFileId) {
+        return Optional.empty();
+    }
 }

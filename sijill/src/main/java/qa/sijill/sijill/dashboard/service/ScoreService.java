@@ -49,6 +49,8 @@ public class ScoreService {
                                   long needFollowUp, long fixedByStaff, long personalDriveFiles,
                                   List<SiteScore> schools) {}
 
+    private final qa.sijill.sijill.rules.repository.RuleVersionRepository ruleVersions;
+    private final qa.sijill.sijill.rules.repository.RuleRepository rules;
     private final SiteRepository sites;
     private final SchoolFileRepository files;
     private final IssueRepository issues;
@@ -114,6 +116,29 @@ public class ScoreService {
             checkedYet |= site.getFirstCheckAt() != null;
         }
         return new NetworkOverview(checkedYet, filesChecked, open, urgent, followUp, fixed, personal, schools);
+    }
+
+    /** An open urgent issue as Leadership may see it: which school and rule, never the file name or contents. */
+    public record UrgentIssue(UUID issueId, UUID siteId, String siteName, String ruleCode, String ruleName,
+                              String status, java.time.Instant openedAt) {}
+
+    /**
+     * The open urgent issues behind the overview's "Urgent" tile, so the tile and the list always agree. Incidents are a
+     * separate, rarer thing (an exam leak, a deletion, a lost connection, an urgent issue left a whole school day).
+     */
+    @Transactional(readOnly = true)
+    public List<UrgentIssue> urgentIssues(CurrentUser user) {
+        policy.requireRole(user, Role.LEADERSHIP);
+        List<UrgentIssue> out = new ArrayList<>();
+        for (Site site : sites.findByOrgIdAndScoredTrueAndActiveTrueOrderByName(user.orgId())) {
+            for (var i : issues.findBySiteIdAndSeverityAndStatusInOrderByOpenedAtDesc(site.getId(), Severity.URGENT, IssueStatus.OPEN)) {
+                var v = ruleVersions.findById(i.getRuleVersionId()).orElse(null);
+                var r = rules.findById(i.getRuleId()).orElse(null);
+                out.add(new UrgentIssue(i.getId(), site.getId(), site.getName(), r == null ? "" : r.getCode(), v == null ? "" : v.getName(),
+                        i.getStatus().name(), i.getOpenedAt()));
+            }
+        }
+        return out;
     }
 
     // ================================================================== daily snapshot

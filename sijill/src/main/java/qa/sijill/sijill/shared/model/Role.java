@@ -1,6 +1,10 @@
 package qa.sijill.sijill.shared.model;
 
-/** The five Phase 1 roles (proposal section 4). Each comes from a directory group in the school workspace. */
+/**
+ * The roles. The first five are the Phase 1 staff roles (proposal section 4), each from a directory group in the
+ * school workspace; {@link #STUDENT} belongs to the school portal (Phase 2). School IT acts as the school Admin of the
+ * academic setup (sections, timetable, results, notices).
+ */
 public enum Role {
     /** Teaching and support staff: sees only their own files and issues. */
     TEACHER,
@@ -11,7 +15,9 @@ public enum Role {
     /** School IT admin (academic staff): connection, people, settings, school rules. */
     SCHOOL_IT,
     /** Network executive team: totals, incidents and the weekly report only. */
-    LEADERSHIP;
+    LEADERSHIP,
+    /** A student of the school portal: sees only their own timetable, attendance, published results and materials. */
+    STUDENT;
 
     /**
      * Whether this role is offered the weekly report download (principals and Leadership only).

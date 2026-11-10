@@ -169,7 +169,7 @@ public class ActivityLogService {
                         ? log.findBySiteIdAndSubjectIdAndActionOrderBySeqDesc(user.siteId(), user.subjectId(), action, paging)
                         : log.findBySiteIdAndSubjectIdOrderBySeqDesc(user.siteId(), user.subjectId(), paging);
             }
-            case TEACHER -> throw new ForbiddenException("The activity log is not available for your role.");
+            case TEACHER, STUDENT -> throw new ForbiddenException("The activity log is not available for your role.");
         };
     }
 
