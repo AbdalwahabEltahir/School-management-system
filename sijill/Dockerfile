@@ -10,5 +10,7 @@ RUN ./mvnw -q -B -DskipTests package
 FROM eclipse-temurin:21-jre
 WORKDIR /app
 COPY --from=build /app/target/sijill-0.0.1-SNAPSHOT.jar app.jar
+# Qatar time: the saved Google token times have no timezone, so the app must read them in the zone they were written in.
+ENV TZ=Asia/Qatar
 EXPOSE 8080
 ENTRYPOINT ["java", "-XX:MaxRAMPercentage=70", "-jar", "/app/app.jar"]
