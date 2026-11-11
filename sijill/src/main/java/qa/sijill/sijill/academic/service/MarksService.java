@@ -115,7 +115,7 @@ public class MarksService {
     /** Assessments the user may see: school staff for the school, a teacher only for the sections and subjects they teach. */
     @Transactional(readOnly = true)
     public List<AssessmentView> list(CurrentUser user, UUID sectionId) {
-        if (user.isAny(Role.STUDENT, Role.LEADERSHIP)) {
+        if (user.isAny(Role.STUDENT, Role.PARENT, Role.LEADERSHIP)) {
             throw new ForbiddenException("Assessments are not available for your role.");
         }
         List<Assessment> rows;
@@ -237,11 +237,11 @@ public class MarksService {
                 .subject(a.getSubjectId()).change("open", "submitted: " + a.getName()).save();
     }
 
-    /** School IT reopens submitted marks for correction. The reason is logged and the teacher is told (BR-006). */
+    /** The teacher of the subject reopens their own submitted marks for correction. The reason is logged (BR-006). */
     @Transactional
     public void unlock(CurrentUser user, UUID assessmentId, String reason) {
-        access.requireAdmin(user);
         Assessment a = find(user, assessmentId);
+        requireTeacher(user, a);
         if (reason == null || reason.isBlank()) {
             throw new BadRequestException("Please write the reason for unlocking the marks.");
         }
@@ -254,18 +254,14 @@ public class MarksService {
         a.setSubmittedAt(null);
         audit.log(user.orgId(), user.siteId(), ActivityActions.MARKS_UNLOCKED).by(user).on("Section", a.getSectionId())
                 .subject(a.getSubjectId()).change("submitted", "unlocked: " + reason.trim()).save();
-        assignments.findBySectionIdAndSubjectId(a.getSectionId(), a.getSubjectId()).map(TeachingAssignment::getTeacherId)
-                .ifPresent(teacher -> publisher.publishEvent(new PersonNotice(teacher, NotificationKind.SYSTEM,
-                        "تم فتح الدرجات لتعديلها", "Your marks were unlocked", a.getName() + ": " + reason.trim())));
     }
 
     // ================================================================== publishing
 
-    /** Makes a section's term visible to its students. Every assessment of that term must be submitted first. */
+    /** A teacher of the section makes its term visible to the students. Every assessment of that term must be submitted first. */
     @Transactional
     public void publish(CurrentUser user, UUID sectionId, int term) {
-        access.requireAdmin(user);
-        Section section = access.section(user, sectionId);
+        Section section = access.requireTeacherOf(user, sectionId);
         List<Assessment> ofTerm = assessments.findBySectionIdAndTerm(sectionId, term);
         if (ofTerm.isEmpty()) {
             throw new ConflictException("There are no assessments for term " + term + " of section " + AcademicAccess.label(section) + ".");
@@ -296,8 +292,7 @@ public class MarksService {
     /** Hides a published term again. A reason is required and logged (BR-007). */
     @Transactional
     public void unpublish(CurrentUser user, UUID sectionId, int term, String reason) {
-        access.requireAdmin(user);
-        access.section(user, sectionId);
+        access.requireTeacherOf(user, sectionId);
         if (reason == null || reason.isBlank()) {
             throw new BadRequestException("Please write the reason for unpublishing the results.");
         }

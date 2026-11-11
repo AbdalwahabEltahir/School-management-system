@@ -235,7 +235,7 @@ public class IssueService {
     @Transactional(readOnly = true)
     public List<Issue> listFor(CurrentUser user, Filter filter) {
         List<Issue> base = switch (user.role()) {
-            case TEACHER, STUDENT -> issues.findByOwnerIdOrderByOpenedAtDesc(user.personId());
+            case TEACHER, STUDENT, PARENT -> issues.findByOwnerIdOrderByOpenedAtDesc(user.personId());
             case COORDINATOR -> user.subjectId() == null
                     ? issues.findBySiteIdOrderByOpenedAtDesc(user.siteId())
                     : issues.findBySiteIdAndSubjectIdOrderByOpenedAtDesc(user.siteId(), user.subjectId());

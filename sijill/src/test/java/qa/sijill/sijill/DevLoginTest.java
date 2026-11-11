@@ -1,7 +1,9 @@
 package qa.sijill.sijill;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrl;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -28,6 +30,7 @@ import static org.springframework.security.test.web.servlet.setup.SecurityMockMv
 class DevLoginTest {
 
     @Autowired WebApplicationContext context;
+    @Autowired qa.sijill.sijill.organisation.repository.SiteRepository sites;
 
     private MockMvc mvc() {
         return MockMvcBuilders.webAppContextSetup(context).apply(springSecurity()).build();
@@ -63,8 +66,30 @@ class DevLoginTest {
     }
 
     @Test
+    void aStudentRegistersAndASecondDeviceSignsInWithTheSamePassword() throws Exception {
+        var site = sites.findAll().stream().filter(x -> x.isActive()).findFirst().orElseThrow();
+        String email = "web-" + java.util.UUID.randomUUID().toString().substring(0, 6) + "@family-mail.test";
+        String body = "{\"siteId\":\"" + site.getId() + "\",\"name\":\"Web Student\",\"email\":\"" + email + "\",\"password\":\"correct horse\"}";
+        MockHttpSession first = new MockHttpSession();
+        mvc().perform(post("/api/auth/register/student").with(csrf()).session(first).contentType("application/json").content(body))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.studentCode").exists());
+        mvc().perform(get("/api/me").session(first)).andExpect(status().isOk()).andExpect(jsonPath("$.role").value("STUDENT"));
+
+        MockHttpSession second = new MockHttpSession();
+        String login = "{\"email\":\"" + email + "\",\"password\":\"correct horse\"}";
+        mvc().perform(post("/api/auth/login").with(csrf()).session(second).contentType("application/json").content(login)).andExpect(status().isOk());
+        mvc().perform(get("/api/enrol/status").session(second)).andExpect(status().isOk()).andExpect(jsonPath("$.studentCode").exists());
+        mvc().perform(post("/api/auth/login").with(csrf()).contentType("application/json").content(login.replace("correct horse", "wrong horse")))
+                .andExpect(status().isBadRequest());
+        mvc().perform(post("/api/auth/login").contentType("application/json").content(login)).andExpect(status().isForbidden()); // no CSRF token
+    }
+
+    @Test
     void withoutSigningInTheApiIsClosed() throws Exception {
-        mvc().perform(get("/api/me")).andExpect(status().is3xxRedirection()); // sent to the login page
+        mvc().perform(get("/api/me")).andExpect(status().isUnauthorized()); // the page then shows the welcome screen
+        mvc().perform(get("/api/issues")).andExpect(status().isUnauthorized());
+        mvc().perform(get("/api/auth/options")).andExpect(status().isOk()); // public: the welcome page needs it
+        mvc().perform(get("/")).andExpect(status().isOk());                  // the welcome page itself
     }
 
     @Test

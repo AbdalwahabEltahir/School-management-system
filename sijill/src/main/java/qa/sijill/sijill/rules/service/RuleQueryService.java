@@ -48,7 +48,7 @@ public class RuleQueryService {
      */
     @Transactional(readOnly = true)
     public List<RuleEntry> list(CurrentUser user) {
-        if (user.is(Role.STUDENT)) {
+        if (user.isAny(Role.STUDENT, Role.PARENT)) {
             throw new qa.sijill.sijill.shared.exception.ForbiddenException("The rules are for school staff.");
         }
         boolean seesAll = user.isAny(Role.SCHOOL_IT, Role.LEADERSHIP);

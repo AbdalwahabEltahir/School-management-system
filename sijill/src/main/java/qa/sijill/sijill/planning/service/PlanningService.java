@@ -161,7 +161,7 @@ public class PlanningService {
                     ? submissions.findBySiteIdOrderByWeekStartDesc(user.siteId())
                     : submissions.findBySiteIdAndSubjectIdOrderByWeekStartDesc(user.siteId(), user.subjectId());
             case PRINCIPAL -> submissions.findBySiteIdOrderByWeekStartDesc(user.siteId());
-            case SCHOOL_IT, LEADERSHIP, STUDENT -> throw new ForbiddenException("Planning files are not available for your role.");
+            case SCHOOL_IT, LEADERSHIP, STUDENT, PARENT -> throw new ForbiddenException("Planning files are not available for your role.");
         };
     }
 
@@ -218,7 +218,7 @@ public class PlanningService {
             case TEACHER -> plan.getTeacherId().equals(user.personId());
             case COORDINATOR -> policy.coordinatesSubject(user, plan.getSiteId(), plan.getSubjectId());
             case PRINCIPAL -> policy.sameSite(user, plan.getSiteId());
-            case SCHOOL_IT, LEADERSHIP, STUDENT -> false;
+            case SCHOOL_IT, LEADERSHIP, STUDENT, PARENT -> false;
         };
         if (!visible) {
             throw new NotFoundException("The plan");

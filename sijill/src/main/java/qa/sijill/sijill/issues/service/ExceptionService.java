@@ -133,7 +133,7 @@ public class ExceptionService {
             case PRINCIPAL, SCHOOL_IT -> exceptions.findBySiteIdAndEndedAtIsNullOrderByEndsOnAsc(user.siteId());
             case COORDINATOR -> exceptions.findBySiteIdAndEndedAtIsNullOrderByEndsOnAsc(user.siteId()).stream()
                     .filter(g -> policy.coordinatesSubject(user, g.getSiteId(), g.getSubjectId())).toList();
-            case TEACHER, STUDENT -> throw new ForbiddenException("Exceptions are not available for your role.");
+            case TEACHER, STUDENT, PARENT -> throw new ForbiddenException("Exceptions are not available for your role.");
         };
     }
 }

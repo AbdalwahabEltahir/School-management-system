@@ -1,0 +1,316 @@
+/* =====================================================================================
+   Coordinator overview (.co) and public landing page (.ld). Values follow the build briefs.
+   The coordinator screen is flat: plain grey shadows only, no glows, no animation.
+   ===================================================================================== */
+
+/* ------------------------------------------------------------------ coordinator overview */
+.frame:has(.co), .frame:has(.co) .content { background: #f5f4f2 }
+.page:has(.co) { max-width: none; padding: 26px 28px 36px }
+.co { display: flex; flex-direction: column; gap: 20px; font-size: 14px }
+.co h1, .co h2 { margin: 0 }
+.co-top { display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap }
+.co-title { display: flex; gap: 14px; align-items: stretch }
+.co-title > span { width: 5px; background: #8f2447; border-radius: 3px }
+.co-title h1 { font-size: 30px; line-height: 1.15; letter-spacing: -.02em }
+.co-title p { margin: 2px 0 0; color: #4a4a50 }
+.co-btns { display: flex; gap: 10px }
+.co-btn { flex: none; white-space: nowrap; border: 1px solid #d9d6d0; background: #fff; color: #1c1c1f; border-radius: 12px; padding: 11px 18px; font-weight: 600; box-shadow: 0 8px 20px rgba(23, 23, 26, .12); text-decoration: none }
+.co-btn:hover { border-color: #8f2447; color: #6b1730; text-decoration: none }
+.co-btn-fill { background: #6b1730; border-color: #6b1730; color: #fff }
+.co-btn-fill:hover { background: #531226; border-color: #531226; color: #fff }
+
+.co-row { display: flex; flex-wrap: wrap; gap: 16px; align-items: stretch }
+.co-k { flex: 1 1 220px; min-width: 0; position: relative; overflow: hidden; border-radius: 28px; padding: 22px; color: #fff; box-shadow: 0 8px 20px rgba(23, 23, 26, .12); display: flex; flex-direction: column; justify-content: space-between; gap: 14px; min-height: 240px }
+.co-k-open { flex: 2 1 500px; padding: 28px; gap: 18px; background: linear-gradient(135deg, #17171a 0%, #2a1119 55%, #6b1730 100%) }
+.co-k-follow { background: linear-gradient(150deg, #b7791f 0%, #8a5a14 60%, #5d3d0c 100%) }
+.co-k-fixed { background: linear-gradient(150deg, #1f9d62 0%, #14633b 55%, #0b3f26 100%) }
+.co-k-top { position: relative; display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap }
+.co-k-top span { font-weight: 600; font-size: 15px; white-space: nowrap }
+.co-k-open .co-k-top span { color: #e7a3b6; letter-spacing: .08em }
+.co-k-top i { flex: none; white-space: nowrap; font-size: 12px; font-style: normal; font-weight: 700; background: rgba(255, 255, 255, .2); border: 1px solid rgba(255, 255, 255, .35); border-radius: 99px; padding: 3px 12px }
+.co-k-open .co-k-top i { background: rgba(255, 255, 255, .14); border-color: rgba(255, 255, 255, .3) }
+.co-k-main { position: relative; display: flex; align-items: flex-end; gap: 18px; flex-wrap: wrap }
+.co-k-main b { font-size: 112px; line-height: .9; letter-spacing: -.05em }
+.co-k-main span { padding-bottom: 10px; color: #e4d3d8; font-size: 15px; max-width: 180px }
+.co-k-n { position: relative; font-size: 76px; line-height: .95; letter-spacing: -.04em }
+.co-k-sub { position: relative; font-size: 13px; color: #fbefd0 }
+.co-wm { position: absolute; inset-inline-end: -18px; bottom: -22px; width: 150px; height: 150px; opacity: .14; color: #fff; pointer-events: none }
+.co-wm svg { width: 100%; height: 100%; stroke-width: 1.4 }
+.co-k-ring { position: relative; display: flex; gap: 14px; align-items: center }
+.co-k-ring > div { position: relative; display: grid; place-items: center }
+.co-k-ring svg { width: 64px; height: 64px; transform: rotate(-90deg) }
+.co-k-ring b { position: absolute; font-size: 13px }
+.co-k-ring > span { font-size: 13px; color: #d6f0e2 }
+
+.co-c { flex: 1 1 300px; min-width: 0; position: relative; overflow: hidden; border-radius: 28px; padding: 26px; color: #fff; box-shadow: 0 8px 20px rgba(23, 23, 26, .12) }
+.co-c-sev { background: linear-gradient(150deg, #8f2447 0%, #5a1228 60%, #2a0d18 100%); display: flex; flex-direction: column; align-items: center }
+.co-c-type { flex: 2 1 380px; background: linear-gradient(135deg, #17171a 0%, #26141c 60%, #4a1a2e 100%) }
+.co-c-day { background: linear-gradient(150deg, #d9698b 0%, #b3295a 50%, #8f2447 100%); display: flex; flex-direction: column }
+.co-ch { position: relative; display: flex; gap: 12px; align-items: center; margin-bottom: 16px; align-self: flex-start; width: 100% }
+.co-ci { width: 40px; height: 40px; flex: none; border-radius: 12px; background: rgba(255, 255, 255, .18); border: 1px solid rgba(255, 255, 255, .3); display: grid; place-items: center }
+.co-ci svg { width: 20px; height: 20px }
+.co-ch h2 { font-size: 19px; color: #fff }
+.co-ch div div { font-size: 12px; color: rgba(255, 255, 255, .8) }
+.co-none { padding: 14px 0; color: rgba(255, 255, 255, .85) }
+
+.co-donut { position: relative; display: grid; place-items: center; margin: 4px 0 }
+.co-donut svg { width: 200px; height: 200px; transform: rotate(-90deg) }
+.co-donut > div { position: absolute; text-align: center }
+.co-donut b { font-size: 54px; line-height: 1; letter-spacing: -.03em; display: block }
+.co-donut span { font-size: 12px; color: rgba(255, 255, 255, .85) }
+.co-tiles { display: flex; gap: 10px; margin-top: auto; padding-top: 14px; width: 100% }
+.co-tiles > div { flex: 1; background: rgba(255, 255, 255, .12); border: 1px solid rgba(255, 255, 255, .22); border-radius: 16px; padding: 10px 14px }
+.co-tiles small { display: block; font-size: 12px; font-weight: 700 }
+.co-tiles b { font-size: 26px }
+
+.co-type { padding: 12px 0; border-top: 1px solid rgba(255, 255, 255, .12) }
+.co-type > div:first-child { display: flex; justify-content: space-between; gap: 10px; align-items: center; flex-wrap: wrap }
+.co-type > div:first-child > span:first-child { font-weight: 500 }
+.co-type > div:first-child > span:last-child { display: flex; gap: 10px; align-items: center }
+.co-type i { font-size: 11px; font-weight: 700; font-style: normal; padding: 2px 10px; border-radius: 99px; color: #fff }
+.co-type i.u { background: rgba(217, 45, 32, .7) } .co-type i.n { background: rgba(210, 154, 46, .55) }
+.co-type b { font-size: 34px; line-height: 1; letter-spacing: -.02em }
+.co-bar { height: 14px; background: rgba(255, 255, 255, .1); border-radius: 99px; margin-top: 8px }
+.co-bar > div { height: 14px; border-radius: 99px }
+.co-bar .u { background: linear-gradient(90deg, #ff7a6e, #e0392d) } .co-bar .n { background: linear-gradient(90deg, #f0c76a, #d29a2e) }
+
+.co-days { display: flex; gap: 8px; flex: 1; min-height: 170px }
+.co-dy { width: 26px; flex: none; display: flex; flex-direction: column; justify-content: space-between; font-size: 12px; color: rgba(255, 255, 255, .85); text-align: end; line-height: 1 }
+.co-dplot { flex: 1; position: relative; display: flex; gap: 26px; align-items: flex-end; padding: 0 14px; border-bottom: 2px solid rgba(255, 255, 255, .5) }
+.co-dgrid { position: absolute; inset: 0; display: flex; flex-direction: column; justify-content: space-between; pointer-events: none }
+.co-dgrid i { border-top: 1px dashed rgba(255, 255, 255, .3) } .co-dgrid i:last-child { border: 0 }
+.co-dbar { position: relative; flex: 1; height: 100%; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; gap: 4px }
+.co-dbar b { font-size: 26px; line-height: 1 }
+.co-dbar div { width: 100%; max-width: 72px; border-radius: 12px 12px 0 0; background: linear-gradient(180deg, #fff, #f6d3de) }
+.co-dbar div.hot { background: linear-gradient(180deg, #ffd0cb, #ff7a6e) }
+.co-dx { display: flex; padding-inline-start: 34px; padding-top: 8px; font-size: 12px; color: rgba(255, 255, 255, .9) }
+.co-dx span { flex: 1; text-align: center }
+
+.co-line { background: #fff; border: 1px solid #ebe9e4; border-radius: 28px; padding: 26px; box-shadow: 0 8px 20px rgba(23, 23, 26, .08) }
+.co-line-h { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; flex-wrap: wrap }
+.co-line-t { display: flex; gap: 14px; align-items: center }
+.co-line-t > span { width: 44px; height: 44px; border-radius: 14px; background: #6b1730; color: #fff; display: grid; place-items: center }
+.co-line-t svg { width: 22px; height: 22px }
+.co-line-t h2 { font-size: 22px; letter-spacing: -.01em }
+.co-line-t div div { font-size: 13px; color: #4a4a50 }
+.co-chips { display: flex; gap: 10px; flex-wrap: wrap }
+.co-chips span { display: flex; gap: 8px; align-items: center; border-radius: 12px; padding: 8px 14px }
+.co-chips i { width: 18px; height: 4px; border-radius: 2px }
+.co-chips b { font-size: 20px }
+.co-chips .o { background: #f6e4ea } .co-chips .o i { background: #6b1730 } .co-chips .o b { color: #6b1730 }
+.co-chips .f { background: #e3f3ea } .co-chips .f i { background: #14633b } .co-chips .f b { color: #14633b }
+.co-line > svg { display: block; width: 100%; height: auto; max-height: 300px; margin-top: 14px }
+
+.co-bottom { display: flex; flex-wrap: wrap; gap: 16px; align-items: flex-start }
+.co-files { flex: 2 1 560px; min-width: 0; background: #fff; border: 1px solid #ebd5dc; border-radius: 28px; box-shadow: 0 8px 20px rgba(23, 23, 26, .12); overflow: hidden }
+.co-files-h { background: linear-gradient(135deg, #17171a 0%, #26141c 55%, #6b1730 100%); color: #fff; padding: 24px 26px; display: flex; justify-content: space-between; align-items: center; gap: 14px; flex-wrap: wrap }
+.co-files-t { display: flex; gap: 14px; align-items: center }
+.co-files-t > span { width: 44px; height: 44px; border-radius: 14px; background: rgba(255, 255, 255, .16); border: 1px solid rgba(255, 255, 255, .3); display: grid; place-items: center }
+.co-files-t svg { width: 22px; height: 22px }
+.co-files-t h2 { font-size: 22px; letter-spacing: -.01em }
+.co-files-t div div { font-size: 13px; color: #e4d3d8 }
+.co-tabs { display: flex; background: rgba(255, 255, 255, .12); border: 1px solid rgba(255, 255, 255, .25); border-radius: 14px; padding: 4px }
+.co-tabs button { border: 0; border-radius: 10px; padding: 8px 16px; font-weight: 600; background: transparent; color: #fff; cursor: pointer }
+.co-tabs button.on { background: #fff; color: #6b1730 }
+.co-files-b { padding: 20px 22px 22px }
+.co-scroll { overflow-x: auto }
+.co-grid { min-width: 600px; display: flex; flex-direction: column; gap: 8px }
+.co-gh, .co-gr { display: grid; grid-template-columns: minmax(0, 2.2fr) minmax(0, 1.6fr) 84px 140px 84px; gap: 12px; align-items: center }
+.co-gh { padding: 8px 16px; background: #f4f3f0; border-radius: 12px; font-size: 12px; font-weight: 600; color: #4a4a50 }
+.co-gh span:last-child, .co-date { text-align: end }
+.co-gr { padding: 11px 16px; border: 1px solid #ebe9e4; border-radius: 14px; background: #fff; cursor: pointer }
+.co-gr:hover { border-color: #d9a9b8; box-shadow: 0 8px 20px rgba(23, 23, 26, .12) }
+.co-gr em { font-size: 12px; font-weight: 700; font-style: normal; padding: 2px 10px; border-radius: 99px; border: 1.5px solid; background: #fff }
+.co-file { color: #2e2e33; overflow: hidden; text-overflow: ellipsis; white-space: nowrap }
+.co-date { color: #4a4a50 }
+.co-files .co-none { color: #4a4a50; text-align: center; padding: 22px }
+.co-foot { display: flex; justify-content: space-between; align-items: center; margin-top: 14px; font-size: 13px; color: #4a4a50 }
+.co-foot a { font-weight: 600 }
+
+.co-help { flex: 1 1 340px; min-width: 0; display: flex; flex-direction: column; gap: 14px }
+.co-help-h { display: flex; justify-content: space-between; align-items: center; gap: 8px }
+.co-help-h > div { display: flex; gap: 12px; align-items: center }
+.co-help-h > div > svg { width: 36px; height: 36px; padding: 9px; flex: none; border-radius: 11px; background: linear-gradient(135deg, #8f2447, #c24a6e); color: #fff }
+.co-help-h h2 { font-size: 18px }
+.co-help-h small { display: block; font-size: 12px; color: #4a4a50 }
+.co-help-h > span { background: #6b1730; color: #fff; font-weight: 700; font-size: 13px; padding: 1px 10px; border-radius: 99px }
+.co-hc { position: relative; overflow: hidden; color: #fff; border-radius: 26px; padding: 22px; box-shadow: 0 8px 20px rgba(23, 23, 26, .12); background: linear-gradient(150deg, #b3295a, #8f2447 55%, #5a1228) }
+.co-hc.u { background: linear-gradient(150deg, #e0392d, #a11d12 55%, #6b1730) }
+.co-hc-none { background: #fff; color: #1c1c1f; border: 1px solid #ebe9e4 }
+.co-hwm { width: 140px; height: 140px; inset-inline-end: -20px; bottom: -26px; opacity: .13 }
+.co-hr { position: relative; display: flex; gap: 12px; align-items: center }
+.co-hr > span { width: 46px; height: 46px; flex: none; border-radius: 50%; background: rgba(255, 255, 255, .2); border: 1px solid rgba(255, 255, 255, .4); display: grid; place-items: center; font-weight: 700 }
+.co-hr > div { flex: 1; min-width: 0 }
+.co-hr b { font-size: 16px }
+.co-hr small { display: block; font-size: 12px; color: rgba(255, 255, 255, .85) }
+.co-hr i { font-size: 11px; font-weight: 700; font-style: normal; padding: 3px 10px; border-radius: 99px; background: rgba(255, 255, 255, .2); border: 1px solid rgba(255, 255, 255, .4) }
+.co-hc p { position: relative; margin: 14px 0 6px; font-size: 16px; font-weight: 600; line-height: 1.35 }
+.co-hc-none p { font-weight: 400; font-size: 14px; color: #4a4a50 }
+.co-hc em { position: relative; display: inline-block; max-width: 100%; font-size: 12px; font-style: normal; background: rgba(0, 0, 0, .22); border-radius: 8px; padding: 3px 10px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap }
+.co-hb { position: relative; display: flex; gap: 8px; margin-top: 16px }
+.co-hb a, .co-hb button { flex: 1; height: 40px; border-radius: 12px; display: grid; place-items: center; font: inherit; cursor: pointer; text-decoration: none }
+.co-hb a { background: #fff; color: #3f0d1c; font-weight: 700 } .co-hb a:hover { background: #f6e4ea; color: #3f0d1c }
+.co-hb button { border: 1px solid rgba(255, 255, 255, .5); background: rgba(255, 255, 255, .12); color: #fff; font-weight: 600 } .co-hb button:hover { background: rgba(255, 255, 255, .24) }
+.co-hc > small { position: relative; display: block; font-size: 11px; color: rgba(255, 255, 255, .85); margin-top: 10px }
+
+/* ------------------------------------------------------------------ landing page */
+@keyframes sjMorph { 0% { border-radius: 62% 38% 46% 54% / 56% 44% 56% 44% } 50% { border-radius: 40% 60% 58% 42% / 48% 62% 38% 52% } 100% { border-radius: 54% 46% 36% 64% / 42% 58% 42% 58% } }
+body:has(.ld) { background: #fbf8f9 }
+html { scroll-behavior: smooth }
+.ld { font-family: Inter, system-ui, sans-serif; color: #1c1c1f; font-size: 16px; line-height: 1.5; overflow-x: hidden; background: #fbf8f9 }
+.ld button { font: inherit; cursor: pointer; border: 0; background: none; color: inherit }
+.ld a { text-decoration: none }
+.ld h1, .ld h2 { margin: 0 }
+.ld-nav { position: sticky; top: 0; z-index: 10; background: rgba(255, 255, 255, .92); backdrop-filter: blur(10px); border-bottom: 1px solid #efe3e7; display: flex; align-items: center; gap: 24px; padding: 14px 48px; flex-wrap: wrap }
+.ld-logo { display: flex; align-items: center; gap: 10px; color: #17171a }
+.ld-logo span { width: 10px; height: 28px; background: #8f2447; border-radius: 3px }
+.ld-logo b { font-size: 28px; letter-spacing: -.02em }
+.ld-logo i { font-size: 22px; font-weight: 600; color: #8f2447; font-style: normal }
+.ld-links { flex: 1 1 300px; display: flex; justify-content: center; gap: 34px }
+.ld .ld-lnk { color: #2e2e33; padding: 8px 0; border-bottom: 2px solid transparent; font-weight: 500; font-size: 15px }
+.ld .ld-lnk:hover { color: #6b1730; border-bottom-color: #8f2447 }
+.ld .ld-pill { background: #6b1730; color: #fff; border-radius: 99px; padding: 12px 24px; font-weight: 600; box-shadow: 0 8px 20px rgba(107, 23, 48, .3) }
+.ld .ld-pill:hover { background: #531226 }
+.ld .ld-fill { display: inline-block; background: #6b1730; color: #fff; border-radius: 99px; padding: 15px 30px; font-weight: 600; box-shadow: 0 12px 26px rgba(107, 23, 48, .35) }
+.ld .ld-fill:hover { background: #531226 }
+.ld .ld-outline { border: 1.5px solid #3f0d1c; color: #3f0d1c; border-radius: 99px; padding: 14px 30px; font-weight: 600; background: rgba(255, 255, 255, .7) }
+.ld .ld-outline:hover { background: #fff }
+
+.ld-hero { position: relative; overflow: hidden; background: linear-gradient(100deg, #fff 0%, #fbf1f4 45%, #f1dde4 100%); min-height: 560px; padding: 64px 48px 84px; display: flex; align-items: center }
+.ld-blob { position: absolute; inset-inline-end: calc(5% - 24px); top: 50%; transform: translateY(-52%); width: min(460px, 38%); aspect-ratio: 1/1; background: linear-gradient(145deg, #c24a6e, #6b1730); opacity: .85; animation: sjMorph 14s ease-in-out infinite alternate }
+.ld-blob.b2 { inset-inline-end: calc(5% + 28px); transform: translateY(-44%); background: none; border: 2px solid #8f2447; opacity: .35; animation-direction: alternate-reverse }
+.ld-photo { position: absolute; inset-inline-end: 5%; top: 50%; transform: translateY(-50%); width: min(460px, 38%); aspect-ratio: 1/1; overflow: hidden; box-shadow: 0 30px 60px rgba(63, 13, 28, .35); border: 6px solid #fff; background: #fff; animation: sjMorph 14s ease-in-out infinite alternate }
+.ld-photo img { width: 100%; height: 100%; object-fit: cover; object-position: 41% 50%; display: block }
+.ld-chip { position: absolute; display: flex; align-items: center }
+.ld-chip-a { inset-inline-end: calc(5% + min(460px, 38%) - 70px); top: calc(50% + 120px); gap: 12px; background: rgba(255, 255, 255, .72); backdrop-filter: blur(14px); border: 1px solid rgba(255, 255, 255, .9); border-radius: 20px; padding: 12px 18px 12px 12px; box-shadow: 0 18px 36px rgba(63, 13, 28, .22) }
+.ld-chip-a > span { width: 42px; height: 42px; border-radius: 14px; background: linear-gradient(135deg, #8f2447, #c24a6e); display: grid; place-items: center }
+.ld-chip-a b { font-size: 15px } .ld-chip-a div div { font-size: 12px; color: #4a4a50 } .ld-chip-a > div { line-height: 1.2 }
+.ld-chip-b { inset-inline-end: calc(5% + min(460px, 38%) - 20px); top: calc(50% - 190px); gap: 10px; background: rgba(23, 23, 26, .82); backdrop-filter: blur(14px); color: #fff; border-radius: 99px; padding: 8px 16px 8px 8px; box-shadow: 0 14px 30px rgba(23, 23, 26, .3) }
+.ld-chip-b > span { width: 30px; height: 30px; border-radius: 50%; background: #14633b; display: grid; place-items: center; font-size: 15px }
+.ld-chip-b b { font-size: 13px; font-weight: 600 }
+.ld-dots { position: absolute; inset-inline-end: 2%; bottom: 30px; opacity: .5 }
+.ld-hero-text { position: relative; z-index: 1; max-width: min(560px, 50%); min-width: 300px }
+.ld-eyebrow { display: flex; align-items: center; gap: 14px; color: #8f2447; font-weight: 700 }
+.ld-hero .ld-eyebrow { font-size: 20px }
+.ld-eyebrow i { width: 70px; height: 2px; background: #8f2447 }
+.ld-hero h1 { margin: 14px 0 18px; font-size: clamp(34px, 4.4vw, 60px); line-height: 1.06; letter-spacing: -.03em; font-weight: 800; color: #3f0d1c }
+.ld-hero p { margin: 0 0 30px; font-size: 19px; color: #2e2e33; max-width: 520px }
+.ld-cta { display: flex; gap: 14px; flex-wrap: wrap }
+
+.ld-feat { max-width: 1280px; margin: -44px auto 0; padding: 0 32px; position: relative; z-index: 2 }
+.ld-feat > div { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr)); gap: 1px; background: #f1e8eb; border: 1px solid #efe3e7; border-radius: 28px; box-shadow: 0 18px 44px rgba(107, 23, 48, .12); overflow: hidden }
+.ld-feat > div > div { display: flex; gap: 16px; align-items: flex-start; padding: 28px 26px; background: #fff }
+.ld-feat span { width: 52px; height: 52px; flex: none; border-radius: 16px; background: linear-gradient(135deg, #8f2447, #c24a6e); display: grid; place-items: center; box-shadow: 0 8px 18px rgba(143, 36, 71, .3) }
+.ld-feat b { font-size: 18px }
+.ld-feat div div div { color: #4a4a50; font-size: 15px }
+
+.ld-sol { max-width: 1280px; margin: 0 auto; padding: 100px 32px 80px; display: flex; flex-wrap: wrap; gap: 56px; align-items: center }
+.ld-sol-t { flex: 1 1 360px; min-width: 0 }
+.ld-eyebrow i { flex: none }
+.ld-sol .ld-eyebrow i { width: 60px }
+.ld-sol h2 { margin: 12px 0 16px; font-size: clamp(32px, 3.6vw, 48px); line-height: 1.1; letter-spacing: -.02em; font-weight: 800; color: #17171a }
+.ld-sol p { margin: 0 0 26px; font-size: 18px; color: #2e2e33 }
+.ld-sol .ld-fill { padding: 14px 28px; box-shadow: none }
+.ld-win { flex: 1.5 1 480px; min-width: 0; display: flex; border-radius: 22px; overflow: hidden; box-shadow: 0 30px 60px rgba(23, 23, 26, .22); border: 1px solid #2e2e33; background: #f5f4f2 }
+.ld-win-s { width: 170px; flex: none; background: linear-gradient(180deg, #1c1c20, #17171a 55%, #3a1626); padding: 20px 12px; color: #d4d4d8; font-size: 13px; display: flex; flex-direction: column; gap: 4px }
+.ld-win-s > div { display: flex; gap: 8px; align-items: center; padding: 0 8px 14px }
+.ld-win-s i { width: 7px; height: 20px; background: #8f2447; border-radius: 2px }
+.ld-win-s b { color: #fff; font-size: 18px }
+.ld-win-s span { padding: 9px 12px; border-radius: 10px }
+.ld-win-s .on { background: linear-gradient(90deg, #6b1730, #8f2447); color: #fff }
+.ld-win-m { flex: 1; min-width: 0; padding: 20px }
+.ld-win-m > b { font-size: 18px }
+.ld-win-k { display: grid; grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); gap: 10px; margin: 14px 0 }
+.ld-win-k > div { background: #fff; border: 1px solid #efe3e7; border-radius: 14px; padding: 12px }
+.ld-win-k i { display: block; width: 24px; height: 24px; border-radius: 8px }
+.ld-win-k b { font-size: 22px; display: block; margin-top: 6px }
+.ld-win-k span { font-size: 12px; color: #4a4a50 }
+.ld-win-a { background: #fff; border: 1px solid #efe3e7; border-radius: 14px; padding: 12px 14px; font-size: 13px }
+.ld-win-a > div { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #f1e8eb }
+.ld-win-a > div:last-child { border: 0 } .ld-win-a > div span:last-child { color: #4a4a50 } .ld-win-a i { font-style: normal }
+
+.ld-sign { position: relative; overflow: hidden; background: linear-gradient(160deg, #17171a 0%, #26141c 55%, #4a1a2e 100%); padding: 96px 32px; color: #fff }
+.ld-sign::before { content: ''; position: absolute; inset-inline-end: -120px; top: -120px; width: 420px; height: 420px; border-radius: 50%; background: radial-gradient(circle, rgba(194, 74, 110, .45), rgba(194, 74, 110, 0) 70%) }
+.ld-sign::after { content: ''; position: absolute; inset-inline-start: -100px; bottom: -140px; width: 380px; height: 380px; border-radius: 50%; background: radial-gradient(circle, rgba(143, 36, 71, .5), rgba(143, 36, 71, 0) 70%) }
+.ld-sign-in { position: relative; z-index: 1; max-width: 1180px; margin: 0 auto }
+.ld-sign-h { text-align: center; margin-bottom: 48px }
+.ld-sign-h > div { color: #e7a3b6; font-weight: 700; letter-spacing: .1em; font-size: 13px }
+.ld-sign-h h2 { margin: 10px 0 8px; font-size: clamp(32px, 3.8vw, 50px); letter-spacing: -.02em; font-weight: 800 }
+.ld-sign-h p { margin: 0; color: #e4d3d8; font-size: 18px }
+.ld-sign-g { display: flex; flex-wrap: wrap; gap: 22px; align-items: stretch }
+.ld .ld-google { flex: 1.4 1 360px; min-width: 0; position: relative; overflow: hidden; display: flex; flex-direction: column; justify-content: space-between; gap: 36px; min-height: 300px; padding: 34px; border-radius: 30px; background: linear-gradient(135deg, #b3295a 0%, #8f2447 45%, #5a1228 100%); color: #fff; box-shadow: 0 24px 50px rgba(0, 0, 0, .4), inset 0 1px 0 rgba(255, 255, 255, .25); transition: transform .2s }
+.ld .ld-google:hover { transform: translateY(-6px); color: #fff }
+.ld-rings { position: absolute; inset-inline-end: -40px; bottom: -50px; width: 260px; opacity: .16 }
+.ld-g-top { position: relative; display: flex; justify-content: space-between; align-items: flex-start }
+.ld-g-top > span { width: 64px; height: 64px; border-radius: 20px; background: #fff; display: grid; place-items: center; box-shadow: 0 10px 24px rgba(0, 0, 0, .3) }
+.ld-g-top i { background: rgba(255, 255, 255, .18); border: 1px solid rgba(255, 255, 255, .3); border-radius: 99px; padding: 5px 14px; font-size: 13px; font-weight: 600; font-style: normal }
+.ld-g-bot { position: relative; display: flex; flex-direction: column; align-items: flex-start }
+.ld-g-bot b { font-size: 30px; letter-spacing: -.01em }
+.ld-g-bot > span { color: #f6d9e2; font-size: 17px }
+.ld-g-bot > div { display: inline-flex; gap: 10px; align-items: center; margin-top: 22px; background: #fff; color: #6b1730; border-radius: 99px; padding: 12px 24px; font-weight: 700 }
+.ld-portals { flex: 1 1 280px; min-width: 0; display: flex; flex-direction: column; gap: 22px }
+.ld .ld-portal { flex: 1; position: relative; display: flex; align-items: center; gap: 20px; padding: 24px 26px; border-radius: 26px; background: rgba(255, 255, 255, .07); border: 1px solid rgba(255, 255, 255, .2); backdrop-filter: blur(8px); color: #fff; text-align: start; transition: transform .2s, background .2s, border-color .2s }
+.ld .ld-portal:hover { transform: translateX(6px); background: rgba(255, 255, 255, .14); border-color: rgba(231, 163, 182, .8) }
+.ld-portal > span { width: 60px; height: 60px; flex: none; border-radius: 50%; display: grid; place-items: center; box-shadow: 0 0 0 6px rgba(255, 255, 255, .08) }
+.ld-portal > div { flex: 1; min-width: 0 }
+.ld-portal small { display: block; font-size: 12px; letter-spacing: .1em; color: #e7a3b6; font-weight: 700 }
+.ld-portal b { font-size: 24px }
+.ld-portal > div > div { color: #e4d3d8; font-size: 15px }
+.ld-portal > i { width: 42px; height: 42px; flex: none; border-radius: 50%; border: 1.5px solid rgba(255, 255, 255, .4); display: grid; place-items: center; font-size: 18px; font-style: normal }
+.ld-dev { margin: 28px 0 0; text-align: center; font-size: 13px; color: #e4d3d8 }
+.ld-dev a { color: #f6d9e2; text-decoration: underline }
+
+.ld-end { max-width: 1280px; margin: 0 auto; padding: 60px 32px 70px }
+.ld-end > div { position: relative; overflow: hidden; display: flex; align-items: center; gap: 28px; flex-wrap: wrap; padding: 44px 40px; border-radius: 28px; background: linear-gradient(100deg, #f6e4ea, #ece7ee); border: 1px solid #ebd5dc }
+.ld-end img { position: absolute; inset-inline-end: 0; bottom: 0; width: min(460px, 42%); aspect-ratio: 1024/410; object-fit: cover; -webkit-mask-image: linear-gradient(to right, transparent 0, #000 45%); mask-image: linear-gradient(to right, transparent 0, #000 45%) }
+.ld-end > div > span { position: relative; width: 6px; height: 56px; background: #8f2447; border-radius: 3px }
+.ld-end > div > div { position: relative; flex: 1 1 320px; max-width: 520px }
+.ld-end b { font-size: 26px; color: #3f0d1c }
+.ld-end > div > div > div { color: #2e2e33 }
+.ld-end .ld-fill { position: relative; padding: 14px 28px; box-shadow: 0 10px 24px rgba(107, 23, 48, .35) }
+.ld-foot { border-top: 1px solid #efe3e7; padding: 24px 48px; display: flex; justify-content: space-between; flex-wrap: wrap; gap: 12px; color: #4a4a50; font-size: 14px }
+.ld-foot b { color: #17171a }
+
+@media (max-width: 900px) {
+  .ld-nav { padding: 12px 20px } .ld-links { display: none } .ld-hero { padding: 48px 20px 90px; flex-direction: column; align-items: flex-start }
+  .ld-blob, .ld-photo, .ld-chip, .ld-dots { display: none } .ld-hero-text { max-width: 100% } .ld-foot { padding: 20px }
+}
+
+/* landing hero: gentle idle drift. Uses the independent 'translate' property so it adds to the centring transforms. */
+@keyframes sjFloat { 0%, 100% { translate: 0 0 } 50% { translate: 10px -18px } }
+@keyframes sjFloatB { 0%, 100% { translate: 0 0 } 50% { translate: -12px 12px } }
+@keyframes sjBob { 0%, 100% { translate: 0 0 } 50% { translate: 0 -12px } }
+.ld-photo { animation: sjMorph 11s ease-in-out infinite alternate, sjFloat 5.5s ease-in-out infinite }
+.ld-blob.b1 { animation: sjMorph 11s ease-in-out infinite alternate, sjFloatB 7s ease-in-out infinite }
+.ld-blob.b2 { animation: sjMorph 11s ease-in-out infinite alternate-reverse, sjFloat 8s ease-in-out infinite reverse }
+.ld-chip-a { animation: sjBob 4.2s ease-in-out infinite }
+.ld-chip-b { animation: sjBob 5s ease-in-out -2s infinite }
+.ld-dots { animation: sjFloatB 9.5s ease-in-out infinite }
+@media (prefers-reduced-motion: reduce) { .ld-photo, .ld-blob, .ld-chip, .ld-dots { animation: none } }
+
+/* landing hero: mouse parallax. app.js sets --mx and --my (-1 to 1) from the cursor; nearer layers move further. */
+.ld-hero { --mx: 0; --my: 0 }
+.ld-photo, .ld-blob, .ld-chip, .ld-dots, .ld-hero-text { transition: transform .9s cubic-bezier(.2, .7, .3, 1) }
+.ld-photo { transform: translateY(-50%) translate(calc(var(--mx) * -22px), calc(var(--my) * -16px)) }
+.ld-blob.b1 { transform: translateY(-52%) translate(calc(var(--mx) * 34px), calc(var(--my) * 26px)) }
+.ld-blob.b2 { transform: translateY(-44%) translate(calc(var(--mx) * -12px), calc(var(--my) * -10px)) }
+.ld-chip-a { transform: translate(calc(var(--mx) * -34px), calc(var(--my) * -24px)) }
+.ld-chip-b { transform: translate(calc(var(--mx) * 28px), calc(var(--my) * 20px)) }
+.ld-dots { transform: translate(calc(var(--mx) * 16px), calc(var(--my) * 16px)) }
+.ld-hero-text { transform: translate(calc(var(--mx) * 8px), calc(var(--my) * 6px)) }
+
+/* landing: carry the dark maroon of the sign-in section (160deg #17171a, #26141c, #4a1a2e) into the nav, icons, closing band and footer */
+.ld-nav { background: linear-gradient(100deg, rgba(23, 23, 26, .94) 0%, rgba(38, 20, 28, .94) 55%, rgba(74, 26, 46, .94) 100%); border-bottom-color: rgba(255, 255, 255, .08) }
+.ld-logo { color: #fff } .ld-logo i { color: #e7a3b6 }
+.ld .ld-lnk { color: #e4d3d8 } .ld .ld-lnk:hover { color: #fff; border-bottom-color: #e7a3b6 }
+.ld .ld-pill { background: #fff; color: #6b1730; box-shadow: 0 8px 20px rgba(0, 0, 0, .3) } .ld .ld-pill:hover { background: #f6e4ea; color: #3f0d1c }
+.ld-feat span, .ld-chip-a > span { background: linear-gradient(135deg, #17171a 0%, #26141c 45%, #6b1730 100%); box-shadow: 0 8px 18px rgba(23, 23, 26, .25) }
+.ld-win { border-color: #4a1a2e }
+.ld-end > div { background: linear-gradient(160deg, #17171a 0%, #26141c 55%, #4a1a2e 100%); border-color: transparent; color: #fff }
+.ld-end > div > span { background: #e7a3b6 }
+.ld-end b { color: #fff } .ld-end > div > div > div { color: #e4d3d8 }
+.ld-end img { opacity: .55 }
+.ld-end .ld-fill { background: #fff; color: #6b1730; box-shadow: 0 10px 24px rgba(0, 0, 0, .35) } .ld-end .ld-fill:hover { background: #f6e4ea; color: #3f0d1c }
+.ld-foot { background: linear-gradient(100deg, #17171a 0%, #26141c 55%, #4a1a2e 100%); border-top: 0; color: #c9b8be }
+.ld-foot b { color: #fff }
+.ld .ld-logo, .ld .ld-logo b { color: #fff }

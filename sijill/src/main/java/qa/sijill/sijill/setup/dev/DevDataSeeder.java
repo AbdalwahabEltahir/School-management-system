@@ -85,6 +85,7 @@ public class DevDataSeeder implements ApplicationRunner {
     private final NoticeService notices;
     private final MaterialService materials;
     private final Clock clock;
+    private final qa.sijill.sijill.people.service.ParentLinks parentLinks;
 
     @Override
     @Transactional
@@ -138,7 +139,7 @@ public class DevDataSeeder implements ApplicationRunner {
             engine.evaluateFile(f.getId());
         }
         seedSchoolPortal(org, school, maths, it, coordinator, teacher);
-        log.info("Dev seed created. Sign in at /dev/login (leadership, it, principal, coordinator, teacher, student).");
+        log.info("Dev seed created. Sign in at /dev/login (leadership, it, principal, coordinator, teacher, student, parent).");
     }
 
     /** A class, its students and teachers, a timetable, marks, a notice and a study material, so both portals have content. */
@@ -152,6 +153,10 @@ public class DevDataSeeder implements ApplicationRunner {
         Person amal = person(org, school, "amal.student", "Amal Student", Role.STUDENT, null);
         Person bader = person(org, school, "bader.student", "Bader Student", Role.STUDENT, null);
         Person cara = person(org, school, "cara.student", "Cara Student", Role.STUDENT, null);
+        Person parent = person(org, school, "maha.parent", "Maha Parent", Role.PARENT, null); // follows Amal and Bader
+        log.info("Seeded student IDs (a parent registers with one): Amal {}, Bader {}, Cara {}", amal.getStudentCode(), bader.getStudentCode(), cara.getStudentCode());
+        parentLinks.link(parent.getId(), amal.getId());
+        parentLinks.link(parent.getId(), bader.getId());
 
         CurrentUser admin = new CurrentUser(it.getId(), org.getId(), school.getId(), Role.SCHOOL_IT, null, it.getEmail(), it.getDisplayName());
         CurrentUser sara = new CurrentUser(teacher.getId(), org.getId(), school.getId(), Role.TEACHER, maths.getId(), teacher.getEmail(), teacher.getDisplayName());
@@ -177,7 +182,7 @@ public class DevDataSeeder implements ApplicationRunner {
                 new AcademicDtos.MarkInput(bader.getId(), new BigDecimal("28.5"), false),
                 new AcademicDtos.MarkInput(cara.getId(), new BigDecimal("33"), false)));
         marks.submit(sara, quiz.id());
-        marks.publish(admin, section.id(), 1);
+        marks.publish(sara, section.id(), 1);
         marks.create(sara, section.id(), maths.getId(), 2, "Mid-term exam", new BigDecimal("100")); // still open: the teacher has work to do
 
         Instant now = Instant.now(clock);
@@ -201,7 +206,7 @@ public class DevDataSeeder implements ApplicationRunner {
         p.setRole(role);
         p.setStatus(PersonStatus.ACTIVE);
         p.setSubjectId(subject == null ? null : subject.getId());
-        return people.save(p);
+        return people.saveAndFlush(p);
     }
 
     private SchoolFile file(Site site, Subject subject, Person owner, String name, String folder, DriveType drive,

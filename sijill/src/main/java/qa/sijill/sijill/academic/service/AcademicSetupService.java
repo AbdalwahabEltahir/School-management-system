@@ -98,7 +98,7 @@ public class AcademicSetupService {
                 UUID own = enrolments.findByStudentId(user.personId()).map(Enrolment::getSectionId).orElse(null);
                 yield all.stream().filter(s -> s.getId().equals(own)).toList();
             }
-            case LEADERSHIP -> List.of();
+            case LEADERSHIP, PARENT -> List.of();
         };
         Map<UUID, Long> counts = enrolments.findBySiteId(user.siteId()).stream()
                 .collect(Collectors.groupingBy(Enrolment::getSectionId, Collectors.counting()));
@@ -175,8 +175,8 @@ public class AcademicSetupService {
     /** The students of a section. Not available to students (they never see their classmates). */
     @Transactional(readOnly = true)
     public List<StudentView> roster(CurrentUser user, UUID sectionId) {
-        if (user.is(Role.STUDENT)) {
-            throw new ForbiddenException("Students cannot see the class list.");
+        if (user.isAny(Role.STUDENT, Role.PARENT)) {
+            throw new ForbiddenException("Students and parents cannot see the class list.");
         }
         access.requireView(user, sectionId);
         return access.students(sectionId).stream().map(p -> new StudentView(p.getId(), p.getDisplayName(), p.getEmail())).toList();
@@ -221,7 +221,7 @@ public class AcademicSetupService {
 
     @Transactional(readOnly = true)
     public List<AssignmentView> assignmentsOf(CurrentUser user, UUID sectionId) {
-        if (user.is(Role.STUDENT) || user.is(Role.LEADERSHIP)) {
+        if (user.isAny(Role.STUDENT, Role.PARENT, Role.LEADERSHIP)) {
             throw new ForbiddenException("Teaching assignments are not available for your role.");
         }
         access.requireView(user, sectionId);

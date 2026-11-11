@@ -65,8 +65,10 @@ class SchoolPortalTest extends WorldTestSupport {
     @Autowired AttendanceService attendance;
     @Autowired MarksService marks;
     @Autowired NoticeService notices;
+    @Autowired qa.sijill.sijill.notifications.service.NotificationService notificationService;
     @Autowired MaterialService materials;
     @Autowired PortalService portal;
+    @Autowired qa.sijill.sijill.academic.service.ParentPortalService parentPortal;
     @Autowired PlanningService planning;
     @Autowired ActivityLogService activityLog;
     @Autowired qa.sijill.sijill.people.service.PeopleService peopleService;
@@ -261,12 +263,10 @@ class SchoolPortalTest extends WorldTestSupport {
         marks.submit(teacher, quiz);
 
         assertThatThrownBy(() -> marks.enter(teacher, quiz, allMarks(s, "36", "28.5", null))).isInstanceOf(ConflictException.class).hasMessageContaining("locked");
-        assertThatThrownBy(() -> marks.unlock(teacher, quiz, "I want to")).isInstanceOf(ForbiddenException.class);
-        assertThatThrownBy(() -> marks.unlock(it, quiz, " ")).isInstanceOf(BadRequestException.class);
+        assertThatThrownBy(() -> marks.unlock(it, quiz, "I want to")).isInstanceOf(ForbiddenException.class); // not School IT's job
+        assertThatThrownBy(() -> marks.unlock(teacher, quiz, " ")).isInstanceOf(BadRequestException.class);
 
-        long before = count(s.w().teacher(), NotificationKind.SYSTEM);
-        marks.unlock(it, quiz, "Wrong mark for Amal");
-        assertThat(count(s.w().teacher(), NotificationKind.SYSTEM)).isEqualTo(before + 1); // the teacher is told
+        marks.unlock(teacher, quiz, "Wrong mark for Amal");
         assertThat(marks.enter(teacher, quiz, allMarks(s, "36", "28.5", null))).isEqualTo(1);
         assertThat(marks.list(teacher, null)).singleElement().satisfies(a -> assertThat(a.submitted()).isFalse());
     }
@@ -282,12 +282,13 @@ class SchoolPortalTest extends WorldTestSupport {
         marks.submit(teacher, quiz);
 
         assertThat(marks.myResults(user(s.s1()))).isEmpty();
-        assertThatThrownBy(() -> marks.publish(it, s.b(), 3)).isInstanceOf(ConflictException.class).hasMessageContaining("no assessments");
+        assertThatThrownBy(() -> marks.publish(teacher, s.b(), 3)).isInstanceOf(ConflictException.class).hasMessageContaining("no assessments");
         marks.enter(teacher, exam, allMarks(s, "80", "70", "60"));
-        assertThatThrownBy(() -> marks.publish(it, s.b(), 2)).isInstanceOf(ConflictException.class).hasMessageContaining("not submitted");
+        assertThatThrownBy(() -> marks.publish(teacher, s.b(), 2)).isInstanceOf(ConflictException.class).hasMessageContaining("not submitted");
 
         long told = count(s.s1(), NotificationKind.SYSTEM);
-        marks.publish(it, s.b(), 1);
+        assertThatThrownBy(() -> marks.publish(it, s.b(), 1)).isInstanceOf(ForbiddenException.class); // School IT does not publish
+        marks.publish(teacher, s.b(), 1);
 
         assertThat(count(s.s1(), NotificationKind.SYSTEM)).isEqualTo(told + 1); // "your results are published"
         assertThat(marks.myResults(user(s.s1()))).singleElement().satisfies(r -> {
@@ -297,10 +298,10 @@ class SchoolPortalTest extends WorldTestSupport {
         });
         assertThat(marks.myResults(user(s.s2())).get(0).value()).isEqualByComparingTo("28.5"); // each student sees their own
         assertThat(marks.myResults(user(s.other()))).isEmpty(); // another section sees nothing
-        assertThatThrownBy(() -> marks.publish(it, s.b(), 1)).isInstanceOf(ConflictException.class).hasMessageContaining("already published");
-        assertThatThrownBy(() -> marks.unlock(it, quiz, "x")).isInstanceOf(ConflictException.class).hasMessageContaining("Unpublish");
-        assertThatThrownBy(() -> marks.unpublish(it, s.b(), 1, "")).isInstanceOf(BadRequestException.class);
-        marks.unpublish(it, s.b(), 1, "A mark was wrong");
+        assertThatThrownBy(() -> marks.publish(teacher, s.b(), 1)).isInstanceOf(ConflictException.class).hasMessageContaining("already published");
+        assertThatThrownBy(() -> marks.unlock(teacher, quiz, "x")).isInstanceOf(ConflictException.class).hasMessageContaining("Unpublish");
+        assertThatThrownBy(() -> marks.unpublish(teacher, s.b(), 1, "")).isInstanceOf(BadRequestException.class);
+        marks.unpublish(teacher, s.b(), 1, "A mark was wrong");
         assertThat(marks.myResults(user(s.s1()))).isEmpty();
     }
 
@@ -358,8 +359,25 @@ class SchoolPortalTest extends WorldTestSupport {
         assertThat(p.canSignIn()).isTrue();
         assertThatThrownBy(() -> peopleService.add(user(w.it()), "new.teacher@" + domain, "Again", Role.TEACHER, null)).isInstanceOf(ConflictException.class);
         assertThatThrownBy(() -> peopleService.add(user(w.it()), "someone@unknown-domain.test", "X", Role.TEACHER, null)).isInstanceOf(BadRequestException.class).hasMessageContaining("domain");
+        assertThat(peopleService.add(user(w.it()), "kid@my-own-mail.test", "Kid", Role.STUDENT, null).canSignIn()).isTrue(); // a student may use any e-mail
         assertThatThrownBy(() -> peopleService.add(user(w.it()), "boss@" + domain, "Boss", Role.LEADERSHIP, null)).isInstanceOf(BadRequestException.class);
         assertThatThrownBy(() -> peopleService.add(user(w.teacher()), "x@" + domain, "X", Role.TEACHER, null)).isInstanceOf(ForbiddenException.class);
+    }
+
+    @Test
+    void aParentSeesOnlyTheirOwnChildReadOnly() {
+        School s = school();
+        var it = user(s.w().it());
+        assertThatThrownBy(() -> peopleService.add(it, "mum@my-own-mail.test", "Mum", Role.PARENT, null, null)).isInstanceOf(BadRequestException.class);
+        var parent = peopleService.add(it, "mum@my-own-mail.test", "Mum", Role.PARENT, null, s.s1().getId()); // any e-mail
+        var me = user(parent);
+
+        assertThat(parentPortal.children(me)).singleElement().satisfies(c -> assertThat(c.id()).isEqualTo(s.s1().getId()));
+        assertThat(parentPortal.child(me, s.s1().getId()).section()).isNotNull();
+        assertThatThrownBy(() -> parentPortal.child(me, s.s2().getId())).isInstanceOf(NotFoundException.class); // not their child
+        assertThatThrownBy(() -> marks.list(me, null)).isInstanceOf(ForbiddenException.class);
+        assertThatThrownBy(() -> setup.roster(me, s.b())).isInstanceOf(ForbiddenException.class);
+        assertThatThrownBy(() -> parentPortal.children(user(s.s1()))).isInstanceOf(ForbiddenException.class); // students are not parents
     }
 
     @Test
@@ -399,6 +417,19 @@ class SchoolPortalTest extends WorldTestSupport {
         assertThat(notices.current(user(s.w().teacher()))).singleElement().satisfies(n -> assertThat(n.audience()).isEqualTo(NoticeAudience.STAFF));
         assertThat(notices.manage(it)).hasSize(4);
         assertThatThrownBy(() -> notices.manage(user(s.w().teacher()))).isInstanceOf(ForbiddenException.class);
+    }
+
+    @Test
+    void aStaffNoticeRingsTheBellOfStaffButNotOfStudentsOrItsAuthor() {
+        School s = school();
+        var it = user(s.w().it());
+        Instant now = Instant.parse("2026-11-10T06:00:00Z");
+
+        notices.create(it, notice("عطلة", now.minusSeconds(60), now.plusSeconds(3600), NoticeAudience.STAFF));
+
+        assertThat(notificationService.mine(user(s.w().teacher()))).anyMatch(n -> (n.getTitle().contains("Holiday") || n.getTitle().contains("عطلة")));
+        assertThat(notificationService.mine(user(s.s1()))).noneMatch(n -> (n.getTitle().contains("Holiday") || n.getTitle().contains("عطلة")));
+        assertThat(notificationService.mine(it)).noneMatch(n -> (n.getTitle().contains("Holiday") || n.getTitle().contains("عطلة")));
     }
 
     @Test

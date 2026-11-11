@@ -1,0 +1,71 @@
+/* =====================================================================================
+   Coordinator inner screens (.cx): same flat, modern language as the Overview (.co).
+   Plain grey shadows only. Loaded after pages.css.
+   ===================================================================================== */
+.frame:has(.cx), .frame:has(.cx) .content { background: #f5f4f2 }
+.page.cx { max-width: none; padding: 26px 28px 36px }
+.cx .ok, .cx .err { border-radius: 14px; padding: 12px 16px; margin-bottom: 16px }
+.cx-stack { display: flex; flex-direction: column; gap: 20px }
+.cx-act { flex-wrap: wrap }
+.cx-act .btn { flex: none; white-space: nowrap }
+
+/* cards */
+.cx-card { background: #fff; border: 1px solid #ebe9e4; border-radius: 24px; padding: 26px; box-shadow: 0 8px 20px rgba(23, 23, 26, .08) }
+.cx-ch { display: flex; gap: 14px; align-items: center; margin-bottom: 18px; flex-wrap: wrap }
+.cx-ci { width: 40px; height: 40px; flex: none; border-radius: 12px; background: #6b1730; color: #fff; display: grid; place-items: center }
+.cx-ci svg { width: 20px; height: 20px }
+.cx-ch h2 { margin: 0; font-size: 19px; letter-spacing: -.01em }
+.cx-ch small { display: block; font-size: 13px; color: #4a4a50 }
+.cx-ex { margin-inline-start: auto }
+.cx-empty { border: 1px dashed #d9d6d0; border-radius: 16px; padding: 26px 16px; text-align: center; color: #4a4a50; background: #faf9f7 }
+
+/* stat tiles */
+.cx .kpi-grid { grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin-bottom: 0 }
+.cx-k { position: relative; overflow: hidden; border-radius: 24px; padding: 20px 22px; color: #fff; min-height: 150px; box-shadow: 0 8px 20px rgba(23, 23, 26, .12); display: flex; flex-direction: column; justify-content: flex-end; gap: 2px; background: linear-gradient(135deg, #17171a 0%, #2a1119 55%, #6b1730 100%) }
+.cx-k-amber { background: linear-gradient(150deg, #b7791f 0%, #8a5a14 60%, #5d3d0c 100%) }
+.cx-k-green { background: linear-gradient(150deg, #1f9d62 0%, #14633b 55%, #0b3f26 100%) }
+.cx-k-slate { background: linear-gradient(135deg, #17171a 0%, #26141c 60%, #4a1a2e 100%) }
+.cx-k > span { position: absolute; top: 18px; inset-inline-end: 18px; width: 40px; height: 40px; border-radius: 12px; background: rgba(255, 255, 255, .18); border: 1px solid rgba(255, 255, 255, .3); display: grid; place-items: center }
+.cx-k > span svg { width: 20px; height: 20px; fill: none; stroke: #fff; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round }
+.cx-k b { font-size: 52px; line-height: 1; letter-spacing: -.04em }
+.cx-k small { font-size: 13px; color: rgba(255, 255, 255, .85); font-weight: 600 }
+
+/* tables */
+.cx table.t { border-collapse: separate; border-spacing: 0 8px }
+.cx table.t th { background: #f4f3f0; color: #4a4a50; font-size: 12px; font-weight: 600; border: 0; padding: 9px 16px }
+.cx table.t th:first-child { border-radius: 12px 0 0 12px }
+.cx table.t th:last-child { border-radius: 0 12px 12px 0 }
+.cx table.t td { background: #fff; border-top: 1px solid #ebe9e4; border-bottom: 1px solid #ebe9e4; padding: 12px 16px; vertical-align: middle }
+.cx table.t td:first-child { border-inline-start: 1px solid #ebe9e4; border-radius: 14px 0 0 14px }
+.cx table.t td:last-child { border-inline-end: 1px solid #ebe9e4; border-radius: 0 14px 14px 0 }
+.cx table.t tr:hover td, .cx table.t tr.click:hover td { background: #fff; border-color: #d9a9b8 }
+.cx table.t tr.click { cursor: pointer }
+
+/* controls */
+.cx .btn { min-height: 42px; border-radius: 12px; font-weight: 600; border: 1px solid #d9d6d0; background: #fff; color: #1c1c1f; box-shadow: 0 8px 20px rgba(23, 23, 26, .12) }
+.cx .btn:hover { border-color: #8f2447; color: #6b1730; background: #fff }
+.cx .btn-sm { min-height: 34px; border-radius: 10px; box-shadow: none }
+.cx .btn-primary { background: #6b1730; border-color: #6b1730; color: #fff }
+.cx .btn-primary:hover { background: #531226; border-color: #531226; color: #fff }
+.cx .btn-danger { background: #fde8e6; border-color: #f3b4ad; color: #a11d12; box-shadow: none }
+.cx .btn-danger:hover { background: #fbd5d1; color: #a11d12 }
+.cx .input, .cx .field input, .cx .field select, .cx .field textarea { min-height: 44px; padding: 0 14px; border: 1px solid #e2e0db; border-radius: 12px; background: #fff; font: inherit }
+.cx .field textarea { padding: 10px 14px }
+.cx .input:focus, .cx .field input:focus, .cx .field select:focus, .cx .field textarea:focus { outline: none; border-color: #8f2447; box-shadow: 0 0 0 4px rgba(143, 36, 71, .12) }
+.cx .field label { font-weight: 600; font-size: 13px; color: #3f0d1c }
+.cx .seg { padding: 4px; gap: 4px; border: 0; border-radius: 14px; background: #f4f3f0 }
+.cx .seg-btn { border-radius: 10px; min-height: 36px; background: transparent; font-weight: 600 }
+.cx .seg-on, .cx .seg-on:hover { background: #6b1730; color: #fff }
+.cx .timeline { display: flex; flex-direction: column; gap: 10px }
+.cx .timeline li { margin: 0; padding: 14px 16px; border: 1px solid #ebe9e4; border-inline-start: 4px solid #6b1730; border-radius: 14px; background: #fff }
+.cx .callout { border-radius: 14px }
+.cx .grid-row3 { gap: 16px }
+.cx .stack { gap: 16px }
+.cx .row > select, .cx select { min-height: 44px; padding: 0 14px; border: 1px solid #e2e0db; border-radius: 12px; background: #fff; font: inherit; color: #1c1c1f }
+.cx select:focus { outline: none; border-color: #8f2447; box-shadow: 0 0 0 4px rgba(143, 36, 71, .12) }
+
+/* long menus (School IT) scroll above the skyline instead of sliding under it */
+.sidebar .nav { min-height: 0 }
+.side-sky { position: relative; z-index: 0 }
+.side-ok { z-index: 1 }
+@media (max-height: 960px) { .side-sky { display: none } }

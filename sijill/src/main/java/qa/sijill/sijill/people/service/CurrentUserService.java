@@ -53,16 +53,20 @@ public class CurrentUserService implements CurrentUserProvider {
     public CurrentUser require() {
         String email = signedInEmail();
 
-        // Only the school domains (and head office) are accepted.
-        String domain = email.substring(email.indexOf('@') + 1);
-        Site site = sites.findByDomainIgnoreCase(domain)
-                .filter(s -> s.isActive())
-                .orElseThrow(() -> new UnauthenticatedException(NOT_SET_UP));
-
-        Person person = people.findByEmailIgnoreCase(email)
-                .or(() -> provision(site, email))
-                .filter(Person::canSignIn)
-                .orElseThrow(() -> new UnauthenticatedException(NOT_SET_UP));
+        // A student or parent School IT added signs in with their own e-mail, whatever its domain. Everybody else is accepted
+        // only through a school domain (and head office).
+        Person person = people.findByEmailIgnoreCase(email).filter(Person::canSignIn)
+                .filter(p -> p.getRole() == Role.STUDENT || p.getRole() == Role.PARENT).orElse(null);
+        if (person == null) {
+            String domain = email.substring(email.indexOf('@') + 1);
+            Site site = sites.findByDomainIgnoreCase(domain)
+                    .filter(s -> s.isActive())
+                    .orElseThrow(() -> new UnauthenticatedException(NOT_SET_UP));
+            person = people.findByEmailIgnoreCase(email)
+                    .or(() -> provision(site, email))
+                    .filter(Person::canSignIn)
+                    .orElseThrow(() -> new UnauthenticatedException(NOT_SET_UP));
+        }
 
         return new CurrentUser(person.getId(), person.getOrgId(), person.getSiteId(), person.getRole(),
                 person.getSubjectId(), person.getEmail(), person.getDisplayName());

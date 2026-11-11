@@ -63,6 +63,7 @@ public class PeopleService {
             Role.LEADERSHIP, Role.SCHOOL_IT, Role.PRINCIPAL, Role.COORDINATOR, Role.TEACHER);
 
     private final PersonRepository people;
+    private final ParentLinks parentLinks;
     private final SiteRepository sites;
     private final SubjectRepository subjects;
     private final RoleGroupRepository roleGroups;
@@ -105,7 +106,7 @@ public class PeopleService {
     // ================================================================== School IT actions
 
     /** Roles School IT may give a new person. Leadership and School IT accounts are not created from this screen. */
-    private static final List<Role> ADDABLE = List.of(Role.TEACHER, Role.COORDINATOR, Role.PRINCIPAL, Role.STUDENT);
+    private static final List<Role> ADDABLE = List.of(Role.TEACHER, Role.COORDINATOR, Role.PRINCIPAL, Role.STUDENT, Role.PARENT);
 
     /**
      * Adds a person to the user's school so they can sign in with their Google account. Sign-in checks that the
@@ -114,6 +115,12 @@ public class PeopleService {
      */
     @Transactional
     public Person add(CurrentUser user, String email, String name, Role role, UUID subjectId) {
+        return add(user, email, name, role, subjectId, null);
+    }
+
+    /** As above; a parent must be linked to the student they follow (studentId). */
+    @Transactional
+    public Person add(CurrentUser user, String email, String name, Role role, UUID subjectId, UUID studentId) {
         policy.requireRole(user, Role.SCHOOL_IT);
         String clean = email == null ? "" : email.trim().toLowerCase();
         if (!clean.matches("[^@\\s]+@[^@\\s]+\\.[^@\\s]+")) {
@@ -123,13 +130,21 @@ public class PeopleService {
             throw new BadRequestException("Please give the person's name.");
         }
         if (role == null || !ADDABLE.contains(role)) {
-            throw new BadRequestException("Choose Teacher, Coordinator, Principal or Student.");
+            throw new BadRequestException("Choose Teacher, Coordinator, Principal, Student or Parent.");
         }
         String domain = clean.substring(clean.indexOf('@') + 1);
         boolean knownDomain = sites.findByOrgIdOrderByName(user.orgId()).stream()
                 .anyMatch(s -> s.isActive() && s.getDomain().equalsIgnoreCase(domain));
-        if (!knownDomain) {
-            throw new BadRequestException("Nobody with @" + domain + " can sign in: that domain does not belong to any school of the network.");
+        if (role != Role.STUDENT && role != Role.PARENT && !knownDomain) {
+            throw new BadRequestException("Staff with @" + domain + " cannot sign in: that domain does not belong to any school of the network.");
+        }
+        Person child = null;
+        if (role == Role.PARENT) {
+            child = studentId == null ? null : people.findById(studentId)
+                    .filter(c -> c.getRole() == Role.STUDENT && c.getSiteId().equals(user.siteId())).orElse(null);
+            if (child == null) {
+                throw new BadRequestException("Choose the student this parent follows.");
+            }
         }
         if (people.findByEmailIgnoreCase(clean).isPresent()) {
             throw new ConflictException(clean + " already has an account.");
@@ -146,7 +161,10 @@ public class PeopleService {
                     .orElseThrow(() -> new BadRequestException("That subject does not belong to this school."));
             person.setSubjectId(subjectId);
         }
-        people.save(person);
+        people.saveAndFlush(person); // flushed: the link below is plain SQL and needs the row
+        if (child != null) {
+            parentLinks.link(person.getId(), child.getId());
+        }
         audit.log(person.getOrgId(), person.getSiteId(), ActivityActions.PERSON_ADDED).by(user)
                 .on("Person", person.getId()).change(null, clean + " as " + role).save();
         return person;

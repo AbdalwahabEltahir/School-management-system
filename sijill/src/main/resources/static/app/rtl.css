@@ -1,0 +1,55 @@
+/* =====================================================================================
+   Arabic (right to left). Most layout already uses logical properties (inline-start/end), so it mirrors by itself.
+   This file covers the rest: the Arabic font, rounded table rows, centred decorations, charts and the language switch.
+   ===================================================================================== */
+
+/* language switch buttons */
+.nav-lang span { font-family: 'IBM Plex Sans Arabic', Inter, system-ui, sans-serif }
+.sp-lang, .ld-lang, .card-lang { flex: none; white-space: nowrap; height: 40px; padding: 0 16px; border-radius: 99px; font: inherit; font-family: 'IBM Plex Sans Arabic', Inter, system-ui, sans-serif; font-weight: 600; font-size: 14px; cursor: pointer }
+.sp-lang { background: #fff; border: 1px solid #e2e0db; color: #6b1730; box-shadow: 0 4px 12px rgba(23, 23, 26, .05) }
+.sp-lang:hover { border-color: #8f2447 }
+.ld .ld-lang { background: rgba(255, 255, 255, .1); border: 1px solid rgba(255, 255, 255, .35); color: #fff }
+.ld .ld-lang:hover { background: rgba(255, 255, 255, .2) }
+.card-lang { float: inline-end; height: 34px; padding: 0 14px; background: #fff; border: 1px solid #e2e0db; color: #6b1730 }
+.card-lang:hover { border-color: #8f2447 }
+
+/* Arabic font everywhere except code-like values */
+html[lang='ar'] body, html[lang='ar'] body :not(.mono):not(code):not(pre) { font-family: 'IBM Plex Sans Arabic', Inter, system-ui, -apple-system, 'Segoe UI', sans-serif }
+html[lang='ar'] body * { letter-spacing: 0 !important }
+html[lang='ar'] body { line-height: 1.6 }
+html[lang='ar'] .ld h1, html[lang='ar'] .ld h2, html[lang='ar'] .sp-hero h1, html[lang='ar'] .co h1 { line-height: 1.3 }
+html[lang='ar'] .co-k-main b, html[lang='ar'] .co-k-n, html[lang='ar'] .cx-k b, html[lang='ar'] .sp-kpi b { font-family: Inter, system-ui, sans-serif }
+
+/* rounded table rows: swap the outer corners */
+[dir='rtl'] .lp table.t th:first-child, [dir='rtl'] .sp table.t th:first-child, [dir='rtl'] .cx table.t th:first-child { border-radius: 0 12px 12px 0 }
+[dir='rtl'] .lp table.t th:last-child, [dir='rtl'] .sp table.t th:last-child, [dir='rtl'] .cx table.t th:last-child { border-radius: 12px 0 0 12px }
+[dir='rtl'] .lp table.t td:first-child, [dir='rtl'] .sp table.t td:first-child, [dir='rtl'] .cx table.t td:first-child { border-radius: 0 14px 14px 0 }
+[dir='rtl'] .lp table.t td:last-child, [dir='rtl'] .sp table.t td:last-child, [dir='rtl'] .cx table.t td:last-child { border-radius: 14px 0 0 14px }
+[dir='rtl'] .lp table.t th:only-child, [dir='rtl'] .sp table.t td:only-child, [dir='rtl'] .cx table.t td:only-child { border-radius: 14px }
+
+/* decorations positioned from the start edge and centred with translateX */
+[dir='rtl'] .sp-sky { transform: translateX(50%) }
+[dir='rtl'] .ld-end img { -webkit-mask-image: linear-gradient(to left, transparent 0, #000 45%); mask-image: linear-gradient(to left, transparent 0, #000 45%) }
+[dir='rtl'] .ld .ld-portal:hover { transform: translateX(-6px) }
+[dir='rtl'] .ld-hero, [dir='rtl'] .sp-hero, [dir='rtl'] .sp-pagehead, [dir='rtl'] .co-files-h, [dir='rtl'] .sp-exam { background-position: right }
+
+/* charts read left to right in both languages (time runs left to right) */
+.sp-chart, .sp-tabs + .sp-chart-box, .co-days, .co-dx, .co-line > svg, .lo-chart, .lo-xlab, .lo-area-box, .lo-area-x, .xaxis, .chart-box { direction: ltr }
+[dir='rtl'] .sp-chart-box { direction: ltr }
+[dir='rtl'] .sp-chart-box .sp-x span, [dir='rtl'] .sp-y span { direction: rtl; unicode-bidi: plaintext }
+
+/* numbers, codes and e-mail addresses keep their own direction inside Arabic text */
+[dir='rtl'] .mono, [dir='rtl'] input[type='email'], [dir='rtl'] input[type='url'], [dir='rtl'] input[name='studentCode'] { direction: ltr; text-align: end }
+[dir='rtl'] .co-file, [dir='rtl'] .sp-user b, [dir='rtl'] .who b { unicode-bidi: plaintext }
+
+/* select arrows and date pickers sit on the left in RTL automatically; give the text room */
+[dir='rtl'] select.input, [dir='rtl'] .field select { padding-inline: 14px 32px }
+
+/* text people typed (notes, notice bodies, owner questions) keeps its own direction inside the Arabic layout */
+[dir='rtl'] .co-hc p, [dir='rtl'] .co-hc em, [dir='rtl'] .sp-notices p, [dir='rtl'] .sp-notices b, [dir='rtl'] .timeline div, [dir='rtl'] .sp-notes p, [dir='rtl'] .sp-act b, [dir='rtl'] .co-gr > span:first-child { unicode-bidi: plaintext }
+
+/* leadership tiles: Arabic labels are wider, so the mini chart moves under the label instead of beside it */
+html[lang='ar'] .lo-kpi { flex-wrap: wrap }
+html[lang='ar'] .lo-kpi-body { flex: 1 1 60% }
+html[lang='ar'] .lo-sp { flex: 1 1 100%; max-width: none }
+html[lang='ar'] .lo-chip { white-space: nowrap }

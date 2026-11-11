@@ -197,7 +197,7 @@ section > .page-head { margin-bottom: 22px }
 .b-normal { background: #fff; color: var(--amber-700); border: 1.5px solid var(--amber) }
 
 /* ------------------------------------------------------------------ KPI cards */
-.kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(310px, 1fr)); gap: 20px; margin-bottom: 22px }
+.kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 20px; margin-bottom: 22px }
 .kpi { position: relative; display: grid; grid-template-columns: auto 1fr; gap: 4px 16px; align-items: center; padding: 20px 22px; overflow: hidden }
 .kpi-ic { width: 52px; height: 52px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; grid-row: span 2 }
 .kpi-ic.t-brand { background: var(--brand-50); color: var(--brand) }
@@ -387,3 +387,247 @@ table.t tr.click:hover td { background: var(--brand-50) }
 .steps-list { margin: 8px 0 0; padding: 0; list-style: none }
 .steps-list li { padding: 6px 0 }
 .btn[disabled] { opacity: .5; cursor: not-allowed }
+
+/* landing page */
+.center-card.landing { max-width: 420px; width: 100%; text-align: center }
+.center-card.landing .brand-row { justify-content: center }
+.landing-main { display: flex; flex-direction: column; align-items: center; gap: 2px; width: 100%; padding: 14px 18px; text-decoration: none; box-sizing: border-box }
+.landing-main small { font-size: 12.5px; opacity: .85; font-weight: 400 }
+.landing-or { display: flex; align-items: center; gap: 12px; margin: 22px 0 14px; color: var(--muted, #6b7280); font-size: 12.5px }
+.landing-or::before, .landing-or::after { content: ''; flex: 1; height: 1px; background: currentColor; opacity: .25 }
+.landing-portals { display: grid; grid-template-columns: 1fr 1fr; gap: 12px }
+.landing-portal { display: flex; flex-direction: column; gap: 2px; padding: 14px 10px; border: 1px solid rgba(128, 128, 128, .35); border-radius: 12px; text-decoration: none; color: var(--ink); background: #fff; box-sizing: border-box }
+.landing-portal small { font-size: 12px; color: var(--muted, #6b7280) }
+a.landing-portal:hover { border-color: var(--accent, #9b1c4b); box-shadow: 0 2px 10px rgba(0, 0, 0, .08) }
+.landing-off { opacity: .55; cursor: not-allowed }
+@media (max-width: 440px) { .landing-portals { grid-template-columns: 1fr } }
+
+button.landing-portal { font: inherit; cursor: pointer; text-align: left }
+
+/* ------------------------------------------------------------------ leadership overview (.lo) */
+.lo { display: flex; flex-direction: column; gap: 22px }
+.lo-hero { position: relative; overflow: hidden; border-radius: 22px; color: #fff; padding: 30px 32px; min-height: 150px;
+  background: radial-gradient(circle at 85% 120%, rgba(231, 163, 182, .45), rgba(143, 36, 71, .25) 40%, transparent 70%), linear-gradient(100deg, #17171A 0%, #1F1419 55%, #3A1626 100%) }
+.lo-art { position: absolute; inset-block: 0; inset-inline-end: 0; width: 72%; height: 100%; pointer-events: none; -webkit-mask-image: linear-gradient(to right, transparent 0, #000 38%); mask-image: linear-gradient(to right, transparent 0, #000 38%) }
+[dir='rtl'] .lo-art { transform: scaleX(-1) }
+.lo-hero-tools { display: flex; gap: 12px; align-items: center }
+.lo-bell { position: relative; width: 44px; height: 44px; display: grid; place-items: center; border: 1px solid rgba(255, 255, 255, .35); border-radius: 8px; background: rgba(255, 255, 255, .08); color: #fff }
+.lo-bell:hover { background: rgba(255, 255, 255, .18); color: #fff; text-decoration: none }
+.lo-bell svg { width: 18px; height: 18px }
+.lo-bell span { position: absolute; top: -7px; inset-inline-end: -7px; min-width: 20px; height: 20px; padding: 0 5px; border-radius: 99px; background: #fff; color: #17171A; font-size: 11px; font-weight: 700; display: grid; place-items: center }
+.lo-hero-top { position: relative; display: flex; flex-wrap: wrap; gap: 16px; align-items: center; justify-content: space-between }
+.lo-hero-text { padding-inline-start: 18px; position: relative }
+.lo-hero-text::before { content: ''; position: absolute; inset-inline-start: 0; top: 2px; bottom: 2px; width: 4px; border-radius: 99px; background: #E7A3B6 }
+.lo-hero h1 { margin: 0; font-size: 30px; font-weight: 700; line-height: 1.2 }
+.lo-hero p { margin: 6px 0 0; color: #E4E4E7; font-size: 15px; max-width: 640px }
+.lo-ok { color: #7FE0B0; font-weight: 700 }
+.lo-hero-btn { display: inline-flex; gap: 8px; align-items: center; height: 44px; padding: 0 18px; border-radius: 10px; background: #8F2447; color: #fff; font-weight: 600; text-decoration: none }
+.lo-hero-btn:hover { background: #A42C53; color: #fff; text-decoration: none }
+.lo-hero-btn svg { width: 16px; height: 16px }
+.lo-body { display: flex; flex-direction: column; gap: 20px }
+.lo svg { fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round }
+
+.lo-kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 16px }
+.lo-kpi { position: relative; overflow: hidden; display: flex; gap: 14px; align-items: flex-start; min-height: 120px; padding: 20px; border: 1px solid #EBE9E4; border-radius: 20px;
+  background: linear-gradient(180deg, #fff 40%, var(--lo-tile)); box-shadow: 0 10px 28px rgba(23, 23, 26, .08); color: inherit; text-decoration: none; --lo-c: #3A3A40; --lo-tile: #ECE9E4 }
+a.lo-kpi:hover { text-decoration: none; transform: translateY(-2px); color: inherit }
+.lo-good { --lo-c: #14633B; --lo-tile: #E3F3EA } .lo-watch { --lo-c: #B7791F; --lo-tile: #FBEFD0 } .lo-bad { --lo-c: #A11D12; --lo-tile: #FDE8E6 } .lo-brand { --lo-c: #6B1730; --lo-tile: #F6E4EA } .lo-slate { --lo-c: #3A3A40; --lo-tile: #ECE9E4 }
+.lo-kpi-ic { flex: none; width: 52px; height: 52px; border-radius: 15px; background: var(--lo-c); color: #fff; display: grid; place-items: center }
+.lo-kpi-ic svg { width: 26px; height: 26px }
+.lo-kpi-label { font-weight: 600; font-size: 14.5px; color: #2E2E33 }
+.lo-kpi-val { display: flex; align-items: baseline; gap: 6px }
+.lo-kpi-val b { font-size: 38px; line-height: 1.1; letter-spacing: -.02em; color: var(--lo-c) }
+.lo-kpi-val span { color: #4A4A50 }
+.lo-kpi-sub { font-size: 12.5px; color: #4A4A50 }
+
+.lo-card { background: #fff; border: 1px solid #EBE9E4; border-radius: 20px; box-shadow: 0 8px 24px rgba(23, 23, 26, .07); padding: 20px }
+.lo-card-head { display: flex; flex-wrap: wrap; gap: 10px; align-items: flex-start; margin-bottom: 14px }
+.lo-card-head h2 { margin: 0; font-size: 17px; font-weight: 700 }
+.lo-card-head small { display: block; color: #4A4A50; font-size: 13px; margin-top: 2px }
+.lo-card-head .card-link { margin-inline-start: auto }
+.lo-pill { background: #6B1730; color: #fff; font-weight: 700; font-size: 13px; padding: 1px 10px; border-radius: 99px }
+.lo-decisions { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 12px }
+.lo-decision { border: 1px solid #E2E0DB; border-radius: 12px; padding: 14px; background: #FAF9F7 }
+.lo-dtype { font-size: 12px; font-weight: 600; color: #6B1730 } .lo-drule { font-weight: 600; font-size: 15px } .lo-dwhat { color: #4A4A50; font-size: 13px; margin-top: 4px }
+
+.lo-row { display: flex; flex-wrap: wrap; gap: 16px; align-items: stretch }
+.lo-grow { flex: 5 1 520px; min-width: 0 }
+.lo-col { flex: 2 1 300px; min-width: 0; display: flex; flex-direction: column; gap: 16px }
+.lo-schools { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 14px }
+.lo-school { position: relative; display: flex; flex-direction: column; gap: 10px; padding: 18px 20px; border: 1px solid #EBE9E4; border-radius: 18px; color: inherit; text-decoration: none; box-shadow: 0 6px 18px rgba(23, 23, 26, .07);
+  background: linear-gradient(160deg, var(--lo-tile) 0%, #fff 55%); transition: box-shadow .15s, transform .15s }
+.lo-school:hover { text-decoration: none; color: inherit; box-shadow: 0 12px 26px rgba(23, 23, 26, .14); transform: translateY(-2px) }
+.lo-s-good { --lo-c: #14633B; --lo-tile: #E3F3EA } .lo-s-watch { --lo-c: #B7791F; --lo-tile: #FBEFD0 } .lo-s-bad { --lo-c: #A11D12; --lo-tile: #FDE8E6 }
+.lo-sname { font-weight: 600; font-size: 15px }
+.lo-sscore b { font-size: 38px; line-height: 1; letter-spacing: -.02em }
+.lo-meter { height: 8px; border-radius: 99px; background: rgba(23, 23, 26, .08) }
+.lo-meter i { display: block; height: 8px; border-radius: 99px; background: var(--lo-c) }
+.lo-band { align-self: flex-start; background: #fff; border: 1px solid var(--lo-c); color: var(--lo-c); font-weight: 600; font-size: 13px; padding: 2px 12px; border-radius: 99px }
+.lo-sfoot { display: flex; justify-content: space-between; gap: 6px; font-size: 13.5px; color: #4A4A50; border-top: 1px solid rgba(23, 23, 26, .08); padding-top: 10px }
+.lo-red { color: #A11D12; font-weight: 600 }
+
+.lo-donut-wrap { display: flex; flex-wrap: wrap; gap: 18px; align-items: center; justify-content: center }
+.lo-donut { position: relative; width: 130px; height: 130px; display: grid; place-items: center }
+.lo-donut svg { width: 130px; height: 130px; transform: rotate(-90deg) }
+.lo-donut > div { position: absolute; text-align: center }
+.lo-donut b { display: block; font-size: 24px; line-height: 1.1 } .lo-donut span { font-size: 12px; color: #4A4A50 }
+.lo-legend { display: flex; flex-direction: column; gap: 8px; font-size: 13px }
+.lo-legend div { display: flex; gap: 8px; align-items: center } .lo-legend i { width: 10px; height: 10px; border-radius: 50% } .lo-legend span { min-width: 100px }
+
+.lo-quick { position: relative; overflow: hidden; display: flex; flex-direction: column; gap: 10px; border-radius: 20px; padding: 22px; color: #fff; box-shadow: 0 14px 34px rgba(23, 23, 26, .28);
+  background: linear-gradient(150deg, #26262B 0%, #17171A 55%, #3A1626 100%) }
+.lo-quick-head { display: flex; gap: 12px; align-items: center; margin-bottom: 4px }
+.lo-quick-head span { width: 40px; height: 40px; border-radius: 12px; background: linear-gradient(135deg, #8F2447, #C24A6E); display: grid; place-items: center }
+.lo-quick-head svg { width: 20px; height: 20px } .lo-quick-head h2 { margin: 0; font-size: 20px }
+.lo-quick a { display: flex; align-items: center; gap: 14px; min-height: 56px; padding: 10px 14px; border-radius: 14px; background: rgba(255, 255, 255, .07); border: 1px solid rgba(255, 255, 255, .12); color: #fff; font-weight: 600; text-decoration: none; transition: background .15s, border-color .15s }
+.lo-quick a:hover { background: rgba(255, 255, 255, .14); border-color: rgba(231, 163, 182, .6); color: #fff; text-decoration: none }
+.lo-qi { width: 36px; height: 36px; border-radius: 10px; background: rgba(231, 163, 182, .16); display: grid; place-items: center; color: #F4C3D0 } .lo-qi svg { width: 19px; height: 19px }
+.lo-ql { flex: 1 } .lo-qa { width: 28px; height: 28px; border-radius: 50%; background: rgba(255, 255, 255, .12); display: grid; place-items: center }
+
+/* ------------------------------------------------------------------ modern layer: full-width overview, sidebar, charts */
+.page:has(.lo) { max-width: none; padding: 0 0 60px }
+.lo { gap: 0 }
+.lo-hero { border-radius: 0; min-height: 230px; padding: 34px 40px 60px }
+.lo-hero h1 { font-size: 34px }
+.lo-body { padding: 0 32px; margin-top: -34px; position: relative; z-index: 2; gap: 20px }
+.lo-kpi { background: linear-gradient(180deg, rgba(255,255,255,.98) 35%, var(--lo-tile)); backdrop-filter: blur(6px); transition: transform .15s, box-shadow .15s }
+.lo-kpi:hover { transform: translateY(-2px); box-shadow: 0 16px 34px rgba(23, 23, 26, .14) }
+.lo-kpi-body { position: relative; z-index: 1; min-width: 0 }
+.lo-spark { position: absolute; inset-inline-end: 0; bottom: 0; width: 44%; height: 62px; color: var(--lo-c); pointer-events: none }
+.lo-c5 { flex: 5 1 420px; min-width: 0 } .lo-c3 { flex: 3 1 300px; min-width: 0 } .lo-trend { flex: 4 1 380px; min-width: 0 }
+.lo-card { transition: box-shadow .15s }
+.lo-card:hover { box-shadow: 0 14px 34px rgba(23, 23, 26, .11) }
+.lo-sub { display: block; margin: -8px 0 6px; color: #4A4A50; font-size: 13px }
+.lo-pill-red { background: #FDE8E6; color: #A11D12; border: 1px solid #F3B4AD }
+.lo-delta { margin-top: 14px; padding-top: 10px; border-top: 1px solid #ECEAE6; font-size: 13px; color: #14633B; font-weight: 600 }
+.lo-schools { grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)) }
+
+.lo-chart-title { display: flex; justify-content: space-between; margin-top: 12px; font-weight: 600; font-size: 13px; color: #1C1C1F }
+.lo-chart-title.red { color: #A11D12 }
+.lo-chart { display: flex; gap: 8px; margin-top: 8px }
+.lo-y { width: 30px; flex: none; display: flex; flex-direction: column; justify-content: space-between; font-size: 12px; color: #4A4A50; text-align: end; line-height: 1 }
+.lo-plot { position: relative; flex: 1; min-width: 0 }
+.lo-grid { position: absolute; inset: 0; display: flex; flex-direction: column; justify-content: space-between; pointer-events: none }
+.lo-grid i { border-top: 1px solid #DCD9D3 }
+.lo-bars { position: relative; height: 100%; display: flex; gap: 14px; align-items: flex-end; padding: 0 10px }
+.lo-bar { flex: 1; height: 100%; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; gap: 3px }
+.lo-bar span { font-size: 12px; font-weight: 600 }
+.lo-bar i { display: block; width: 100%; max-width: 56px; border-radius: 8px 8px 0 0; background: linear-gradient(180deg, #4A4A52, #1C1C1F) }
+.lo-bar.red span { color: #A11D12 } .lo-bar.red i { background: linear-gradient(180deg, #F0554A, #A11D12) }
+.lo-xlab { display: flex; gap: 8px; margin-top: 6px; font-size: 12px; color: #4A4A50 }
+.lo-xlab > div { flex: 1; display: flex; gap: 14px; padding: 0 10px } .lo-xlab > div span { flex: 1; text-align: center }
+
+.lo-table { display: flex; flex-direction: column; gap: 8px; overflow-x: auto }
+.lo-tr { display: grid; grid-template-columns: minmax(110px, 1.4fr) minmax(140px, 2fr) 80px minmax(100px, 1fr) 44px; gap: 12px; align-items: center; min-width: 540px; padding: 12px 16px; border: 1px solid #EBE9E4; border-radius: 14px; background: #fff; color: inherit; text-decoration: none; transition: box-shadow .15s, border-color .15s }
+a.lo-tr:hover { box-shadow: 0 6px 16px rgba(23, 23, 26, .10); border-color: #D9A9B8; text-decoration: none; color: inherit }
+.lo-th { background: #F4F3F0; border-color: transparent; font-size: 12px; font-weight: 600; color: #4A4A50; padding: 8px 16px }
+.lo-end { text-align: end } .lo-muted { color: #4A4A50; font-weight: 600 }
+.lo-sev { font-style: normal; display: inline-block; background: #FDE8E6; color: #A11D12; border: 1px solid #F3B4AD; font-size: 12px; font-weight: 600; padding: 1px 10px; border-radius: 99px }
+.lo-inc { padding: 10px 0; border-bottom: 1px solid #ECEAE6; display: flex; flex-direction: column; gap: 4px; font-size: 13px }
+.lo-inc-top { display: flex; justify-content: space-between; gap: 8px } .lo-inc-top b { font-size: 14px } .lo-inc-top span { color: #4A4A50 }
+.lo-inc-foot { display: flex; justify-content: space-between; align-items: center; gap: 8px }
+
+/* sidebar: same dark-maroon language as the banner, with the skyline at the foot */
+.sidebar {
+  background: radial-gradient(circle at 20% 100%, rgba(143, 36, 71, .35), transparent 60%), linear-gradient(180deg, #1C1C20 0%, #17171A 55%, #2A1220 100%);
+  padding-bottom: 0; overflow: hidden
+}
+.who { display: flex; gap: 12px; align-items: center; margin: 0 4px 14px; padding: 12px; border-radius: 12px; background: #202024; border: 1px solid #2E2E33 }
+.who-av { width: 36px; height: 36px; flex: none; border-radius: 50%; background: #6B1730; color: #fff; display: grid; place-items: center; font-weight: 600; font-size: 12px }
+.who b { margin-bottom: 1px }
+.nav { padding-bottom: 8px }
+.side-sky { position: relative; margin: 8px -14px 0; flex: none }
+.side-sky svg { display: block; width: 100%; height: 120px }
+.side-ok { position: absolute; z-index: 1; top: -2px; inset-inline-start: 22px; display: flex; gap: 8px; align-items: center; font-size: 12px; color: #D4D4D8 }
+.side-ok i { width: 8px; height: 8px; border-radius: 50%; background: #5FD39A; box-shadow: 0 0 0 4px rgba(95, 211, 154, .2) }
+@media (max-width: 1000px) { .side-sky { display: none } .lo-hero { padding: 26px 18px 54px } .lo-body { padding: 0 14px } }
+
+.lo-area-top { display: flex; justify-content: space-between; align-items: flex-end; margin: 4px 0 8px }
+.lo-area-top b { font-size: 36px; line-height: 1; color: #A11D12; letter-spacing: -.02em } .lo-area-top div span { margin-inline-start: 6px; color: #4A4A50; font-size: 13px }
+.lo-area-peak { font-size: 12px; color: #4A4A50 }
+.lo-area-box { display: flex; gap: 8px; height: 130px }
+.lo-area-box svg { flex: 1; min-width: 0; height: 100%; display: block; border-bottom: 1px solid #C9C6C0 }
+.lo-area-box svg .g { stroke: #E4E1DB; stroke-width: 1; vector-effect: non-scaling-stroke }
+.lo-area-x { display: flex; justify-content: space-between; margin: 6px 0 4px 38px; font-size: 12px; color: #4A4A50 }
+
+/* ------------------------------------------------------------------ Leadership inner pages (.lp): maroon-accent modern cards */
+.page:has(.lo) > .ok, .page:has(.lo) > .err { margin: 16px 32px 0 }
+.lo-hero-sm { min-height: 150px; padding: 28px 40px 56px }
+.lo-hero-sm h1 { font-size: 30px }
+.lo-hero .btn { background: rgba(255, 255, 255, .1); border-color: rgba(255, 255, 255, .35); color: #fff; box-shadow: none; backdrop-filter: blur(6px) }
+.lo-hero .btn:hover { background: rgba(255, 255, 255, .2); color: #fff }
+.lo-hero .btn-primary { background: #8F2447; border-color: #8F2447 }
+.lo-hero .btn-primary:hover { background: #A42C53 }
+.lp .stack-gap > * + * { margin-top: 20px }
+.lp .lo-kpis { margin-bottom: 4px }
+
+/* cards: white, soft shadow, maroon accent bar */
+.lp .card { position: relative; overflow: hidden; border: 1px solid #EBE9E4; border-radius: 20px; padding: 22px 24px; box-shadow: 0 8px 24px rgba(23, 23, 26, .07) }
+.lp .card::before { content: ''; position: absolute; inset-inline-start: 0; top: 0; width: 100%; height: 3px; background: linear-gradient(90deg, #8F2447, #C24A6E 60%, transparent) }
+.lp .card-head h2 { font-size: 17px; display: flex; align-items: center; gap: 10px }
+.lp .card-head h2::before { content: ''; width: 8px; height: 8px; border-radius: 3px; background: #8F2447; box-shadow: 0 0 0 3px rgba(143, 36, 71, .18) }
+.lp .card-link { color: #8F2447 }
+
+/* tables: spaced rounded rows, maroon header */
+.lp table.t { border-collapse: separate; border-spacing: 0 8px }
+.lp table.t th { background: #F6E4EA; color: #6B1730; font-size: 11.5px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; border: 0; padding: 10px 14px }
+.lp table.t th:first-child { border-radius: 10px 0 0 10px } .lp table.t th:last-child { border-radius: 0 10px 10px 0 }
+.lp table.t td { background: #fff; border-top: 1px solid #EBE9E4; border-bottom: 1px solid #EBE9E4; padding: 14px; vertical-align: middle }
+.lp table.t td:first-child { border-inline-start: 1px solid #EBE9E4; border-radius: 12px 0 0 12px } .lp table.t td:last-child { border-inline-end: 1px solid #EBE9E4; border-radius: 0 12px 12px 0 }
+.lp table.t tr:hover td { background: #FCF4F7; border-color: #E8C3D0 }
+
+/* controls */
+.lp .btn { border-radius: 12px }
+.lp .btn:hover { border-color: #D9A9B8; background: #FCF4F7 }
+.lp .btn-primary { background: linear-gradient(135deg, #B03060, #8F2447 60%, #6B1730); border-color: #6B1730; color: #fff; box-shadow: 0 6px 16px rgba(143, 36, 71, .3) }
+.lp .btn-primary:hover { background: linear-gradient(135deg, #8F2447, #6B1730); color: #fff }
+.lp .seg { border-radius: 99px; padding: 3px; gap: 3px; border-color: #EBE9E4 } .lp .seg-btn { border-radius: 99px } .lp .seg-on, .lp .seg-on:hover { background: #8F2447 }
+.lp .input:focus, .lp .field input:focus, .lp .field select:focus, .lp .field textarea:focus { outline: none; border-color: #8F2447; box-shadow: 0 0 0 4px rgba(143, 36, 71, .12) }
+.lp .kpi-grid .kpi { border-radius: 20px; background: linear-gradient(180deg, #fff 40%, #F6E4EA) }
+.lp .timeline { display: flex; flex-direction: column; gap: 10px }
+.lp .timeline li { padding: 14px 16px; border: 1px solid #EBE9E4; border-inline-start: 4px solid #8F2447; border-radius: 14px; margin: 0; background: #fff; transition: box-shadow .15s }
+.lp .timeline li:hover { box-shadow: 0 8px 18px rgba(23, 23, 26, .09) }
+.lp .callout-warn { border-radius: 14px }
+
+/* incident list */
+.lp-list { display: flex; flex-direction: column; gap: 10px }
+.lp-item { display: flex; gap: 14px; align-items: center; padding: 16px 18px; border: 1px solid #EBE9E4; border-radius: 16px; background: #fff; transition: box-shadow .15s, transform .15s }
+.lp-item:hover { box-shadow: 0 10px 22px rgba(23, 23, 26, .10); transform: translateY(-1px) }
+.lp-dot { width: 12px; height: 12px; flex: none; border-radius: 50%; background: #12A66E; box-shadow: 0 0 0 5px rgba(18, 166, 110, .15) }
+.lp-item.is-open { background: linear-gradient(90deg, #FDF1F4, #fff 45%); border-color: #F0C9D5 }
+.lp-item.is-open .lp-dot { background: #8F2447; box-shadow: 0 0 0 5px rgba(143, 36, 71, .18) }
+.lp-item-main { flex: 1; min-width: 0 } .lp-item-top { display: flex; gap: 10px; align-items: center; flex-wrap: wrap } .lp-item-top b { font-size: 15px }
+.lp-item p { margin: 4px 0 2px; color: #2E2E33 } .lp-item small { color: #7A8194; font-size: 12px }
+
+/* rule and school cards */
+.lp-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 16px }
+.lp-rule { position: relative; overflow: hidden; display: flex; flex-direction: column; gap: 8px; padding: 20px 22px; border: 1px solid #EBE9E4; border-radius: 20px; background: linear-gradient(160deg, #FCF4F7 0%, #fff 50%); box-shadow: 0 6px 18px rgba(23, 23, 26, .07); transition: box-shadow .15s, transform .15s }
+.lp-rule::after { content: ''; position: absolute; inset-inline-end: -40px; top: -50px; width: 130px; height: 130px; border-radius: 50%; background: radial-gradient(circle, rgba(143, 36, 71, .18), transparent 70%); pointer-events: none }
+.lp-rule:hover { box-shadow: 0 14px 30px rgba(23, 23, 26, .13); transform: translateY(-2px) }
+.lp-rule.is-off { opacity: .72; background: #fff }
+.lp-rule-top { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; position: relative; z-index: 1 }
+.lp-code { min-width: 40px; height: 32px; padding: 0 10px; border-radius: 10px; background: linear-gradient(135deg, #B03060, #6B1730); color: #fff; font-weight: 700; font-size: 13px; display: inline-grid; place-items: center; box-shadow: 0 6px 14px rgba(143, 36, 71, .3) }
+.lp-rule h3 { margin: 4px 0 0; font-size: 16px; font-weight: 700; position: relative; z-index: 1 }
+.lp-rule p { margin: 0; color: #4B5263; font-size: 13.5px; flex: 1; position: relative; z-index: 1 }
+.lp-meta { display: flex; justify-content: space-between; gap: 8px; font-size: 13px; color: #4B5263; border-top: 1px solid rgba(23, 23, 26, .08); padding-top: 10px; position: relative; z-index: 1 }
+.lp-rule .row { position: relative; z-index: 1 }
+
+/* bigger KPI tiles with a detailed trend */
+.lo-kpis { grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 18px }
+.lo-kpi { min-height: 190px; padding: 24px 24px 20px; gap: 16px; border-radius: 22px }
+.lo-kpi-ic { width: 60px; height: 60px; border-radius: 17px }
+.lo-kpi-ic svg { width: 30px; height: 30px }
+.lo-kpi-label { font-size: 16px }
+.lo-kpi-val b { font-size: 52px }
+.lo-kpi-val span { font-size: 17px }
+.lo-kpi-sub { font-size: 13px; margin-top: 4px; line-height: 1.5 }
+.lo-kpi-body { flex: 1 1 46% }
+.lo-chip { display: inline-block; font-size: 12px; font-weight: 700; padding: 1px 9px; border-radius: 99px; background: #ECEAE6; color: #4A4A50; margin-inline-end: 4px }
+.lo-chip.up { background: #E3F3EA; color: #14633B } .lo-chip.down { background: #FDE8E6; color: #A11D12 }
+.lo-sp { position: relative; z-index: 1; flex: 0 0 48%; max-width: 270px; align-self: stretch; display: flex; flex-direction: column; justify-content: flex-end; color: var(--lo-c) }
+.lo-sp svg { width: 100%; height: auto; display: block; overflow: visible }
+.lo-sp-row { display: flex; justify-content: space-between; gap: 6px; font-size: 11.5px; color: #4A4A50 }
+.lo-sp-row b { color: var(--lo-c); font-size: 12px }
+.lo-sp-lo { color: #7A8194; margin-top: 1px }
+.lo-kpi .lo-spark { display: none }
+@media (max-width: 720px) { .lo-kpi { flex-wrap: wrap } .lo-sp { flex-basis: 100%; max-width: none } }
