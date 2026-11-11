@@ -128,17 +128,21 @@ jobs:
           done
           echo "App did not become healthy"; tail -n 80 sijill/app.log; exit 1
 
-      - name: Every demo role can sign in by name
+      - name: Test sign-in offers only the approved accounts
         run: |
           set -e
-          for name in Lina Omar Reem Huda Sara Amal Maha; do
+          # The seeded demo people are not on the approved list (Abdalwahab, Huda, Nora, Rajaa, Teacher1, Teacher2,
+          # Student, Parent with matching roles), so the list must not show them and signing in as them must be refused.
+          people=$(curl -sf http://localhost:8080/api/auth/test/people)
+          echo "offered: $people"
+          for name in Lina Omar Reem Sara Amal Maha; do
+            if echo "$people" | grep -q "\"name\":\"$name "; then echo "$name must not be offered"; exit 1; fi
             jar=$(mktemp)
             curl -s -c "$jar" -b "$jar" -o /dev/null http://localhost:8080/api/auth/options
             token=$(grep XSRF "$jar" | awk '{print $7}')
-            curl -sf -c "$jar" -b "$jar" -H "X-XSRF-TOKEN: $token" -H 'Content-Type: application/json' \
-              -d "{\"name\":\"$name\"}" http://localhost:8080/api/auth/test/signin > /dev/null
-            curl -sf -b "$jar" http://localhost:8080/api/me | grep -q '"role"'
-            echo "signed in as $name"
+            code=$(curl -s -o /dev/null -w '%{http_code}' -c "$jar" -b "$jar" -H "X-XSRF-TOKEN: $token" -H 'Content-Type: application/json'               -d "{\"name\":\"$name\"}" http://localhost:8080/api/auth/test/signin)
+            if [ "$code" = "200" ]; then echo "$name signed in but should be refused"; exit 1; fi
+            echo "$name refused ($code)"
           done
 
       - name: Show the app log on failure
