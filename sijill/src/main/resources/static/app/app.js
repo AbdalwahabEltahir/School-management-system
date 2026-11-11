@@ -518,8 +518,10 @@ SCREENS.overview = async () => {
       <div class="lo-chart" style="height:${h}px"><div class="lo-y"><span>${max}</span><span>${max / 2}</span><span>0</span></div>
       <div class="lo-plot"><div class="lo-grid"><i></i><i></i><i></i></div><div class="lo-bars">${vals.map((v, i) => html`<div class="lo-bar ${tone}"><span>${v}</span><i style="height:${(v / max * 88).toFixed(1)}%;opacity:${i === vals.length - 1 ? 1 : .55}"></i></div>`)}</div></div></div>`;
   };
-  const trendCard = pick.length >= 2 ? html`<div class="lo-card lo-trend"><div class="lo-card-head"><div><h2>Issues trend</h2><small>Open issues across the scored schools, last 30 days</small></div></div>
-      ${chart('open', 'ink', 'Total open issues', 130)}${chart('urgent', 'red', '▲ Open urgent', 100)}
+  const tFirst = pick.length ? byDate[pick[0]].open : 0, tLast = pick.length ? byDate[pick[pick.length - 1]].open : 0;
+  const trendVerdict = html`<p class="lo-explain"><b>${tLast < tFirst ? 'Improving: ' : tLast > tFirst ? 'Getting worse: ' : 'No change: '}</b>${tLast === tFirst ? 'the same number of issues as at the start.' : 'issues went from ' + tFirst + ' to ' + tLast + ' over this period.'}</p>`;
+  const trendCard = pick.length >= 2 ? html`<div class="lo-card lo-trend"><div class="lo-card-head"><div><h2>Are problems going down?</h2><small>Each bar is one day: how many issues were open across all schools. Shorter bars are better.</small></div></div>
+      ${trendVerdict}${chart('open', 'ink', 'Open issues', 150)}
       <div class="lo-xlab"><span style="width:38px"></span><div>${pick.map(d => html`<span>${new Date(d).toLocaleDateString(uiLocale(), { month: 'short', day: 'numeric' })}</span>`)}</div></div></div>`
     : html`<div class="lo-card lo-trend"><div class="lo-card-head"><div><h2>Issues trend</h2><small>Open issues across the scored schools</small></div></div>${empty('The chart appears once a few days of history have been recorded.')}</div>`;
 
@@ -541,26 +543,25 @@ SCREENS.overview = async () => {
 
   return html`<div class="lo">
     <header class="lo-hero">${raw(LO_ART)}<div class="lo-hero-top"><div class="lo-hero-text"><h1>${hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening'}${first ? ', ' + first : ''}</h1>
-      <p>${o.checkedYet ? html`<span class="lo-ok">✓</span> Across every scored school. Totals only: Leadership never sees file names or contents.` : 'No check has finished yet. Numbers appear after the first check.'}</p></div>
+      ${o.checkedYet ? '' : html`<p>No check has finished yet. Numbers appear after the first check.</p>`}</div>
       <div class="lo-hero-tools"><a class="lo-bell" href="#/notifications" aria-label="Notifications">${ico('M18 8a6 6 0 10-12 0c0 7-3 9-3 9h18s-3-2-3-9M13.7 21a2 2 0 01-3.4 0')}${S.unread ? html`<span>${S.unread}</span>` : ''}</a>
       ${S.me.canDownloadWeeklyReport ? html`<a class="lo-hero-btn" href="/api/dashboard/weekly-report.pdf">${ico(IC.dl)} Weekly report (PDF)</a>` : ''}</div></div></header>
     <div class="lo-body">
       ${firstCheck}${noSchools}
       <section class="lo-kpis">
-        ${kpi2('Network health score', netScore === null ? '—' : netScore.toFixed(1), netScore === null ? '' : '/100', netBand || 'slate', IC.shield, netScore === null ? 'Waiting for the first check' : html`${chg(healthSeries, true, 1)}${counts.good} Good · ${counts.watch} Watch · ${counts.bad} Needs attention`, spark(healthSeries, 1))}
-        ${kpi2('Open urgent', o.urgentOpen, '', o.urgentOpen ? 'bad' : 'good', IC.warn, html`${chg(series.map(d => d.urgent), false)}${o.urgentOpen ? 'Listed below' : 'None open'}`, spark(series.map(d => d.urgent)))}
-        ${kpi2('Open issues', o.open, '', 'slate', IC.clip, html`${chg(series.map(d => d.open), false)}${o.open - o.urgentOpen} normal + ${o.urgentOpen} urgent`, spark(series.map(d => d.open)))}
-        ${kpi2('Needs follow-up', o.needFollowUp, '', 'brand', IC.clock, o.fixedByStaff + ' fixed by staff · ' + o.personalDriveFiles + ' files in personal drives')}
+        ${kpi2('Overall health', netScore === null ? '—' : Math.round(netScore), netScore === null ? '' : '/100', netBand || 'slate', IC.shield, netScore === null ? 'Waiting for the first check' : html`<b>${netBand === 'good' ? 'Healthy' : netBand === 'watch' ? 'Keep an eye on it' : 'Needs attention'}</b><br>Average score across all schools. 100 means no file problems.`)}
+        ${kpi2('Urgent problems', o.urgentOpen, '', o.urgentOpen ? 'bad' : 'good', IC.warn, o.urgentOpen ? html`<b>Need action now</b><br>Serious problems, like sensitive files shared publicly.` : html`<b>All clear</b><br>No serious problems are open.`)}
+        ${kpi2('Other open issues', o.open - o.urgentOpen, '', 'slate', IC.clip, html`<b>Being tracked by schools</b><br>Smaller problems that staff are fixing. No action needed from you.`)}
       </section>
       ${decide}
       <section class="lo-row">
-        <div class="lo-card lo-c5"><div class="lo-card-head"><div><h2>School performance</h2><small>Worst first. Score = 100 − ((open normal + 3 × open urgent) ÷ files × 100)</small></div><a class="card-link" href="#/sites">All schools →</a></div>${schoolCards}</div>
+        <div class="lo-card lo-c5"><div class="lo-card-head"><div><h2>School performance</h2><small>Each school's score out of 100, worst first. Higher is better: 85+ is good, 70–84 needs watching, below 70 needs attention.</small></div><a class="card-link" href="#/sites">All schools →</a></div>${schoolCards}</div>
         ${trendCard}
-        <div class="lo-card lo-c3"><div class="lo-card-head"><h2>Open incidents</h2><span class="lo-pill lo-pill-red">${urgentNow.length}</span><a class="card-link" href="#/incidents">View all →</a></div><small class="lo-sub">Major events open per day</small>${incChart}${urgentNow.slice(0, 2).map(i => html`<div class="lo-inc"><div class="lo-inc-top"><b>${siteOf(i.siteId) || title(i.type)}</b><span>${ageOf(i.detectedAt)}</span></div><div class="lo-inc-foot"><em class="lo-sev">${title(i.type)}</em><button class="btn btn-sm" data-act="resolveIncident" data-id="${i.id}">Resolve</button></div></div>`)}</div>
+        <div class="lo-card lo-c3"><div class="lo-card-head"><h2>Open incidents</h2><span class="lo-pill lo-pill-red">${urgentNow.length}</span><a class="card-link" href="#/incidents">View all →</a></div><small class="lo-sub">Serious events, such as an exam leak or deleted files, that someone must resolve. The chart shows how many were open each day.</small>${incChart}${urgentNow.slice(0, 2).map(i => html`<div class="lo-inc"><div class="lo-inc-top"><b>${siteOf(i.siteId) || title(i.type)}</b><span>${ageOf(i.detectedAt)}</span></div><div class="lo-inc-foot"><em class="lo-sev">${title(i.type)}</em><button class="btn btn-sm" data-act="resolveIncident" data-id="${i.id}">Resolve</button></div></div>`)}</div>
       </section>
       <section class="lo-row">
-        <div class="lo-card lo-c5"><div class="lo-card-head"><div><h2>Urgent issues</h2><small>School, rule and status only. File names stay with the school.</small></div><a class="card-link" href="#/incidents">All incidents →</a></div>${recent}</div>
-        <div class="lo-card lo-c3"><div class="lo-card-head"><div><h2>Network health</h2><small>Schools by health band</small></div></div>${donut}<div class="lo-delta">${o.fixedByStaff} issues fixed by staff · ${o.filesChecked} files checked</div></div>
+        <div class="lo-card lo-c5"><div class="lo-card-head"><div><h2>Urgent issues</h2><small>Serious rule breaks that are still open. You see the school and the rule only, never file names.</small></div><a class="card-link" href="#/incidents">All incidents →</a></div>${recent}</div>
+        <div class="lo-card lo-c3"><div class="lo-card-head"><div><h2>Network health</h2><small>How many schools are healthy, need watching, or need attention.</small></div></div>${donut}<div class="lo-delta">${o.fixedByStaff} issues fixed by staff · ${o.filesChecked} files checked</div></div>
         <div class="lo-quick lo-c3"><div class="lo-quick-head"><span>${ico(IC.bolt)}</span><h2>Quick actions</h2></div>${actions.map(([href, l, p]) => html`<a href="${href}"><span class="lo-qi">${ico(p)}</span><span class="lo-ql">${l}</span><span class="lo-qa">→</span></a>`)}</div>
       </section>
     </div></div>`;
