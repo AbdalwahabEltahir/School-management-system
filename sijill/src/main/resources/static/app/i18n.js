@@ -83,7 +83,7 @@ const AR = {
   'INCIDENT_RAISED': 'تسجيل حادثة', 'INCIDENT_RESOLVED': 'حل حادثة', 'FILE_CLASSIFIED': 'تصنيف ملف', 'CHECK_RUN': 'تشغيل فحص', 'RULE_CREATED': 'إنشاء قاعدة', 'RULE_UPDATED': 'تحديث قاعدة',
   'RULE_APPROVED': 'اعتماد قاعدة', 'RULE_PAUSED': 'إيقاف قاعدة', 'RULE_RESUMED': 'استئناف قاعدة', 'RULE_DELETED': 'حذف قاعدة', 'SETTING_CHANGED': 'تغيير إعداد', 'SITE_CREATED': 'إضافة مدرسة',
   'SITE_UPDATED': 'تحديث مدرسة', 'SITE_REMOVED': 'إزالة مدرسة', 'SUBJECT_CHANGED': 'تغيير مادة', 'DOC_TYPE_CHANGED': 'تغيير نوع مستند', 'ROLE_GROUP_CHANGED': 'تغيير مجموعة دور',
-  'PERSON_UPDATED': 'تحديث شخص', 'PERSON_ADDED': 'إضافة شخص', 'ENROLMENT_REQUESTED': 'طلب تسجيل', 'ENROLMENT_REQUEST_DECIDED': 'البت في طلب تسجيل', 'PERSON_FOLLOWED_UP': 'متابعة شخص',
+  'PERSON_UPDATED': 'تحديث شخص', 'PERSON_ADDED': 'إضافة شخص', 'PERSON_DELETED': 'حذف شخص', 'ENROLMENT_REQUESTED': 'طلب تسجيل', 'ENROLMENT_REQUEST_DECIDED': 'البت في طلب تسجيل', 'PERSON_FOLLOWED_UP': 'متابعة شخص',
   'DIRECTORY_SYNCED': 'مزامنة الدليل', 'WELCOME_SENT': 'إرسال رسالة ترحيب', 'PLANNING_SUBMITTED': 'إرسال خطة', 'PLANNING_REVIEWED': 'مراجعة خطة', 'RESTORE_REQUESTED': 'طلب استعادة',
   'RESTORE_APPROVED': 'اعتماد استعادة', 'RESTORE_REJECTED': 'رفض استعادة', 'RESTORE_COMPLETED': 'اكتمال استعادة', 'EXPORT_CREATED': 'إنشاء تصدير', 'SECTION_CREATED': 'إنشاء شعبة',
   'TERM_SAVED': 'حفظ فصل دراسي', 'STUDENT_ENROLLED': 'تسجيل طالب', 'TEACHER_ASSIGNED': 'تعيين معلم', 'TIMETABLE_CHANGED': 'تغيير الجدول', 'ATTENDANCE_RECORDED': 'تسجيل حضور',

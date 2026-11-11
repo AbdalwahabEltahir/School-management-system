@@ -4,6 +4,7 @@ import jakarta.validation.Valid;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -44,6 +45,12 @@ public class PeopleController {
     public PeopleDtos.PersonView update(CurrentUser user, @PathVariable UUID personId,
                                         @RequestBody PeopleDtos.UpdatePersonRequest request) {
         return PeopleDtos.PersonView.from(people.update(user, personId, request.toCommand()));
+    }
+
+    /** School IT deletes a person who has no records yet. */
+    @DeleteMapping("/{personId}")
+    public void delete(CurrentUser user, @PathVariable UUID personId) {
+        people.delete(user, personId);
     }
 
     @PostMapping("/{personId}/welcome")

@@ -56,7 +56,11 @@ import qa.sijill.sijill.workspace.WorkspacePerson;
 public class PeopleService {
 
     /** What School IT can change on a person. Null fields are left as they are. */
-    public record UpdateCommand(Role role, PersonStatus status, UUID subjectId, Boolean generic) {}
+    public record UpdateCommand(Role role, PersonStatus status, UUID subjectId, Boolean generic, String name, String email) {
+        public UpdateCommand(Role role, PersonStatus status, UUID subjectId, Boolean generic) {
+            this(role, status, subjectId, generic, null, null);
+        }
+    }
 
     /** Order of precedence when a person is in several role groups: the most privileged wins. */
     private static final List<Role> ROLE_PRECEDENCE = List.of(
@@ -75,10 +79,10 @@ public class PeopleService {
 
     // ================================================================== reading
 
-    /** The People screen: School IT and coordinators see their own school's people. */
+    /** The People screen: School IT and coordinators see their own school's people; the principal reads them (no edits). */
     @Transactional(readOnly = true)
     public List<Person> list(CurrentUser user) {
-        policy.requireRole(user, Role.SCHOOL_IT, Role.COORDINATOR);
+        policy.requireRole(user, Role.SCHOOL_IT, Role.COORDINATOR, Role.PRINCIPAL);
         return people.findBySiteIdOrderByDisplayName(user.siteId());
     }
 
@@ -178,6 +182,29 @@ public class PeopleService {
         String before = person.getRole() + "/" + person.getStatus();
         PersonStatus oldStatus = person.getStatus();
 
+        if (cmd.name() != null) {
+            if (cmd.name().isBlank() || cmd.name().length() > 200) {
+                throw new BadRequestException("Please give the person's name.");
+            }
+            person.setDisplayName(cmd.name().trim());
+        }
+        if (cmd.email() != null && !cmd.email().trim().equalsIgnoreCase(person.getEmail())) {
+            String clean = cmd.email().trim().toLowerCase();
+            if (!clean.matches("[^@\\s]+@[^@\\s]+\\.[^@\\s]+")) {
+                throw new BadRequestException("Please give a valid e-mail address.");
+            }
+            people.findByEmailIgnoreCase(clean).filter(o -> !o.getId().equals(person.getId())).ifPresent(o -> {
+                throw new ConflictException(clean + " already has an account.");
+            });
+            Role effective = cmd.role() != null ? cmd.role() : person.getRole();
+            String domain = clean.substring(clean.indexOf('@') + 1);
+            boolean knownDomain = sites.findByOrgIdOrderByName(user.orgId()).stream()
+                    .anyMatch(x -> x.isActive() && x.getDomain().equalsIgnoreCase(domain));
+            if (effective != Role.STUDENT && effective != Role.PARENT && !knownDomain) {
+                throw new BadRequestException("Staff with @" + domain + " cannot sign in: that domain does not belong to any school of the network.");
+            }
+            person.setEmail(clean);
+        }
         if (cmd.role() != null) {
             person.setRole(cmd.role());
         }
@@ -201,6 +228,33 @@ public class PeopleService {
 
         announceStatusChange(person, oldStatus);
         return person;
+    }
+
+    /**
+     * Permanently deletes a person of the user's school. Not allowed for yourself or for Leadership/School IT
+     * accounts. A person who already has records (files, issues, marks, messages) cannot be deleted without
+     * losing history, so the call is refused and School IT should set their status to Left instead.
+     */
+    @Transactional
+    public void delete(CurrentUser user, UUID personId) {
+        policy.requireRole(user, Role.SCHOOL_IT);
+        Person person = ownSchoolPerson(user, personId);
+        if (person.getId().equals(user.personId())) {
+            throw new BadRequestException("You cannot delete your own account.");
+        }
+        if (person.getRole() == Role.LEADERSHIP || person.getRole() == Role.SCHOOL_IT) {
+            throw new BadRequestException("Leadership and School IT accounts cannot be deleted here.");
+        }
+        String summary = person.getEmail() + " (" + person.getRole() + ")";
+        try {
+            people.delete(person);
+            people.flush();
+        } catch (org.springframework.dao.DataIntegrityViolationException e) {
+            throw new ConflictException(person.getDisplayName()
+                    + " already has records in Sijill, so they cannot be deleted. Set their status to Left instead.");
+        }
+        audit.log(person.getOrgId(), person.getSiteId(), ActivityActions.PERSON_DELETED).by(user)
+                .on("Person", personId).change(summary, null).save();
     }
 
     /** "Send welcome" for people marked "New: welcome not sent" (FR-11.5). */

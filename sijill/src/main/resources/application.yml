@@ -25,8 +25,9 @@ spring:
       client:
         registration:
           google:
-            client-id: ${GOOGLE_CLIENT_ID}
-            client-secret: ${GOOGLE_CLIENT_SECRET}
+            # Without real credentials the app still starts (the demo uses the test sign-in); Google sign-in then fails at Google.
+            client-id: ${GOOGLE_CLIENT_ID:not-configured}
+            client-secret: ${GOOGLE_CLIENT_SECRET:not-configured}
             scope: openid,email,profile,https://www.googleapis.com/auth/drive.readonly
 
   # Generic OIDC alternative (replaces the block above for a non-Google provider):
@@ -43,6 +44,8 @@ spring:
   #           issuer-uri: ${OIDC_ISSUER_URI}
 
 server:
+  port: ${PORT:8080}                        # Render sets PORT
+  forward-headers-strategy: framework  # behind Render's HTTPS proxy, so redirects and cookies use https
   servlet:
     session:
       timeout: 8h        # staff sessions expire after 8 hours (section 4); IT/Leadership idle limit is future work
@@ -71,6 +74,11 @@ sijill:
     # A member of a school's own Google Workspace (Google reports the domain) signs in without approval, as a Teacher,
     # once the school's first check has run. Personal Gmail accounts never qualify. false = School IT must add everyone.
     auto-provision: true
+    # TESTING ONLY. true shows "Sign in with a name (testing)" on the welcome page: type a person's name (e.g. Huda) or pick
+    # them from a list and sign in with their role. No password and no Google check, so anyone who can open the site can
+    # become any person, including School IT. It is ON here for the mentor's test. Before real use set it to false, or set
+    # SIJILL_SIGNIN_TEST_MODE=false in the environment.
+    test-mode: ${SIJILL_SIGNIN_TEST_MODE:true}
   scoring:
     allow-head-office: true   # test setup with only a head office: lets Leadership include it in the school scores (SRS 11.2 says it is normally unscored)
   jobs:

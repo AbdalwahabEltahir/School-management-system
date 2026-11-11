@@ -1,0 +1,38 @@
+# Render Blueprint: one web service (the Sijill app in Docker) and one Postgres database.
+# Demo setup for a mentor's test: the "dev" profile seeds a complete demo school with every role, the test sign-in
+# (by name) is on, and the Google Drive connector is off so no Google credentials are needed.
+services:
+  - type: web
+    name: sijill
+    runtime: docker
+    dockerfilePath: ./sijill/Dockerfile
+    dockerContext: ./sijill
+    plan: free
+    healthCheckPath: /actuator/health
+    envVars:
+      - key: SPRING_PROFILES_ACTIVE
+        value: dev                      # seeds the demo school the first time the database is empty
+      - key: SIJILL_BOOTSTRAP_ENABLED
+        value: "false"                  # the demo seed creates the organisation instead
+      - key: SIJILL_GOOGLE_DRIVE_ENABLED
+        value: "false"
+      - key: SIJILL_JOBS_ENABLED
+        value: "false"
+      - key: SIJILL_SIGNIN_TEST_MODE
+        value: "true"                   # TESTING ONLY: sign in by name, no password. Set to false for real use.
+      - key: DB_HOST
+        fromDatabase: { name: sijill-db, property: host }
+      - key: DB_PORT
+        fromDatabase: { name: sijill-db, property: port }
+      - key: DB_NAME
+        fromDatabase: { name: sijill-db, property: database }
+      - key: DB_USERNAME
+        fromDatabase: { name: sijill-db, property: user }
+      - key: DB_PASSWORD
+        fromDatabase: { name: sijill-db, property: password }
+
+databases:
+  - name: sijill-db
+    plan: free
+    databaseName: sijill
+    user: sijill
