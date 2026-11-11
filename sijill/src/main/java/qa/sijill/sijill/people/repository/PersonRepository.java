@@ -14,6 +14,8 @@ public interface PersonRepository extends JpaRepository<Person, UUID> {
     /** Sign-in lookup: the school account's e-mail identifies the person. */
     Optional<Person> findByEmailIgnoreCase(String email);
 
+    Optional<Person> findByStudentCode(String studentCode);
+
     List<Person> findBySiteIdOrderByDisplayName(UUID siteId);
 
     List<Person> findBySiteIdAndRole(UUID siteId, Role role);

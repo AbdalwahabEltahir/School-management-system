@@ -36,7 +36,7 @@ public class PeopleController {
     /** School IT adds a person so they can sign in with their own account. */
     @PostMapping
     public PeopleDtos.PersonView add(CurrentUser user, @Valid @RequestBody PeopleDtos.AddPersonRequest request) {
-        return PeopleDtos.PersonView.from(people.add(user, request.email(), request.name(), request.role(), request.subjectId()));
+        return PeopleDtos.PersonView.from(people.add(user, request.email(), request.name(), request.role(), request.subjectId(), request.studentId()));
     }
 
     /** School IT changes role, status, subject or the generic-account flag (an override). */

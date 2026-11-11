@@ -167,7 +167,7 @@ public class FileService {
     @Transactional(readOnly = true)
     public List<SchoolFile> visibleFiles(CurrentUser user) {
         return switch (user.role()) {
-            case TEACHER, STUDENT -> ownFiles(user);
+            case TEACHER, STUDENT, PARENT -> ownFiles(user);
             case COORDINATOR -> {
                 Map<UUID, SchoolFile> merged = new LinkedHashMap<>();
                 List<SchoolFile> subjectFiles = user.subjectId() == null

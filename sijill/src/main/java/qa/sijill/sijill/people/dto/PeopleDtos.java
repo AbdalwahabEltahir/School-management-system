@@ -19,10 +19,12 @@ public final class PeopleDtos {
     private PeopleDtos() {}
 
     public record PersonView(UUID id, String email, String displayName, String role, String status, UUID siteId,
-                             UUID subjectId, boolean generic, boolean overridden, Instant welcomeSentAt) {
+                             UUID subjectId, boolean generic, boolean overridden, Instant welcomeSentAt,
+                             String studentCode) {
         public static PersonView from(Person p) {
             return new PersonView(p.getId(), p.getEmail(), p.getDisplayName(), p.getRole().name(), p.getStatus().name(),
-                    p.getSiteId(), p.getSubjectId(), p.isGeneric(), p.isOverridden(), p.getWelcomeSentAt());
+                    p.getSiteId(), p.getSubjectId(), p.isGeneric(), p.isOverridden(), p.getWelcomeSentAt(),
+                    p.getStudentCode());
         }
     }
 
@@ -51,7 +53,7 @@ public final class PeopleDtos {
         }
     }
 
-    public record AddPersonRequest(@NotBlank String email, @NotBlank String name, @NotNull Role role, UUID subjectId) {}
+    public record AddPersonRequest(@NotBlank String email, @NotBlank String name, @NotNull Role role, UUID subjectId, UUID studentId) {}
 
     public record FollowUpRequest(String note) {}
 

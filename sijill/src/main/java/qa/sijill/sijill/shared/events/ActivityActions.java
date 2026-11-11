@@ -39,6 +39,8 @@ public final class ActivityActions {
     // ---- people ----
     public static final String PERSON_UPDATED = "PERSON_UPDATED";
     public static final String PERSON_ADDED = "PERSON_ADDED";
+    public static final String ENROLMENT_REQUESTED = "ENROLMENT_REQUESTED";
+    public static final String ENROLMENT_REQUEST_DECIDED = "ENROLMENT_REQUEST_DECIDED";
     public static final String PERSON_FOLLOWED_UP = "PERSON_FOLLOWED_UP";
     public static final String DIRECTORY_SYNCED = "DIRECTORY_SYNCED";
     public static final String WELCOME_SENT = "WELCOME_SENT";

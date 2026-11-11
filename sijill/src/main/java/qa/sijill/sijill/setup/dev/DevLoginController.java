@@ -46,7 +46,7 @@ public class DevLoginController {
     /** URL name of each role → the role it signs in as. */
     private static final Map<String, Role> ROLES = Map.of(
             "leadership", Role.LEADERSHIP, "it", Role.SCHOOL_IT, "principal", Role.PRINCIPAL,
-            "coordinator", Role.COORDINATOR, "teacher", Role.TEACHER, "student", Role.STUDENT);
+            "coordinator", Role.COORDINATOR, "teacher", Role.TEACHER, "student", Role.STUDENT, "parent", Role.PARENT);
 
     private final PersonRepository people;
 
@@ -59,7 +59,7 @@ public class DevLoginController {
                 <h1>Sijill: development sign-in</h1>
                 <p>Pick a role. No password. Only available in the <code>dev</code> profile.</p><ul style="line-height:2.2">
                 """);
-        for (String key : List.of("leadership", "it", "principal", "coordinator", "teacher", "student")) {
+        for (String key : List.of("leadership", "it", "principal", "coordinator", "teacher", "student", "parent")) {
             String who = people.findAll().stream().filter(p -> p.getRole() == ROLES.get(key)).findFirst()
                     .map(p -> p.getDisplayName() + " (" + p.getEmail() + ")").orElse("nobody yet");
             html.append("<li><a href=\"/dev/login/").append(key).append("\"><b>").append(key).append("</b></a> — ")

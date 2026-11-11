@@ -4,6 +4,7 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
+import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
 import java.time.Instant;
 import java.util.UUID;
@@ -74,6 +75,17 @@ public class Person extends BaseEntity {
     @Enumerated(EnumType.STRING)
     @Column(name = "digest_mode", nullable = false, length = 20)
     private DigestMode digestMode = DigestMode.PER_ISSUE;
+
+    /** A student's ID, given to them when their account is created. A parent uses it to register and follow the student. */
+    @Column(name = "student_code", length = 20)
+    private String studentCode;
+
+    @PrePersist
+    void assignStudentCode() {
+        if (role == Role.STUDENT && studentCode == null) {
+            studentCode = StudentCodes.next();
+        }
+    }
 
     /** When the staff welcome page was sent ("New: welcome not sent" until set, FR-11.5). */
     @Column(name = "welcome_sent_at")

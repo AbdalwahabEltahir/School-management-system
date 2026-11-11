@@ -50,6 +50,8 @@ public class SecurityConfig {
                 .requestMatchers("/actuator/health/**").permitAll()
                 // dev-only sign-in links; the controller exists only in the "dev" profile, so elsewhere this is a 404
                 .requestMatchers("/dev/**").permitAll()
+                // the welcome page and its assets are public; the data behind them is not
+                .requestMatchers("/", "/index.html", "/app/**", "/favicon.ico", "/error", "/api/auth/**").permitAll()
                 .anyRequest().authenticated());
 
         // Single-page front end: plain (non-XOR) token handler, and a filter that makes sure the cookie is
@@ -57,6 +59,11 @@ public class SecurityConfig {
         http.csrf(csrf -> csrf.csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
                 .csrfTokenRequestHandler(new CsrfTokenRequestAttributeHandler()));
         http.addFilterAfter(new CsrfCookieFilter(), BasicAuthenticationFilter.class);
+
+        // The API answers 401 (the page then shows the welcome screen) instead of sending the browser to Google.
+        http.exceptionHandling(e -> e.defaultAuthenticationEntryPointFor(
+                new org.springframework.security.web.authentication.HttpStatusEntryPoint(org.springframework.http.HttpStatus.UNAUTHORIZED),
+                request -> request.getRequestURI().startsWith("/api/")));
 
         ClientRegistrationRepository registrations = clientRegistrations.getIfAvailable();
         if (registrations != null) {

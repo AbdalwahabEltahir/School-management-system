@@ -26,9 +26,9 @@ class GoogleAccountStore {
         return jdbc.queryForList("SELECT email FROM connector_account WHERE provider = 'google' ORDER BY email", String.class);
     }
 
-    /** Has School IT (or the Workspace sign-in) given this address an account in Sijill? */
+    /** Has School IT (or the Workspace sign-in) given this address a staff account? Students and parents are never read: their Drives stay private. */
     boolean isSijillPerson(String email) {
-        Integer n = jdbc.queryForObject("SELECT count(*) FROM people WHERE lower(email) = ?", Integer.class, email.toLowerCase());
+        Integer n = jdbc.queryForObject("SELECT count(*) FROM people WHERE lower(email) = ? AND role NOT IN ('STUDENT', 'PARENT')", Integer.class, email.toLowerCase());
         return n != null && n > 0;
     }
 

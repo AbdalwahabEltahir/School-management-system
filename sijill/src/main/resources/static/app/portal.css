@@ -1,0 +1,226 @@
+/* =====================================================================================
+   Student and parent portals (.sp). Values follow the Student Dashboard build brief.
+   Loaded after theme.css. Scoped to .sp or to classes only the portals use.
+   ===================================================================================== */
+[hidden] { display: none !important }
+.frame:has(.sp) { grid-template-columns: 248px minmax(0, 1fr) }
+.frame:has(.sp), .frame:has(.sp) .content { background: #f5f4f2 }
+.frame:has(.sp) { font-size: 14px; line-height: 1.45 }
+.frame:has(.sp) .sidebar { background: linear-gradient(180deg, #1c1c20 0%, #17171a 55%, #3a1626 100%); overflow-y: auto }
+.frame:has(.sp) .nav-item { min-height: 0; padding: 12px 14px; font-size: 14px; font-weight: 500; color: #c9c9ce }
+.frame:has(.sp) .nav-item:hover { background: #202024; color: #fff }
+.frame:has(.sp) .nav-on, .frame:has(.sp) .nav-on:hover { background: linear-gradient(90deg, #6b1730, #8f2447); color: #fff; box-shadow: 0 8px 18px rgba(143, 36, 71, .35) }
+.frame:has(.sp) .who { background: #202024; border: 1px solid #2e2e33 }
+.side-help { margin-top: auto; padding: 0 }
+.side-help-card { margin: 0 16px 0; padding: 16px; border-radius: 16px; background: rgba(255, 255, 255, .05); border: 1px solid rgba(255, 255, 255, .14); display: flex; flex-direction: column; gap: 2px }
+.side-help-card b { color: #fff; font-size: 14px }
+.side-help-card small { color: #a8a8ae; font-size: 12px; margin-bottom: 8px }
+.side-help-card a { align-self: flex-start; padding: 6px 16px; border-radius: 99px; border: 1px solid rgba(255, 255, 255, .4); color: #fff; font-size: 13px; font-weight: 600; text-decoration: none }
+.side-help-card a:hover { background: rgba(255, 255, 255, .12); text-decoration: none; color: #fff }
+.side-ok-flat { position: static; padding: 14px 20px 16px; font-size: 12px; color: #d4d4d8 }
+
+/* top bar */
+.sp-top { display: flex; align-items: center; gap: 12px; flex-wrap: nowrap; padding: 24px 28px 0 }
+.sp-tag { flex: 1 1 0; min-width: 0; font-size: 15px; color: #4a4a50; white-space: nowrap; overflow: hidden; text-overflow: ellipsis }
+.sp-search { flex: 0 1 320px; min-width: 0; display: flex; align-items: center; gap: 10px; height: 44px; padding: 0 16px; border-radius: 99px; background: #fff; border: 1px solid #e2e0db; box-shadow: 0 4px 12px rgba(23, 23, 26, .05) }
+.sp-search svg, .sp-bell svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; flex: none; color: #4a4a50 }
+.sp-bell svg { width: 18px; height: 18px; color: #1c1c1f }
+.sp-search input { flex: 1; min-width: 0; border: 0; outline: 0; background: transparent; font: inherit; color: #1c1c1f }
+.sp-bell { flex: none; position: relative; width: 44px; height: 44px; display: grid; place-items: center; border-radius: 50%; background: #fff; border: 1px solid #e2e0db; box-shadow: 0 4px 12px rgba(23, 23, 26, .05) }
+.sp-bell span { position: absolute; top: -4px; inset-inline-end: -4px; min-width: 20px; height: 20px; padding: 0 5px; border-radius: 99px; background: #8f2447; color: #fff; font-size: 11px; font-weight: 700; display: grid; place-items: center }
+.sp-user { flex: none; white-space: nowrap; display: flex; align-items: center; gap: 10px; padding: 4px 14px 4px 4px; border-radius: 99px; background: #fff; border: 1px solid #e2e0db; box-shadow: 0 4px 12px rgba(23, 23, 26, .05); text-decoration: none; color: #1c1c1f }
+.sp-user:hover { text-decoration: none; color: #1c1c1f }
+.sp-user .who-av { width: 36px; height: 36px; background: #6b1730 }
+.sp-user b { display: block; font-size: 13px; line-height: 1.2 }
+.sp-user small { display: block; font-size: 11px; color: #4a4a50; line-height: 1.2 }
+
+.page.sp { max-width: none; padding: 24px 28px 32px }
+.sp .page-top { margin-bottom: 18px }
+.sp .page-head::before { background: linear-gradient(180deg, #c24a6e, #6b1730) }
+.sp .page-title { color: #3f0d1c }
+
+.sp-grid-main { display: flex; flex-wrap: wrap; gap: 20px; align-items: flex-start; align-content: flex-start }
+.sp-col { flex: 1 1 620px; min-width: 0; display: flex; flex-direction: column; gap: 20px }
+.sp-rail { flex: 0 1 420px; min-width: 320px; display: flex; flex-direction: column; gap: 20px }
+.sp-row { display: flex; flex-wrap: wrap; gap: 16px }
+.sp-f1 { flex: 1 1 220px; min-width: 0 } .sp-f2 { flex: 2 1 340px; min-width: 0 } .sp-f3 { flex: 1 1 300px; min-width: 0 }
+.sp-stack { display: flex; flex-direction: column; gap: 20px }
+.sp-scroll { overflow-x: auto }
+
+/* icon badges */
+.sp-ic { flex: none; width: 36px; height: 36px; border-radius: 11px; background: linear-gradient(135deg, #8f2447, #c24a6e); color: #fff; display: grid; place-items: center; box-shadow: 0 6px 14px rgba(143, 36, 71, .3) }
+.sp-ic svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round }
+.sp-ic-exam { position: relative; width: 60px; height: 60px; border-radius: 18px; box-shadow: 0 8px 18px rgba(143, 36, 71, .5) } .sp-ic-exam svg { width: 30px; height: 30px; stroke-width: 1.8 }
+.sp-ic-kpi { width: 44px; height: 44px; border-radius: 14px } .sp-ic-kpi svg { width: 22px; height: 22px }
+.sp-ic-tile { width: 62px; height: 62px; border-radius: 18px; box-shadow: 0 8px 18px rgba(143, 36, 71, .35) } .sp-ic-tile svg { width: 32px; height: 32px; stroke-width: 1.8 }
+.sp-ic-soft { width: 52px; height: 52px; border-radius: 16px; background: #f6e4ea; color: #6b1730; box-shadow: none } .sp-ic-soft svg { width: 26px; height: 26px; stroke-width: 1.8 }
+.sp-ic-note { width: 44px; height: 44px; border-radius: 12px; background: #f6e4ea; color: #6b1730; box-shadow: none } .sp-ic-note svg { width: 22px; height: 22px }
+.sp-ic-foot { width: 56px; height: 56px; border-radius: 16px; background: #6b1730; box-shadow: none } .sp-ic-foot svg { width: 28px; height: 28px }
+
+/* exam banner */
+.sp-exam { position: relative; overflow: hidden; display: flex; align-items: center; gap: 20px; flex-wrap: wrap; padding: 22px 26px; border-radius: 20px; color: #fff; background: linear-gradient(100deg, #17171a, #3a1626 70%, #6b1730); box-shadow: 0 12px 28px rgba(23, 23, 26, .22) }
+.sp-exam-glow { position: absolute; inset-inline-end: -40px; top: -60px; width: 220px; height: 220px; border-radius: 50%; background: radial-gradient(circle, rgba(194, 74, 110, .45), rgba(194, 74, 110, 0) 70%) }
+.sp-exam-text { position: relative; flex: 1 1 220px; display: flex; flex-direction: column }
+.sp-exam-text small { font-size: 12px; letter-spacing: .08em; color: #e7a3b6; font-weight: 600 }
+.sp-exam-text b { font-size: 22px }
+.sp-exam-text span { color: #e4e4e7; font-size: 14px }
+.sp-exam-days { position: relative; padding: 8px 18px; text-align: center; border-radius: 14px; background: rgba(255, 255, 255, .1); border: 1px solid rgba(255, 255, 255, .18) }
+.sp-exam-days b { display: block; font-size: 28px; line-height: 1.1 }
+.sp-exam-days span { font-size: 12px; color: #e4e4e7 }
+
+/* banner */
+.sp-hero { position: relative; overflow: hidden; border-radius: 24px; background: linear-gradient(100deg, #fff 0%, #faf1f4 45%, #f1dde4 100%); color: #1c1c1f; border: 1px solid #ebd5dc; padding: 52px 44px 56px; min-height: 380px; box-shadow: 0 14px 34px rgba(107, 23, 48, .12) }
+.sp-hero-glow { position: absolute; inset-inline-end: 0; top: 0; bottom: 0; width: 62%; background: radial-gradient(ellipse at 70% 60%, rgba(194, 74, 110, .22), rgba(194, 74, 110, 0) 65%) }
+.sp-hero-orb { position: absolute; inset-inline-start: -40px; top: -60px; width: 260px; height: 260px; border-radius: 50%; background: rgba(143, 36, 71, .07) }
+.sp-sky { position: absolute; inset-inline-start: 44%; transform: translateX(-50%); bottom: 0; width: 50%; height: 80%; pointer-events: none; -webkit-mask-image: linear-gradient(to right, transparent 0, #000 25%, #000 75%, transparent 100%); mask-image: linear-gradient(to right, transparent 0, #000 25%, #000 75%, transparent 100%) }
+.sp-hero-art { position: absolute; inset-inline-end: 0; bottom: 0; height: 100%; max-width: 52%; object-fit: contain; object-position: right bottom; mix-blend-mode: multiply; -webkit-mask-image: linear-gradient(to right, transparent 0, #000 22%); mask-image: linear-gradient(to right, transparent 0, #000 22%) }
+[dir='rtl'] .sp-hero-art { transform: scaleX(-1) }
+.sp-hero-text { position: relative; z-index: 1; max-width: 46% }
+.sp-welcome { font-size: 26px; font-weight: 500; color: #4a4a50 }
+.sp-hero h1 { margin: 4px 0 12px; font-size: clamp(30px, 4.2vw, 52px); line-height: 1.1; font-weight: 700; letter-spacing: -.02em; color: #3f0d1c }
+.sp-hero p { margin: 0 0 20px; color: #2e2e33; font-size: 15px }
+.sp-btn { display: inline-flex; gap: 8px; align-items: center; white-space: nowrap; border: 0; background: #8f2447; color: #fff; border-radius: 12px; padding: 12px 20px; font: inherit; font-weight: 600; cursor: pointer; box-shadow: 0 8px 20px rgba(143, 36, 71, .45); text-decoration: none }
+.sp-btn:hover { background: #a42c53; color: #fff; text-decoration: none }
+@media (max-width: 720px) { .sp-hero-text { max-width: 100% } .sp-hero-art, .sp-sky { opacity: .3 } }
+
+/* stat tiles */
+.sp-kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px }
+.sp-kpi { position: relative; overflow: hidden; border: 1px solid #ebe9e4; border-radius: 20px; padding: 18px 18px 0; box-shadow: 0 8px 24px rgba(23, 23, 26, .08); display: flex; flex-direction: column; gap: 2px; min-height: 170px; transition: transform .15s, box-shadow .15s, border-color .15s }
+.sp-kpi:hover { transform: translateY(-2px); box-shadow: 0 14px 28px rgba(107, 23, 48, .16); border-color: #d9a9b8 }
+.sp-kpi b { font-size: 40px; line-height: 1.1; margin-top: 8px; letter-spacing: -.02em }
+.sp-kpi-l { font-weight: 500; color: #2e2e33 }
+.sp-kpi-a { font-weight: 600; font-size: 13px; margin-top: 4px }
+.sp-spark { position: absolute; inset-inline-end: 0; bottom: 0; width: 55%; height: 46px }
+
+/* cards */
+.sp-card, .sp .card { position: relative; overflow: hidden; background: linear-gradient(170deg, #fff 0%, #fcf6f8 100%); border: 1px solid #efe3e7; border-radius: 24px; padding: 26px; box-shadow: 0 12px 30px rgba(107, 23, 48, .09) }
+.sp .card::before { display: none }
+.sp .card-head h2::before { content: ''; display: inline-block; width: 9px; height: 9px; margin-inline-end: 10px; border-radius: 3px; background: linear-gradient(135deg, #8f2447, #c24a6e) }
+.sp-card-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; margin: 0 0 14px }
+.sp-card-title { display: flex; gap: 12px; align-items: center }
+.sp-card-title h2 { margin: 0; font-size: 19px }
+.sp-link { font-weight: 600; font-size: 13px; white-space: nowrap; margin-top: 8px }
+.sp-sub { margin: -6px 0 10px; font-size: 13px; color: #4a4a50 }
+.sp-empty { border: 1px dashed #d9d6d0; border-radius: 16px; padding: 26px 16px; text-align: center; color: #4a4a50; background: #faf9f7; display: flex; flex-direction: column; gap: 10px; align-items: center }
+
+/* grid tables: materials, timetable, lessons */
+.sp-gt { display: flex; flex-direction: column; gap: 8px }
+.sp-week { min-width: 640px }
+.sp-gt-h, .sp-gt-r { display: grid; grid-template-columns: var(--cols); gap: 8px; align-items: center }
+.sp-week .sp-gt-h, .sp-week .sp-gt-r { gap: 10px }
+.sp-gt-h { padding: 9px 14px; background: #f4f3f0; border-radius: 12px; font-size: 12px; font-weight: 600; color: #4a4a50 }
+.sp-gt-r { padding: 12px 14px; border: 1px solid #ebe9e4; border-radius: 14px; background: transparent; transition: transform .15s, box-shadow .15s, border-color .15s }
+.sp-gt-r:hover { transform: translateY(-2px); box-shadow: 0 8px 18px rgba(107, 23, 48, .12); border-color: #d9a9b8 }
+.sp-gt-r > span, .sp-gt-h > span { min-width: 0 }
+.sp-gt-r a { font-weight: 600; text-align: end }
+.sp .lesson { background: #f6e4ea; border-radius: 10px; padding: 8px 10px }
+.sp .lesson b { color: #6b1730 }
+.sp .lesson div { font-size: 12px; color: #4a4a50 }
+
+/* attendance */
+.sp-att { display: flex; flex-direction: column; align-items: center; text-align: center }
+.sp-att .sp-card-head { align-self: stretch } .sp-att .sp-sub { align-self: flex-start }
+.sp-donut { position: relative; display: grid; place-items: center; margin: 6px 0 }
+.sp-donut svg { width: 140px; height: 140px; transform: rotate(-90deg) }
+.sp-donut > div { position: absolute }
+.sp-donut b { font-size: 30px; display: block; line-height: 1.1 }
+.sp-donut span { font-size: 12px; color: #4a4a50 }
+.sp-legend { display: flex; flex-wrap: wrap; justify-content: center; gap: 4px 14px; font-size: 12px; color: #4a4a50; margin-top: auto; padding-top: 10px }
+.sp-legend span { display: flex; gap: 5px; align-items: center }
+.sp-legend i { width: 8px; height: 8px; border-radius: 50% }
+.sp-last { display: flex; justify-content: space-between; align-items: center; align-self: stretch; margin-top: 12px; padding: 10px 12px; border: 1px solid #ebe9e4; border-radius: 12px; background: #faf9f7; font-size: 13px }
+
+/* progress chart */
+.sp-tabs { display: flex; flex-wrap: wrap; gap: 22px; margin: 14px 0 4px; border-bottom: 1px solid #eceae6 }
+.sp-tabs button { padding: 0 0 8px; border: 0; border-bottom: 2px solid transparent; background: none; font: inherit; color: #4a4a50; cursor: pointer }
+.sp-tabs button.on { border-bottom-color: #6b1730; color: #6b1730; font-weight: 600 }
+.sp-chart { display: flex; gap: 8px; margin-top: 10px; height: 150px; margin-bottom: 34px }
+.sp-y { display: flex; flex-direction: column; justify-content: space-between; width: 34px; flex: none; font-size: 12px; color: #4a4a50; text-align: end; line-height: 1 }
+.sp-plot { position: relative; flex: 1; min-width: 0 }
+.sp-grid { position: absolute; inset: 0; display: flex; flex-direction: column; justify-content: space-between }
+.sp-grid i { border-top: 1px solid #e4e1db }
+.sp-plot svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible }
+.sp-dot { position: absolute; width: 10px; height: 10px; margin: -5px 0 0 -5px; border-radius: 50%; background: #8f2447; border: 2px solid #fff; box-sizing: content-box }
+.sp-dot em { position: absolute; bottom: 20px; inset-inline-start: 50%; transform: translateX(-50%); padding: 2px 10px; border-radius: 8px; background: #17171a; color: #fff; font-size: 12px; font-style: normal; font-weight: 600 }
+.sp-x { position: absolute; inset-inline: 0; top: 100%; margin-top: 8px }
+.sp-x span { position: absolute; transform: translateX(-50%); font-size: 12px; color: #4a4a50; white-space: nowrap }
+
+/* notices */
+.sp-notices { display: flex; flex-direction: column; gap: 10px }
+.sp-notices > div { display: flex; gap: 14px; align-items: flex-start; padding: 12px; border-radius: 14px; background: #faf9f7; border: 1px solid #eceae6 }
+.sp-notices b { display: block }
+.sp-notices small { display: block; font-size: 12px; color: #4a4a50 }
+.sp-notices p { margin: 2px 0 0 }
+
+/* quick access and recent activity */
+.sp-quick { position: relative; overflow: hidden; background: linear-gradient(170deg, #fff 0%, #faf3f5 100%); border: 1px solid #ebe9e4; border-radius: 24px; padding: 34px; box-shadow: 0 16px 38px rgba(23, 23, 26, .12) }
+.sp-quick-glow { position: absolute; inset-inline-end: -60px; top: -60px; width: 200px; height: 200px; border-radius: 50%; background: radial-gradient(circle, rgba(194, 74, 110, .25), rgba(194, 74, 110, 0) 70%); pointer-events: none }
+.sp-quick h2 { position: relative; margin: 0 0 24px; font-size: 30px; letter-spacing: -.01em }
+.sp-tiles { position: relative; display: grid; grid-template-columns: 1fr 1fr; gap: 18px }
+.sp-tile { display: flex; flex-direction: column; gap: 14px; align-items: center; justify-content: center; min-height: 156px; border-radius: 22px; background: #fff; border: 1px solid #efedf0; box-shadow: 0 8px 20px rgba(23, 23, 26, .08); color: #1c1c1f; font: inherit; font-weight: 600; font-size: 15px; text-align: center; padding: 16px 10px; text-decoration: none; cursor: pointer; transition: transform .15s, box-shadow .15s, border-color .15s }
+.sp-tile:hover { transform: translateY(-3px); box-shadow: 0 14px 28px rgba(107, 23, 48, .18); border-color: #d9a9b8; color: #6b1730; text-decoration: none }
+.sp-act > div { display: flex; gap: 12px; padding: 11px 0; border-bottom: 1px solid #eceae6 }
+.sp-act i { width: 10px; height: 10px; border-radius: 50%; margin-top: 6px; flex: none }
+.sp-act b { font-weight: 500 }
+.sp-act small { display: block; font-size: 12px; color: #4a4a50 }
+
+/* footer band */
+.sp-foot { display: flex; align-items: center; gap: 20px; flex-wrap: wrap; margin-top: 20px; padding: 22px 28px; border-radius: 20px; background: linear-gradient(100deg, #f6e4ea, #ece7ee); border: 1px solid #ebd5dc }
+.sp-foot > div { flex: 1 1 280px }
+.sp-foot b { font-size: 20px; color: #3f0d1c }
+.sp-foot > div > div { color: #2e2e33 }
+.sp-learn { border: 1.5px solid #6b1730; border-radius: 99px; padding: 10px 22px; font-weight: 600; background: #fff; text-decoration: none }
+.sp-learn:hover { background: #6b1730; color: #fff; text-decoration: none }
+
+/* inner pages (results, materials, notices, notifications, parent results) */
+.sp table.t { border-collapse: separate; border-spacing: 0 6px }
+.sp table.t th { background: #f4f3f0; color: #4a4a50; font-size: 12px; font-weight: 600; border: 0; padding: 9px 14px }
+.sp table.t th:first-child { border-radius: 12px 0 0 12px }
+.sp table.t th:last-child { border-radius: 0 12px 12px 0 }
+.sp table.t td { background: #fff; border-top: 1px solid #ebe9e4; border-bottom: 1px solid #ebe9e4; padding: 12px 14px; vertical-align: middle }
+.sp table.t td:first-child { border-inline-start: 1px solid #ebe9e4; border-radius: 14px 0 0 14px }
+.sp table.t td:last-child { border-inline-end: 1px solid #ebe9e4; border-radius: 0 14px 14px 0 }
+.sp table.t tr:hover td { background: #fdf6f8 }
+.sp .timeline { display: flex; flex-direction: column; gap: 10px }
+.sp .timeline li { padding: 12px 16px; border: 1px solid #eceae6; border-inline-start: 4px solid #8f2447; border-radius: 14px; margin: 0; background: #faf9f7 }
+.sp .btn-primary { background: linear-gradient(135deg, #c24a6e, #8f2447 60%, #6b1730); border-color: #6b1730 }
+
+@media (max-width: 1000px) { .frame:has(.sp) { grid-template-columns: minmax(0, 1fr) } .sp-top { padding: 16px 16px 0; flex-wrap: wrap } .sp-tag { display: none } .page.sp { padding: 16px 16px 32px } .side-help { display: none } }
+
+/* ---- inner portal screens: page header, results, materials, notices, notifications, forms ---- */
+.sp-pagehead { position: relative; overflow: hidden; display: flex; align-items: center; gap: 20px; flex-wrap: wrap; padding: 28px 32px; border-radius: 24px; border: 1px solid #ebd5dc; background: radial-gradient(circle at 85% 20%, rgba(194, 74, 110, .22), transparent 55%), linear-gradient(100deg, #fff 0%, #faf1f4 45%, #f1dde4 100%); box-shadow: 0 14px 34px rgba(107, 23, 48, .12); margin-bottom: 20px }
+.sp-pagehead .sp-ic-exam { box-shadow: 0 8px 18px rgba(143, 36, 71, .4) }
+.sp-pagehead-text { position: relative; flex: 1 1 260px; min-width: 0 }
+.sp-pagehead h1 { margin: 0; font-size: clamp(26px, 3.2vw, 38px); line-height: 1.15; font-weight: 700; letter-spacing: -.02em; color: #3f0d1c }
+.sp-pagehead p { margin: 4px 0 0; color: #2e2e33; font-size: 15px }
+.sp-pagehead-act { position: relative }
+.sp-card-sub { display: block; font-size: 12.5px; font-weight: 400; color: #4a4a50 }
+.sp .sp-empty { margin: 4px 0 }
+.sp .field label { font-weight: 600; font-size: 13px; color: #3f0d1c }
+.sp .field input, .sp .field select, .sp .field textarea, .sp .input { min-height: 46px; padding: 0 14px; border: 1px solid #e2e0db; border-radius: 12px; background: #fff; font: inherit }
+.sp .field input:focus, .sp .field select:focus, .sp .input:focus { outline: none; border-color: #8f2447; box-shadow: 0 0 0 4px rgba(143, 36, 71, .12) }
+.sp .btn { min-height: 44px; border-radius: 12px; font-weight: 600 }
+.sp .btn-primary { box-shadow: 0 8px 20px rgba(143, 36, 71, .35) }
+.sp .btn:hover { border-color: #d9a9b8; background: #fdf6f8 }
+.sp .btn-primary:hover { background: linear-gradient(135deg, #8f2447, #6b1730); color: #fff }
+.sp-score { display: flex; align-items: center; gap: 10px }
+.sp-bar { flex: 1; height: 8px; border-radius: 99px; background: #eceae6; overflow: hidden }
+.sp-bar i { display: block; height: 100%; border-radius: 99px; background: #14633b }
+.sp-bar i.watch { background: #b7791f } .sp-bar i.bad { background: #a11d12 }
+.sp-score em { font-style: normal; font-weight: 600; font-size: 12.5px; min-width: 38px; text-align: end }
+.sp-mats { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 16px }
+.sp-mat { display: flex; align-items: center; gap: 14px; padding: 20px; border-radius: 22px; border: 1px solid #efe3e7; background: linear-gradient(170deg, #fff 0%, #fcf6f8 100%); box-shadow: 0 12px 30px rgba(107, 23, 48, .09); color: #1c1c1f; text-decoration: none; transition: transform .15s, box-shadow .15s, border-color .15s }
+.sp-mat:hover { transform: translateY(-3px); box-shadow: 0 16px 32px rgba(107, 23, 48, .18); border-color: #d9a9b8; text-decoration: none; color: #1c1c1f }
+.sp-mat > div { flex: 1; min-width: 0 } .sp-mat b { display: block; font-size: 16px } .sp-mat small { display: block; font-size: 12.5px; color: #4a4a50 }
+.sp-open { font-weight: 600; font-size: 13px; color: #8f2447; white-space: nowrap }
+.sp-notices-lg > div { padding: 18px 20px; border-radius: 20px; border: 1px solid #efe3e7; background: linear-gradient(170deg, #fff 0%, #fcf6f8 100%); box-shadow: 0 12px 30px rgba(107, 23, 48, .09); transition: transform .15s, box-shadow .15s }
+.sp-notices-lg > div:hover { transform: translateY(-2px); box-shadow: 0 16px 32px rgba(107, 23, 48, .16) }
+.sp-notices-lg b { font-size: 16px } .sp-notices-lg p { font-size: 14px }
+.sp-notes { display: flex; flex-direction: column; gap: 12px }
+.sp-notes > div { display: flex; gap: 14px; padding: 18px 20px; border-radius: 20px; border: 1px solid #efe3e7; background: #fff; box-shadow: 0 8px 22px rgba(107, 23, 48, .07); transition: transform .15s, box-shadow .15s }
+.sp-notes > div:hover { transform: translateY(-2px); box-shadow: 0 14px 28px rgba(107, 23, 48, .14) }
+.sp-notes > div.new { background: linear-gradient(90deg, #fdf1f4, #fff 55%); border-color: #f0c9d5 }
+.sp-notes i { width: 10px; height: 10px; margin-top: 7px; border-radius: 50%; background: #d4d0cc; flex: none }
+.sp-notes .new i { background: #8f2447; box-shadow: 0 0 0 5px rgba(143, 36, 71, .15) }
+.sp-notes b { margin-inline-end: 8px } .sp-notes p { margin: 2px 0 4px } .sp-notes small { color: #4a4a50; font-size: 12px }
+.sp-pagehead + .sp-stack .sp-kpis { margin-bottom: 4px }

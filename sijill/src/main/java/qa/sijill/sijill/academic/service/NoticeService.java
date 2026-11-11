@@ -2,9 +2,12 @@ package qa.sijill.sijill.academic.service;
 
 import java.time.Clock;
 import java.time.Instant;
+import java.util.EnumSet;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -13,11 +16,16 @@ import qa.sijill.sijill.academic.dto.AcademicDtos.NoticeView;
 import qa.sijill.sijill.academic.model.Notice;
 import qa.sijill.sijill.academic.model.NoticeAudience;
 import qa.sijill.sijill.academic.repository.NoticeRepository;
+import qa.sijill.sijill.people.model.Person;
+import qa.sijill.sijill.people.model.PersonStatus;
+import qa.sijill.sijill.people.repository.PersonRepository;
 import qa.sijill.sijill.shared.events.ActivityActions;
 import qa.sijill.sijill.shared.events.AuditPublisher;
+import qa.sijill.sijill.shared.events.PersonNotice;
 import qa.sijill.sijill.shared.exception.BadRequestException;
 import qa.sijill.sijill.shared.exception.ForbiddenException;
 import qa.sijill.sijill.shared.exception.NotFoundException;
+import qa.sijill.sijill.shared.model.NotificationKind;
 import qa.sijill.sijill.shared.model.Role;
 import qa.sijill.sijill.shared.security.CurrentUser;
 
@@ -33,6 +41,8 @@ public class NoticeService {
     private final AcademicAccess access;
     private final AuditPublisher audit;
     private final Clock clock;
+    private final PersonRepository people;
+    private final ApplicationEventPublisher publisher;
 
     @Transactional
     public NoticeView create(CurrentUser user, NoticeRequest request) {
@@ -57,7 +67,24 @@ public class NoticeService {
         notices.save(n);
         audit.log(user.orgId(), user.siteId(), ActivityActions.NOTICE_PUBLISHED).by(user).on("Notice", n.getId())
                 .change(null, n.getTitleEn()).save();
+        notifyAudience(user, n);
         return view(n);
+    }
+
+    /** A bell entry for everyone the notice is meant for (not the author), so staff and families see it without looking for it. */
+    private void notifyAudience(CurrentUser author, Notice n) {
+        Set<Role> roles = switch (n.getAudience()) {
+            case ALL -> EnumSet.of(Role.TEACHER, Role.COORDINATOR, Role.PRINCIPAL, Role.SCHOOL_IT, Role.STUDENT, Role.PARENT);
+            case STAFF -> EnumSet.of(Role.TEACHER, Role.COORDINATOR, Role.PRINCIPAL, Role.SCHOOL_IT);
+            case STUDENTS -> EnumSet.of(Role.STUDENT, Role.PARENT);
+        };
+        for (Role role : roles) {
+            for (Person p : people.findBySiteIdAndRole(n.getSiteId(), role)) {
+                if (p.getId().equals(author.personId()) || p.getStatus() == PersonStatus.LEFT) continue;
+                publisher.publishEvent(new PersonNotice(p.getId(), NotificationKind.SYSTEM, "إشعار جديد: " + n.getTitleAr(),
+                        "New notice: " + n.getTitleEn(), n.getBodyEn().length() > 900 ? n.getBodyEn().substring(0, 900) + "…" : n.getBodyEn()));
+            }
+        }
     }
 
     /** The notices to show this person right now: inside their dates and meant for them. */
@@ -74,7 +101,7 @@ public class NoticeService {
         return notices.findBySiteIdOrderByStartsAtDesc(user.siteId()).stream()
                 .filter(n -> !n.getStartsAt().isAfter(now) && n.getEndsAt().isAfter(now))
                 .filter(n -> n.getAudience() == NoticeAudience.ALL
-                        || (n.getAudience() == NoticeAudience.STUDENTS) == user.is(Role.STUDENT))
+                        || (n.getAudience() == NoticeAudience.STUDENTS) == user.isAny(Role.STUDENT, Role.PARENT))
                 .map(this::view).toList();
     }
 

@@ -17,7 +17,9 @@ public enum Role {
     /** Network executive team: totals, incidents and the weekly report only. */
     LEADERSHIP,
     /** A student of the school portal: sees only their own timetable, attendance, published results and materials. */
-    STUDENT;
+    STUDENT,
+    /** A parent or guardian: sees only the children School IT linked to them, read-only. */
+    PARENT;
 
     /**
      * Whether this role is offered the weekly report download (principals and Leadership only).

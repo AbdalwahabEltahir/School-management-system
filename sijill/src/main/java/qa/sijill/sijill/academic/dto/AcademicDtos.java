@@ -95,4 +95,18 @@ public final class AcademicDtos {
 
     public record MaterialRequest(@NotNull UUID sectionId, @NotNull UUID subjectId, @NotBlank String title,
                                   @NotBlank String link) {}
+
+    /** A child a parent may follow; section is null until the child is enrolled. */
+    public record ChildView(UUID id, String name, String section, String pendingClass) {}
+
+    public record ClassOption(UUID id, String label) {}
+
+    /** A student's own ID and class; section is null until they are enrolled. */
+    public record StudentStatus(String studentCode, String name, String section, String pendingClass) {}
+
+    public record ClassRequest(UUID studentId, @NotNull UUID sectionId) {}
+
+    public record PendingRequest(UUID id, String student, String studentCode, String section, String requestedBy) {}
+
+    public record UnenrolledStudent(UUID id, String name, String email, String studentCode) {}
 }
