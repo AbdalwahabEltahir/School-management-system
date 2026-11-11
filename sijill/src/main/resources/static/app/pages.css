@@ -248,6 +248,10 @@ html { scroll-behavior: smooth }
 .ld-g-bot b { font-size: 30px; letter-spacing: -.01em }
 .ld-g-bot > span { color: #f6d9e2; font-size: 17px }
 .ld-g-bot > div { display: inline-flex; gap: 10px; align-items: center; margin-top: 22px; background: #fff; color: #6b1730; border-radius: 99px; padding: 12px 24px; font-weight: 700 }
+.ld-g-bot > .ld-g-act { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 22px; padding: 0; background: none; border-radius: 0 }
+.ld-g-act a, .ld-g-act button { display: inline-flex; gap: 10px; align-items: center; background: #fff; color: #6b1730; border-radius: 99px; padding: 12px 24px; font: inherit; font-weight: 700; border: 2px solid #fff; cursor: pointer; text-decoration: none }
+.ld-g-act button { background: transparent; color: #fff; border-color: rgba(255, 255, 255, .75) }
+.ld-g-act a:hover, .ld-g-act button:hover { transform: translateY(-2px) }
 .ld-portals { flex: 1 1 280px; min-width: 0; display: flex; flex-direction: column; gap: 22px }
 .ld .ld-portal { flex: 1; position: relative; display: flex; align-items: center; gap: 20px; padding: 24px 26px; border-radius: 26px; background: rgba(255, 255, 255, .07); border: 1px solid rgba(255, 255, 255, .2); backdrop-filter: blur(8px); color: #fff; text-align: start; transition: transform .2s, background .2s, border-color .2s }
 .ld .ld-portal:hover { transform: translateX(6px); background: rgba(255, 255, 255, .14); border-color: rgba(231, 163, 182, .8) }
@@ -314,3 +318,89 @@ html { scroll-behavior: smooth }
 .ld-foot { background: linear-gradient(100deg, #17171a 0%, #26141c 55%, #4a1a2e 100%); border-top: 0; color: #c9b8be }
 .ld-foot b { color: #fff }
 .ld .ld-logo, .ld .ld-logo b { color: #fff }
+
+/* ---- Principal dashboard v2 (My school) ---- */
+.pd { display: flex; flex-direction: column; gap: 20px; color: #1c1c1f; font-size: 14px; line-height: 1.45 }
+.pd a { text-decoration: none }
+.pd-hero { position: relative; overflow: hidden; border-radius: 28px; background: linear-gradient(105deg, #17171a 0%, #26141c 55%, #4a1a2e 100%); color: #fff; padding: 34px 36px; display: flex; flex-wrap: wrap; gap: 28px; align-items: center; justify-content: space-between; min-height: 260px }
+.pd-sky { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; opacity: .5; -webkit-mask-image: linear-gradient(to right, transparent 30%, #000 70%); mask-image: linear-gradient(to right, transparent 30%, #000 70%) }
+.pd-hero-t { position: relative; flex: 1 1 320px; min-width: 0 }
+.pd-eyebrow { display: flex; gap: 12px; align-items: center; color: #e7a3b6; font-weight: 700; font-size: 13px; letter-spacing: .08em }
+.pd-eyebrow span { width: 36px; height: 2px; background: #e7a3b6 }
+.pd-hero h1 { margin: 8px 0 6px; font-size: clamp(38px, 5vw, 60px); line-height: 1.05; font-weight: 800; letter-spacing: -.03em; color: #fff }
+.pd-hero p { margin: 0 0 22px; color: #e4d3d8; font-size: 16px; max-width: 360px }
+.pd-dl { display: inline-flex; gap: 8px; align-items: center; white-space: nowrap; background: #fff; color: #6b1730; border-radius: 12px; padding: 12px 20px; font-weight: 700 }
+.pd-dl:hover { background: #f6e4ea; color: #3f0d1c }
+.pd-gauge { position: relative; flex: 0 0 auto; width: 300px; max-width: 100%; text-align: center }
+.pd-gauge svg { width: 100%; display: block }
+.pd-chip { display: inline-block; margin-top: 6px; background: rgba(255, 107, 94, .22); border: 1px solid rgba(255, 107, 94, .6); color: #ffc9c3; font-weight: 700; font-size: 13px; padding: 2px 14px; border-radius: 99px }
+.pd-chip-good { background: rgba(95, 211, 154, .2); border-color: rgba(95, 211, 154, .6); color: #c6f3dd }
+
+.pd-kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px }
+.pd-kpi { position: relative; overflow: hidden; border-radius: 28px; padding: 24px; color: #fff; box-shadow: 0 8px 20px rgba(23, 23, 26, .14); display: flex; flex-direction: column; justify-content: space-between; gap: 16px; min-height: 210px }
+.pd-k-open { background: linear-gradient(150deg, #26141c, #17171a 55%, #6b1730) }
+.pd-k-urgent { background: linear-gradient(150deg, #d92d20, #a11d12 55%, #6b1730) }
+.pd-k-follow { background: linear-gradient(150deg, #b7791f, #8a5a14 60%, #5d3d0c) }
+.pd-k-fixed { background: linear-gradient(150deg, #1f9d62, #14633b 55%, #0b3f26) }
+.pd-kpi-mark { position: absolute; inset-inline-end: -20px; bottom: -24px; width: 150px; height: 150px; opacity: .14 }
+.pd-kpi-top { position: relative; display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap; font-weight: 700; font-size: 15px }
+.pd-kpi-tag { flex: none; white-space: nowrap; font-size: 12px; font-weight: 700; background: rgba(255, 255, 255, .2); border: 1px solid rgba(255, 255, 255, .35); border-radius: 99px; padding: 3px 12px }
+.pd-kpi > b { position: relative; font-size: 84px; line-height: .9; letter-spacing: -.05em }
+.pd-kpi-foot { position: relative; font-size: 13px; color: rgba(255, 255, 255, .92) }
+.pd-bar { height: 8px; border-radius: 99px; background: rgba(255, 255, 255, .22); margin-top: 10px }
+.pd-bar div { height: 8px; border-radius: 99px; background: #fff }
+
+.pd-cols { display: flex; flex-wrap: wrap; gap: 20px; align-items: flex-start }
+.pd-left { flex: 3 1 520px; min-width: 0; display: flex; flex-direction: column; gap: 20px }
+.pd-right { flex: 2 1 340px; min-width: 0; display: flex; flex-direction: column; gap: 20px }
+.pd-card { background: #fff; border: 1px solid #ebe9e4; border-radius: 28px; padding: 26px; box-shadow: 0 8px 20px rgba(23, 23, 26, .08) }
+.pd-card h2 { margin: 0; font-size: 22px; letter-spacing: -.01em }
+.pd-card small, .pd-sub { font-size: 13px; color: #4a4a50 }
+.pd-sub { display: block; margin-bottom: 14px }
+.pd-card-h { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 16px }
+.pd-card-h > div { display: flex; gap: 12px; align-items: center }
+.pd-card-h > a { flex: none; white-space: nowrap; font-weight: 700; color: #6b1730 }
+.pd-tile { width: 42px; height: 42px; flex: none; border-radius: 13px; background: #6b1730; display: grid; place-items: center }
+.pd-tile svg { width: 22px; height: 22px; fill: none; stroke: #fff; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round }
+.pd-tile-red { background: #a11d12 }
+.pd-urgents { display: flex; flex-direction: column; gap: 12px }
+.pd-urgent { display: flex; gap: 16px; align-items: center; flex-wrap: wrap; padding: 16px 18px; border: 1px solid #f0d3d0; background: #fffafa; border-radius: 18px }
+.pd-urgent:hover { border-color: #d9a9b8 }
+.pd-file { width: 46px; height: 46px; flex: none; border-radius: 14px; background: #fde8e6; display: grid; place-items: center }
+.pd-file svg { width: 22px; height: 22px; fill: none; stroke: #a11d12; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round }
+.pd-urgent-t { flex: 1 1 220px; min-width: 0 }
+.pd-urgent-t b { display: block; overflow: hidden; text-overflow: ellipsis }
+.pd-urgent-t span { color: #2e2e33; font-size: 13px }
+.pd-urgent-r { display: flex; gap: 10px; align-items: center; flex-wrap: wrap }
+.pd-date { font-size: 13px; color: #4a4a50; white-space: nowrap }
+.pd-review { background: #6b1730; color: #fff; border-radius: 10px; padding: 8px 16px; font-weight: 600; font-size: 13px }
+.pd-review:hover { background: #531226; color: #fff }
+.pd-cols2 { display: flex; flex-wrap: wrap; gap: 24px }
+.pd-col { flex: 1 1 280px; min-width: 0 }
+.pd-col-h { display: flex; gap: 10px; align-items: center; margin-bottom: 12px }
+.pd-col-h .pd-tile { width: 38px; height: 38px; border-radius: 12px }
+.pd-col-h .pd-tile svg { width: 20px; height: 20px }
+.pd-col-h b { font-size: 17px }
+.pd-col-h div div { font-size: 12px; color: #4a4a50 }
+.pd-people { display: flex; flex-direction: column; gap: 10px }
+.pd-none { color: #4a4a50; font-size: 13px; padding: 8px 2px }
+.pd-person { display: flex; gap: 12px; align-items: center; padding: 12px 14px; border: 1px solid #ebe9e4; border-radius: 16px; background: #faf9f7 }
+.pd-person:hover { border-color: #d9a9b8 }
+.pd-av { width: 40px; height: 40px; flex: none; border-radius: 50%; background: #f6e4ea; color: #6b1730; display: grid; place-items: center; font-weight: 700; font-size: 13px }
+.pd-person-t { flex: 1; min-width: 0 }
+.pd-person-t b { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap }
+.pd-person-t span { font-size: 12px; color: #4a4a50 }
+.pd-open { flex: none; text-align: end; line-height: 1.1 }
+.pd-open b { font-size: 22px }
+.pd-open div { font-size: 11px; color: #4a4a50 }
+.pd-dark { background: #17171a; color: #fff; border-color: #17171a; box-shadow: 0 8px 20px rgba(23, 23, 26, .14) }
+.pd-dark small { color: #cfcfd6 }
+.pd-pill { background: rgba(255, 255, 255, .12); border-radius: 99px; padding: 3px 12px; font-size: 12px; font-weight: 700 }
+.pd-trend { display: block; width: 100%; height: auto; margin-top: 12px }
+.pd-trend-empty { color: #cfcfd6; font-size: 13px; padding: 24px 0 }
+.pd-seg { display: flex; height: 16px; border-radius: 99px; overflow: hidden; gap: 3px }
+.pd-seg span { min-width: 8px; border-radius: 99px }
+.pd-leg { display: flex; gap: 10px; align-items: center; padding: 11px 0; border-top: 1px solid #eceae6; margin-top: 10px }
+.pd-leg i { width: 12px; height: 12px; border-radius: 4px; flex: none }
+.pd-leg span { flex: 1; min-width: 0; color: #2e2e33 }
+.pd-leg b { font-size: 22px }

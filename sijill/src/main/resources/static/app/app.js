@@ -96,7 +96,7 @@ const loadFiles = () => {
   return lazy('files', S.me.role === 'TEACHER' ? '/api/files/mine' : '/api/files', f => [f.id, f])();
 };
 const loadRules = lazy('rules', '/api/rules', r => [r.id, r]);
-const loadPeople = () => ['SCHOOL_IT', 'COORDINATOR'].includes(S.me.role) ? lazy('people', '/api/people', p => [p.id, p])() : Promise.resolve(S.people = S.people || {});
+const loadPeople = () => ['SCHOOL_IT', 'COORDINATOR', 'PRINCIPAL'].includes(S.me.role) ? lazy('people', '/api/people', p => [p.id, p])() : Promise.resolve(S.people = S.people || {});
 const loadSites = lazy('sites', '/api/sites', s => [s.id, s]);
 const loadSubjects = lazy('subjects', '/api/subjects');
 const loadDocTypes = lazy('docTypes', '/api/doc-types');
@@ -574,14 +574,85 @@ SCREENS.site = async id => {
     ${card('Trend', null, sparkline(r.trend))}`, html`<a class="btn" href="javascript:history.back()">Back</a>`);
 };
 
+// ---- principal: My school (dashboard v2)
+const PD_SKYLINE = '<svg class="pd-sky" viewBox="0 0 900 300" preserveAspectRatio="xMidYMax slice" aria-hidden="true"><g fill="#8f2447"><rect x="400" y="200" width="30" height="100" opacity=".5"/><path d="M450 300Q460 220 456 140Q454 104 468 76Q482 104 480 140Q476 220 486 300Z" opacity=".8"/><path d="M520 300V138Q520 110 538 104Q556 110 556 138V300Z" opacity=".7"/><path d="M640 300L643 160Q629 138 638 104Q652 70 666 104Q675 138 661 160L664 300Z" opacity=".9"/><rect x="570" y="136" width="30" height="164" opacity=".6"/><path d="M690 300V118L722 104V300Z" opacity=".7"/><rect x="726" y="150" width="28" height="150" opacity=".55"/><rect x="760" y="190" width="34" height="110" opacity=".45"/><rect x="800" y="220" width="70" height="80" opacity=".4"/></g></svg>';
+const PD_TYPE_COLOURS = ['#b7791f', '#a11d12', '#6b1730', '#14633b', '#2563eb', '#77777e'];
+const pdInitials = n => String(n || '?').trim().split(/\s+/).slice(0, 2).map(w => w[0]).join('').toUpperCase();
+const pdOpenColour = n => n === 0 ? '#14633b' : n >= 4 ? '#a11d12' : '#b7791f';
+const pdShortDate = d => new Date(d).toLocaleDateString(uiLocale(), { month: 'numeric', day: 'numeric' });
+
+function pdGauge(value) {
+  const v = value == null ? 0 : Math.max(0, Math.min(100, value)), good = value != null && value >= 70;
+  const colour = good ? '#5fd39a' : '#ff6b5e';
+  return html`<div class="pd-gauge"><svg viewBox="0 0 200 118" aria-hidden="true"><path d="M20 100A80 80 0 0 1 180 100" fill="none" stroke="rgba(255,255,255,.16)" stroke-width="16" stroke-linecap="round" pathLength="100"/><path d="M20 100A80 80 0 0 1 180 100" fill="none" stroke="${colour}" stroke-width="16" stroke-linecap="round" pathLength="100" stroke-dasharray="${v} 100"/><text x="100" y="92" text-anchor="middle" font-size="46" font-weight="800" fill="#fff" font-family="Inter,sans-serif">${value == null ? '–' : value}</text><text x="100" y="112" text-anchor="middle" font-size="11" fill="#e4d3d8" font-family="Inter,sans-serif">HEALTH SCORE · OF 100</text></svg>
+    <span class="pd-chip ${good ? 'pd-chip-good' : ''}">${value == null ? 'No score yet' : good ? '✓ On track' : '! Needs attention'}</span></div>`;
+}
+
+function pdTrend(points) {
+  const pts = (points || []).slice(-7);
+  if (pts.length < 2) return html`<div class="pd-trend-empty">Not enough history yet.</div>`;
+  const n = pts.length, xs = i => 60 + i * (224 / (n - 1)), ys = s => 120 - Math.max(0, Math.min(100, s)) * 1.08;
+  const line = pts.map((p, i) => xs(i).toFixed(1) + ',' + ys(p.score).toFixed(1)).join(' ');
+  const area = line + ' ' + xs(n - 1).toFixed(1) + ',120 ' + xs(0).toFixed(1) + ',120';
+  return html`<svg viewBox="0 0 320 150" role="img" aria-label="Health score trend, ${pdShortDate(pts[0].date)} to ${pdShortDate(pts[n - 1].date)}" class="pd-trend"><defs><linearGradient id="pdtd" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ff6b5e" stop-opacity=".3"/><stop offset="1" stop-color="#ff6b5e" stop-opacity="0"/></linearGradient></defs>
+    <g stroke="rgba(255,255,255,.14)"><line x1="34" x2="310" y1="12" y2="12"/><line x1="34" x2="310" y1="48" y2="48"/><line x1="34" x2="310" y1="84" y2="84"/><line x1="34" x2="310" y1="120" y2="120"/></g>
+    <g fill="#cfcfd6" font-size="11" text-anchor="end"><text x="26" y="16">100</text><text x="26" y="52">66</text><text x="26" y="88">33</text><text x="26" y="124">0</text></g>
+    <polygon points="${area}" fill="url(#pdtd)"/><polyline points="${line}" fill="none" stroke="#ff8a80" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>
+    <g fill="#17171a" stroke="#ff8a80" stroke-width="2.5">${pts.slice(0, -1).map((p, i) => html`<circle cx="${xs(i).toFixed(1)}" cy="${ys(p.score).toFixed(1)}" r="4.5"/>`)}</g>
+    <circle cx="${xs(n - 1).toFixed(1)}" cy="${ys(pts[n - 1].score).toFixed(1)}" r="6" fill="#fff" stroke="#ff8a80" stroke-width="3"/>
+    <g fill="#cfcfd6" font-size="11" text-anchor="middle">${pts.map((p, i) => html`<text x="${xs(i).toFixed(1)}" y="142">${pdShortDate(p.date)}</text>`)}</g></svg>`;
+}
+
+const pdKpi = (label, tag, value, note, pct, cls, icon) => html`<div class="pd-kpi ${cls}"><svg class="pd-kpi-mark" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="${icon}"/></svg>
+  <div class="pd-kpi-top"><span>${label}</span><span class="pd-kpi-tag">${tag}</span></div><b>${value}</b>
+  <div class="pd-kpi-foot"><div>${note}</div><div class="pd-bar"><div style="width:${Math.max(0, Math.min(100, pct))}%"></div></div></div></div>`;
+
+const pdPerson = (p, open, colour) => html`<div class="pd-person"><span class="pd-av">${pdInitials(p.displayName)}</span><div class="pd-person-t"><b>${p.displayName}</b><span>${ROLE_LABEL[p.role] || title(p.role)}${p.siteId ? ' · ' + (siteName(p.siteId) || '') : ''}</span></div><span class="pd-open"><b style="color:${colour}">${open}</b><div>open</div></span></div>`;
+
 SCREENS.school = async () => {
-  const [counts, issues] = await Promise.all([get('/api/follow-up/counts'), get('/api/issues?filter=URGENT'), loadFiles(), loadSites()]);
+  const [counts, openIssues, urgent, rules] = await Promise.all([get('/api/follow-up/counts'), get('/api/issues?filter=ALL_OPEN'), get('/api/issues?filter=URGENT'),
+    loadRules(), loadFiles(), loadSites(), loadPeople()]);
+  await nameMissing(urgent, i => i.fileId);
   const score = await get(`/api/dashboard/sites/${S.me.siteId}/score?days=30`).catch(() => null);
-  return page(siteName(S.me.siteId) || 'My school', 'Where your school stands today.',
-    html`<div class="kpi-grid">${kpi('Open', counts.open)}${kpi('Urgent', counts.urgent, 'brand')}${kpi('Need follow-up', counts.needFollowUp, 'amber')}${kpi('Fixed', counts.fixed, 'green')}${score ? kpi('Health score', Math.round(score.score.score), 'slate') : ''}</div>
-    ${score ? card('Trend', null, sparkline(score.trend)) : ''}
-    ${card('Urgent issues', null, issues.length ? issueTable(issues) : empty('No urgent issues.'), html`<a class="card-link" href="#/issues">All issues</a>`)}`,
-    S.me.canDownloadWeeklyReport ? html`<a class="btn" href="/api/dashboard/weekly-report.pdf">Weekly report (PDF)</a>` : '');
+  const health = score ? Math.round(score.score.score) : null;
+  const total = counts.open + counts.fixed, pct = n => total ? Math.round(n * 100 / total) : 0;
+  const school = siteName(S.me.siteId) || 'My school';
+
+  // open issues per owner (names come from the school's people list)
+  const perOwner = {};
+  openIssues.forEach(i => { if (i.ownerId) perOwner[i.ownerId] = (perOwner[i.ownerId] || 0) + 1; });
+  const staff = Object.values(S.people || {}).filter(p => p.status !== 'LEFT' && p.siteId === S.me.siteId);
+  const byRole = r => staff.filter(p => p.role === r).sort((a, b) => (perOwner[b.id] || 0) - (perOwner[a.id] || 0)).slice(0, 6);
+  const coords = byRole('COORDINATOR'), teachers = byRole('TEACHER');
+  const peopleList = (head, sub, icon, list, own) => html`<div class="pd-col"><div class="pd-col-h"><span class="pd-tile">${lico(icon)}</span><div><b>${head}</b><div>${sub}</div></div></div>
+    <div class="pd-people">${list.length ? list.map(p => pdPerson(p, perOwner[p.id] || 0, own ? '#6b1730' : pdOpenColour(perOwner[p.id] || 0))) : html`<div class="pd-none">Nobody yet.</div>`}</div></div>`;
+
+  // open issues grouped by the rule that raised them
+  const byRule = {};
+  openIssues.forEach(i => { byRule[i.ruleId] = (byRule[i.ruleId] || 0) + 1; });
+  const types = Object.entries(byRule).map(([id, n]) => { const r = rules[id] || {}; const v = r.effective || r.pending || {}; return { l: v.name || r.code || 'Other', n }; })
+    .sort((a, b) => b.n - a.n).map((t, i) => ({ ...t, c: PD_TYPE_COLOURS[Math.min(i, PD_TYPE_COLOURS.length - 1)] }));
+
+  const wantAr = I18N.lang === 'ar' || (S.me.language && S.me.language !== 'EN');
+  const urgentRow = i => html`<div class="pd-urgent"><span class="pd-file">${lico('M14 3H7a2 2 0 00-2 2v14a2 2 0 002 2h10a2 2 0 002-2V8zM14 3v5h5')}</span><div class="pd-urgent-t"><b>${fileName(i.fileId)}</b><span dir="auto">${wantAr && i.detailAr ? i.detailAr : i.detailEn}</span></div>
+    <div class="pd-urgent-r">${statusBadge(i.status)}<span class="pd-date">${fmtDate(i.openedAt)}</span><a class="pd-review" href="#/issue/${i.id}">Review</a></div></div>`;
+  const trend = score ? score.trend : [];
+
+  return html`<div class="pd">
+  <section class="pd-hero">${raw(PD_SKYLINE)}<div class="pd-hero-t"><div class="pd-eyebrow"><span></span>MY SCHOOL</div><h1>${school}</h1><p>Where your school stands today.</p>
+    ${S.me.canDownloadWeeklyReport ? html`<a class="pd-dl" href="/api/dashboard/weekly-report.pdf"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 4v11m0 0l-4-4m4 4l4-4M5 20h14"/></svg>Weekly report (PDF)</a>` : ''}</div>${pdGauge(health)}</section>
+  <section class="pd-kpis">${pdKpi('Open', 'Needs review', counts.open, 'Files waiting for a decision', pct(counts.open), 'pd-k-open', LIC.shield)}
+    ${pdKpi('Urgent', 'Act first', counts.urgent, counts.urgent ? counts.urgent + ' files need action first' : 'Nothing urgent', counts.open ? counts.urgent * 100 / counts.open : 0, 'pd-k-urgent', LIC.warn)}
+    ${pdKpi('Follow-up', counts.needFollowUp ? 'Waiting' : 'All clear', counts.needFollowUp, counts.needFollowUp ? 'Owners waiting on you' : 'No owners waiting on you', counts.open ? counts.needFollowUp * 100 / counts.open : 0, 'pd-k-follow', LIC.clock)}
+    ${pdKpi('Fixed', 'Resolved', counts.fixed, pct(counts.fixed) + '% of ' + total + ' issues fixed', pct(counts.fixed), 'pd-k-fixed', LIC.check)}</section>
+  <section class="pd-cols"><div class="pd-left">
+    <div class="pd-card"><div class="pd-card-h"><div><span class="pd-tile pd-tile-red">${lico(LIC.warn)}</span><div><h2>Urgent issues</h2><small>${urgent.length} files need action first</small></div></div><a href="#/issues">All issues →</a></div>
+      <div class="pd-urgents">${urgent.length ? urgent.map(urgentRow) : empty('No urgent issues.')}</div></div>
+    ${coords.length || teachers.length ? html`<div class="pd-card"><div class="pd-card-h"><div><div><h2>Teachers and coordinators</h2><small>Who owns the open files</small></div></div></div>
+      <div class="pd-cols2">${peopleList('Coordinators', 'Review and approve fixes', 'M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2M9 11a4 4 0 100-8 4 4 0 000 8zM23 21v-2a4 4 0 00-3-3.9M16 3.1a4 4 0 010 7.8', coords, true)}${peopleList('Teachers', 'Own the files with issues', 'M2 9l10-5 10 5-10 5zM6 11v5c0 1.5 2.7 3 6 3s6-1.5 6-3v-5', teachers, false)}</div></div>` : ''}</div>
+  <div class="pd-right"><div class="pd-card pd-dark"><div class="pd-card-h"><div><div><h2>Trend</h2><small>Score 0 to 100</small></div></div><span class="pd-pill">${Math.min(7, trend.length)} days</span></div>${pdTrend(trend)}</div>
+    <div class="pd-card"><h2>Issues by type</h2><small class="pd-sub">${openIssues.length} open files</small>
+      ${types.length ? html`<div class="pd-seg">${types.map(t => html`<span style="flex:${t.n};background:${t.c}"></span>`)}</div>${types.map(t => html`<div class="pd-leg"><i style="background:${t.c}"></i><span>${t.l}</span><b>${t.n}</b></div>`)}` : empty('No open issues.')}</div></div></section></div>`;
 };
 
 SCREENS.incidents = async () => {
@@ -642,7 +713,7 @@ SCREENS.people = async () => {
   const rows = list.map(p => ({ cells: [html`<b>${p.displayName}</b><div class="muted">${p.email}</div>${p.studentCode ? html`<div class="muted mono">${p.studentCode}</div>` : ''}`, siteName(p.siteId),
     it ? html`<form data-form="person" data-id="${p.id}" class="row"><select name="role">${options(ROLES, p.role, x => ROLE_LABEL[x])}</select><select name="status">${options(['NEW', 'ACTIVE', 'LEAVING', 'LEFT'], p.status)}</select><button class="btn btn-sm">Save</button></form>` : html`${ROLE_LABEL[p.role]} · ${title(p.status)}`,
     p.overridden ? badge('b-watch', 'Overridden') : '',
-    html`<div class="row">${it ? html`<button class="btn btn-sm" data-act="welcome" data-id="${p.id}">Send welcome</button>` : ''}${coord ? html`<button class="btn btn-sm" data-act="personFollowUp" data-id="${p.id}">Follow up</button>` : ''}</div>`] }));
+    html`<div class="row">${it ? html`<button class="btn btn-sm" data-act="welcome" data-id="${p.id}">Send welcome</button><button class="btn btn-sm" data-act="editPerson" data-id="${p.id}">Edit</button>` : ''}${it && p.id !== S.me.id && !['LEADERSHIP', 'SCHOOL_IT'].includes(p.role) ? html`<button class="btn btn-sm btn-danger" data-act="deletePerson" data-id="${p.id}" data-confirm="Delete this person permanently?">Delete</button>` : ''}${coord ? html`<button class="btn btn-sm" data-act="personFollowUp" data-id="${p.id}">Follow up</button>` : ''}</div>`] }));
   return page('People', 'Everyone signs in with their own school account. There are no Sijill passwords.',
     html`${card('Staff', list.length + ' people', table(['Person', 'School', 'Role and status', '', ''], rows))}
     ${it ? card('Add a person', 'They sign in with their own Google account. Use the same e-mail they sign in with.', html`<form data-form="addPerson" class="row"><input class="input" type="email" name="email" placeholder="name@school.edu" required><input class="input" name="name" placeholder="Full name" required><select name="role">${options(['TEACHER', 'COORDINATOR', 'PRINCIPAL', 'STUDENT', 'PARENT'], 'TEACHER', x => ROLE_LABEL[x])}</select><select name="studentId" title="Only for a parent: the student they follow"><option value="">Child (for a parent)</option>${list.filter(p => p.role === 'STUDENT').map(p => html`<option value="${p.id}">${p.displayName}</option>`)}</select><button class="btn btn-primary">Add person</button></form>`) : ''}
@@ -708,7 +779,7 @@ SCREENS.restores = async () => {
 };
 
 SCREENS.prefs = async () => page('My preferences', isPortal() ? 'Choose how Sijill talks to you.' : null, card('Messages', null, html`<form data-form="prefs">
-  ${field('Language of messages', html`<select name="language">${options(['EN', 'AR', 'BOTH'], S.me.language, x => ({ EN: 'English', AR: 'Arabic', BOTH: 'English and Arabic' }[x]))}</select>`)}
+  ${field('Language of messages', html`<select name="language" data-act="prefLang">${options(['EN', 'AR', 'BOTH'], S.me.language, x => ({ EN: 'English', AR: 'Arabic', BOTH: 'English and Arabic' }[x]))}</select>`)}
   ${field('How to receive them', html`<select name="digestMode">${options(['PER_ISSUE', 'DAILY'], S.me.digestMode, x => x === 'DAILY' ? 'One daily summary' : 'One message per issue')}</select>`)}
   <button class="btn btn-primary">Save</button></form>`));
 
@@ -1047,6 +1118,14 @@ SCREENS.noticesAdmin = async () => {
 // =============================================================== actions (buttons)
 async function refreshAfter(msg) { if (msg) toast(msg); await render(); }
 const ACT = {
+  // "My preferences": choosing a language switches the whole app at once and saves it (English and Arabic keeps the English screens)
+  prefLang: async (d, sel) => {
+    const language = sel.value, form = sel.closest('form');
+    S.me = await put('/api/me/preferences', { language, digestMode: form ? form.elements.digestMode.value : S.me.digestMode });
+    setLang(language === 'AR' ? 'ar' : 'en');
+    await render();
+    toast('Saved.');
+  },
   setLang: async () => {
     setLang(I18N.lang === 'ar' ? 'en' : 'ar');
     if (S.me) await render(); else showLanding();
@@ -1074,7 +1153,7 @@ const ACT = {
   publishResults: async d => { await post(`/api/marks/sections/${d.section}/publish`, { term: Number(d.term) }); await refreshAfter('Published. Students were told.'); },
   unpublishResults: async d => { const reason = prompt(trText('Why are you unpublishing these results?')); if (!reason) return; await post(`/api/marks/sections/${d.section}/unpublish`, { term: Number(d.term), reason }); await refreshAfter('Results are hidden again.'); },
   addPerson: async f => { await post('/api/people', { email: f.email, name: f.name, role: f.role, studentId: f.role === 'PARENT' && f.studentId ? f.studentId : undefined }); invalidate('people'); await refreshAfter(f.email + ' can now sign in.'); },
-  landing: async d => { L.view = d.view; L.mode = d.mode || 'login'; if (L.view === 'student' && L.mode === 'register' && !L.schools) L.schools = await get('/api/auth/schools').catch(() => []); showLanding(); },
+  landing: async d => { L.view = d.view; L.mode = d.mode || 'login'; if (L.view === 'testname') L.testPeople = await get('/api/auth/test/people').catch(() => null); if (L.view === 'student' && L.mode === 'register' && !L.schools) L.schools = await get('/api/auth/schools').catch(() => []); showLanding(); },
   approveReq: async d => { await post('/api/enrol/requests/' + d.id + '/approve'); await refreshAfter('Student enrolled.'); },
   declineReq: async d => { await post('/api/enrol/requests/' + d.id + '/decline'); await refreshAfter('Request declined.'); },
   renameSchool: async d => { const name = prompt(trText('School name:'), d.name); if (!name || name === d.name) return; await put('/api/sites/' + d.id, { name }); invalidate('sites'); await refreshAfter('Renamed.'); },
@@ -1086,6 +1165,14 @@ const ACT = {
   approveRule: async d => { await post(`/api/rules/${d.id}/versions/${d.version}/approve`); await refreshAfter('Version approved. It applies from the next check.'); },
   syncPeople: async () => { const r = await post('/api/people/sync'); invalidate('people'); await refreshAfter(r.changed + ' people changed.'); },
   welcome: async d => { await post(`/api/people/${d.id}/welcome`); await refreshAfter('Welcome message queued.'); },
+  editPerson: async d => {
+    const p = S.people[d.id]; if (!p) return;
+    const name = prompt(trText('Full name:'), p.displayName); if (name === null) return;
+    const email = prompt(trText('Google e-mail (they sign in with this address):'), p.email); if (email === null) return;
+    if (name.trim() === p.displayName && email.trim().toLowerCase() === p.email.toLowerCase()) return;
+    await patch(`/api/people/${d.id}`, { name: name.trim(), email: email.trim() }); invalidate('people'); await refreshAfter('Saved.');
+  },
+  deletePerson: async d => { await del(`/api/people/${d.id}`); await refreshAfter('Person deleted.'); },
   personFollowUp: async d => { const note = prompt(trText('Note for the follow-up (optional):')); if (note === null) return; await post(`/api/people/${d.id}/follow-up`, { note }); toast('Follow-up recorded.'); },
   trustType: async d => { await post(`/api/doc-types/${d.id}/trust`); invalidate('docTypes'); await refreshAfter('Type trusted.'); },
   connTest: async d => { const r = await post(`/api/connection/${d.id}/test`); toast((r && r.message) || 'Connection tested.'); },
@@ -1142,6 +1229,8 @@ const FORM = {
   material: async f => { const [sectionId, subjectId] = f.pair.split('|'); await post('/api/materials', { sectionId, subjectId, title: f.title, link: f.link }); await refreshAfter('Shared with the section.'); },
   term: async f => { await put('/api/academic/terms', { number: Number(f.number), name: f.name, startsOn: f.startsOn, endsOn: f.endsOn }); await refreshAfter('Term saved.'); },
   section: async f => { await post('/api/academic/sections', { grade: Number(f.grade), name: f.name }); await refreshAfter('Section added.'); },
+  testSignin: async f => { await post('/api/auth/test/signin', { name: f.name }); afterAuth(); },
+  testPick: async d => { await post('/api/auth/test/pick', { id: d.id }); afterAuth(); },
   login: async f => { await post('/api/auth/login', { email: f.email, password: f.password }); afterAuth(); },
   registerStudent: async f => { await post('/api/auth/register/student', { siteId: f.siteId, name: f.name, email: f.email, password: f.password }); afterAuth(); },
   registerParent: async f => { await post('/api/auth/register/parent', { studentCode: f.studentCode, name: f.name, email: f.email, password: f.password }); afterAuth(); },
@@ -1152,7 +1241,7 @@ const FORM = {
   lesson: async (f, d) => { await post('/api/academic/timetable', { sectionId: d.section, subjectId: f.subjectId, day: Number(f.day), period: Number(f.period), room: f.room || null }); await refreshAfter('Lesson added.'); },
   assessment: async f => { const [sectionId, subjectId] = f.pair.split('|'); await post('/api/marks/assessments', { sectionId, subjectId, term: Number(f.term), name: f.name, maxMark: Number(f.maxMark) }); await refreshAfter('Assessment added.'); },
   notice: async f => { await post('/api/notices', { ...f, startsAt: new Date(f.startsAt).toISOString(), endsAt: new Date(f.endsAt).toISOString() }); await refreshAfter('Notice published.'); },
-  prefs: async f => { S.me = await put('/api/me/preferences', { language: f.language, digestMode: f.digestMode }); await refreshAfter('Saved.'); }
+  prefs: async f => { S.me = await put('/api/me/preferences', { language: f.language, digestMode: f.digestMode }); setLang(f.language === 'AR' ? 'ar' : 'en'); await refreshAfter('Saved.'); }
 };
 
 document.addEventListener('click', async e => {
@@ -1188,6 +1277,7 @@ document.addEventListener('input', e => {
 document.addEventListener('change', e => {
   const a = e.target.dataset && e.target.dataset.act;
   if (a === 'pickSite') ACT.pickSite({}, e.target);
+  if (a === 'prefLang') ACT.prefLang({}, e.target).catch(fail);
   if (a === 'pickSection') location.hash = '#/' + e.target.dataset.route + '?s=' + e.target.value;
 });
 document.addEventListener('submit', async e => {
@@ -1238,7 +1328,7 @@ function shell(route, body) {
     <div class="content">${portal ? portalTopbar(initials) : ''}<main class="page ${portal ? 'sp' : isCoord() ? 'cx' : ''}" id="main">${body}</main></div></div>`;
 }
 
-const L = { view: 'home', mode: 'login', dev: false, schools: null };
+const L = { view: 'home', mode: 'login', dev: false, test: false, schools: null };
 function showLanding() { document.getElementById('app').innerHTML = signIn(null, L.dev).s; }
 function afterAuth() { S.me = null; location.hash = ''; render(); }
 
@@ -1277,9 +1367,9 @@ function landingPage() {
   <section class="ld-sign" id="ld-signin"><div class="ld-sign-in">
     <div class="ld-sign-h"><div>SIGN IN</div><h2>Welcome to Sijill</h2><p>Choose how you want to sign in.</p></div>
     <div class="ld-sign-g">
-      <a class="ld-google" href="/oauth2/authorization/google"><svg class="ld-rings" viewBox="0 0 200 200" aria-hidden="true"><g fill="none" stroke="#fff" stroke-width="3"><circle cx="100" cy="100" r="90"/><circle cx="100" cy="100" r="62"/><circle cx="100" cy="100" r="34"/></g></svg>
+      <div class="ld-google"><svg class="ld-rings" viewBox="0 0 200 200" aria-hidden="true"><g fill="none" stroke="#fff" stroke-width="3"><circle cx="100" cy="100" r="90"/><circle cx="100" cy="100" r="62"/><circle cx="100" cy="100" r="34"/></g></svg>
         <div class="ld-g-top"><span><svg width="32" height="32" viewBox="0 0 24 24" aria-hidden="true"><path d="M21.6 12.2c0-.7-.1-1.4-.2-2H12v3.8h5.4a4.6 4.6 0 01-2 3v2.5h3.2c1.9-1.7 3-4.3 3-7.3z" fill="#4285F4"/><path d="M12 22c2.7 0 5-.9 6.6-2.5l-3.2-2.5c-.9.6-2 1-3.4 1-2.6 0-4.8-1.8-5.6-4.1H3.1v2.6A10 10 0 0012 22z" fill="#34A853"/><path d="M6.4 14c-.2-.6-.3-1.3-.3-2s.1-1.4.3-2V7.4H3.1a10 10 0 000 9.2z" fill="#FBBC05"/><path d="M12 5.9c1.5 0 2.8.5 3.8 1.5l2.8-2.8A10 10 0 003.1 7.4L6.4 10c.8-2.3 3-4.1 5.6-4.1z" fill="#EA4335"/></svg></span><i>Recommended</i></div>
-        <div class="ld-g-bot"><b>Login with Google</b><span>For school related emails</span><div>Continue <span aria-hidden="true">→</span></div></div></a>
+        <div class="ld-g-bot"><b>Login with Google</b><span>For school related emails</span><div class="ld-g-act"><a href="/oauth2/authorization/google">Continue <span aria-hidden="true">→</span></a><button type="button" data-act="landing" data-view="testname" data-mode="login">Sign in with a name (testing)</button></div></div></div>
       <div class="ld-portals">${portals.map(([v, t, g, p]) => html`<button type="button" class="ld-portal" data-act="landing" data-view="${v}" data-mode="login"><span style="background:${g}">${ldIc(p, 28, 1.8)}</span><div><small>PORTAL</small><b>${t}</b><div>Sign in or register</div></div><i aria-hidden="true">→</i></button>`)}</div></div>
     ${L.dev ? html`<p class="ld-dev">Test mode, no e-mail needed: <a href="/dev/login/student?next=/">student</a> · <a href="/dev/login/parent?next=/">parent</a> · <a href="/dev/login">all test roles</a></p>` : ''}</div></section>
 
@@ -1296,6 +1386,16 @@ function signIn(message, dev) {
       <button class="btn" data-act="signout">Sign out and try another account</button></div></div>`;
   }
   if (L.view === 'home') return landingPage();
+  if (L.view === 'testname') {
+    const off = L.testPeople === null;
+    const who = (L.testPeople || []).map(x => html`<button type="button" class="btn btn-sm" data-act="testPick" data-id="${x.id}">${x.name} · ${ROLE_LABEL[x.role] || x.role}</button>`);
+    return html`<div class="center-screen"><div class="center-card landing" style="text-align:start"><button type="button" class="card-lang" data-act="setLang">${langLabel()}</button>${logo}
+      <h1 style="margin:0 0 8px;font-size:22px">Test sign-in</h1>
+      ${off ? html`<p class="muted" style="color:#8E1B1B">Test sign-in is switched off. Start the app with SIJILL_SIGNIN_TEST_MODE=true to use it.</p>` : html`<p class="muted">For testing only. Type a name, for example Huda, to sign in with that person's role. There is no password.</p>`}
+      <form data-form="testSignin">${field('Name', html`<input class="input" name="name" autocomplete="off" required>`)}<button class="btn btn-primary" style="width:100%">Sign in</button></form>
+      <p class="muted" style="margin:16px 0 8px">Or pick a person:</p><div class="row" style="gap:8px;flex-wrap:wrap">${who}</div>
+      <p style="margin:18px 0 0"><button class="btn btn-sm" data-act="landing" data-view="home">Back</button></p></div></div>`;
+  }
   const student = L.view === 'student', reg = L.mode === 'register';
   const pw = html`${field('Password', html`<input class="input" type="password" name="password" minlength="${reg ? 8 : 1}" autocomplete="${reg ? 'new-password' : 'current-password'}" required>`)}`;
   const form = !reg
@@ -1334,6 +1434,7 @@ async function render() {
       // 401 with a message = signed in to Google but not set up in Sijill; plain 401 = not signed in;
       // anything else is a real problem, so say what it was instead of pretending to be a sign-in page
       const opts = e.status === 401 && !e.body ? await get('/api/auth/options').catch(() => ({ dev: false })) : {};
+      L.test = !!opts.testSignin;
       app.innerHTML = (e.status === 401 && !e.body ? signIn(null, opts.dev) : e.status === 401 ? signIn(e.message) : problem(e)).s;
       return;
     }

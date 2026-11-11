@@ -47,9 +47,9 @@ public final class PeopleDtos {
     public record PreferencesRequest(Language language, DigestMode digestMode) {}
 
     /** School IT's override. Null fields are left as they are. */
-    public record UpdatePersonRequest(Role role, PersonStatus status, UUID subjectId, Boolean generic) {
+    public record UpdatePersonRequest(Role role, PersonStatus status, UUID subjectId, Boolean generic, String name, String email) {
         public PeopleService.UpdateCommand toCommand() {
-            return new PeopleService.UpdateCommand(role, status, subjectId, generic);
+            return new PeopleService.UpdateCommand(role, status, subjectId, generic, name, email);
         }
     }
 
