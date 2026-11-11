@@ -14,6 +14,8 @@ services:
     autoDeployTrigger: checksPass       # deploy main only after the GitHub Actions checks pass
     healthCheckPath: /actuator/health
     envVars:
+      - key: TZ
+        value: Asia/Qatar               # the saved Google token times are in Qatar time (no timezone stored)
       - key: SIJILL_GOOGLE_DRIVE_ENABLED
         value: "true"                   # read the Drive of the accounts that signed in
       - key: SIJILL_JOBS_ENABLED
