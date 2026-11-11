@@ -47,7 +47,7 @@ public class TestSignInController {
 
     /** The only accounts offered by test sign-in: a name (spaces ignored, matched from the start of the full name) and its role. */
     private static final Map<String, Role> ALLOWED = Map.of(
-            "abdalwahab", Role.SCHOOL_IT, "huda", Role.PRINCIPAL, "noora", Role.LEADERSHIP, "rajaa", Role.COORDINATOR,
+            "abdalwahab", Role.SCHOOL_IT, "huda", Role.PRINCIPAL, "noora", Role.LEADERSHIP, "nora", Role.LEADERSHIP, "rajaa", Role.COORDINATOR,
             "teacher1", Role.TEACHER, "teacher2", Role.TEACHER, "student", Role.STUDENT, "parent", Role.PARENT);
 
     private static boolean offered(Person p) {
