@@ -320,6 +320,7 @@ html { scroll-behavior: smooth }
 .ld .ld-logo, .ld .ld-logo b { color: #fff }
 
 /* ---- Principal dashboard v2 (My school) ---- */
+.page:has(.pd) { max-width: none; padding: 24px 28px 36px }
 .pd { display: flex; flex-direction: column; gap: 20px; color: #1c1c1f; font-size: 14px; line-height: 1.45 }
 .pd a { text-decoration: none }
 .pd-hero { position: relative; overflow: hidden; border-radius: 28px; background: linear-gradient(105deg, #17171a 0%, #26141c 55%, #4a1a2e 100%); color: #fff; padding: 34px 36px; display: flex; flex-wrap: wrap; gap: 28px; align-items: center; justify-content: space-between; min-height: 260px }

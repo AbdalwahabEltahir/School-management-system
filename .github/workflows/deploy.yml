@@ -1,0 +1,38 @@
+name: Deploy to Render
+
+# Normal flow: Render watches main and deploys it once CI passes (autoDeployTrigger: checksPass in render.yaml).
+# This workflow is the manual alternative: it triggers a deploy through Render's deploy hook and then checks that the
+# site is up. Add the secret RENDER_DEPLOY_HOOK_URL (Render service > Settings > Deploy Hook) and, optionally, the
+# repository variable RENDER_URL (for example https://sijill.onrender.com).
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    name: Trigger deploy and check it
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Trigger the Render deploy
+        env:
+          HOOK: ${{ secrets.RENDER_DEPLOY_HOOK_URL }}
+        run: |
+          if [ -z "$HOOK" ]; then echo "Secret RENDER_DEPLOY_HOOK_URL is not set"; exit 1; fi
+          curl -sf -X POST "$HOOK" > /dev/null
+          echo "Deploy requested"
+
+      - name: Wait for the site to answer
+        env:
+          URL: ${{ vars.RENDER_URL }}
+        run: |
+          if [ -z "$URL" ]; then echo "RENDER_URL is not set, skipping the check"; exit 0; fi
+          # A free service may be asleep or still building: allow up to about 10 minutes
+          for i in $(seq 1 40); do
+            code=$(curl -s -o /dev/null -w "%{http_code}" "$URL/actuator/health" || true)
+            if [ "$code" = "200" ]; then echo "Healthy: $URL"; exit 0; fi
+            echo "attempt $i: HTTP $code"; sleep 15
+          done
+          echo "The site did not become healthy"; exit 1

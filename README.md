@@ -40,11 +40,7 @@ Sijjil/
         └── main/resources/
             ├── application.yml
             ├── db/migration/    Flyway SQL migrations
-<<<<<<< HEAD
             ├── static/          Web UI (index.html, app/)
-=======
-            ├── static/          HTML prototype and assets
->>>>>>> f7086e57728570d0b6d7288afc1428e852b86cf6
             └── templates/
 ```
 
@@ -99,7 +95,6 @@ Settings are in [application.yml](sijill/src/main/resources/application.yml).
 | Database host / port / name | `DB_HOST`, `DB_PORT`, `DB_NAME` | `localhost`, `5433`, `sijill` |
 | Database credentials | `DB_USERNAME`, `DB_PASSWORD` | `sijill` / `sijill_dev` |
 | Scheduled jobs | `sijill.jobs.enabled` | `true` |
-<<<<<<< HEAD
 | Google Drive folder to scan | `GOOGLE_DRIVE_ROOT_FOLDER_ID` | `root` (whole My Drive) |
 
 `sijill.jobs.enabled` controls the nightly check, reminders and message delivery. Set it to `false` to turn them all off.
@@ -115,7 +110,7 @@ students, who teaches what, the weekly timetable) and **Assessments & results**,
 | Teacher | Today's lessons, attendance (same day only), marks (enter, submit to lock), study-material links, notices |
 | Student | My day (timetable, notices, attendance, materials), My results (only after publishing, only their own) |
 
-To try it with demo data run the app with the `dev` profile and sign in at `/dev/login` as `teacher`, `student` or `it`.
+To try it with demo data run the app with the `dev` profile and sign in at `/dev/login` as `teacher`, `student` or `it`, or use the test sign-in below.
 To add a student on a real installation, list them in `extra-people` with `role: STUDENT`, then enrol them under Academic setup.
 What is and is not built is in `sijill/docs/CHANGES.md`.
 
@@ -138,11 +133,12 @@ Things to know:
 - Sharing changes do not change a file's modified time, so the five-minute check re-lists the whole Drive. That is fine for a test account.
 - A school deployment would use a service account with domain-wide delegation behind the same `WorkspaceConnector` interface.
 
-=======
+### Test sign-in by name (testing only)
 
-`sijill.jobs.enabled` controls the nightly check, reminders and message delivery. Set it to `false` to turn them all off.
+With `sijill.signin.test-mode: true` (env `SIJILL_SIGNIN_TEST_MODE`) the welcome page shows **Sign in with a name (testing)**: type a
+person's name (for example `Reem`) or pick them from a list, and you are signed in with their role. There is no password and no
+Google check, so anyone who can open the site can become any person. It is for demos only: set it to `false` for real use.
 
->>>>>>> f7086e57728570d0b6d7288afc1428e852b86cf6
 ### Sign-in (OIDC)
 
 Staff sign in with their school workspace account, so Sijill stores no passwords. To enable OIDC, uncomment the `spring.security.oauth2.client` block in `application.yml` and set:
@@ -189,12 +185,16 @@ All endpoints are under `/api`.
 | Backup and restore | `/api/backup/sites/{siteId}/runs`, `/restores` (create, approve, reject, complete) |
 | Audit | `/api/activity-log`, `/activity-log/verify`, `/activity-log/download`, `/exports/issues.csv` |
 
+## Deploying a demo
+
+The repository has a `Dockerfile` and a Render Blueprint (`render.yaml`). [DEPLOY.md](DEPLOY.md) explains how to put a demo school online and lists
+the demo accounts.
+
 ## Observability
 
 - Spring Boot Actuator is enabled.
 - Every log line carries a correlation ID (`%X{correlationId}`). Search the logs for one value to follow a request or background job through the controller, services, re-check and e-mail.
 
-<<<<<<< HEAD
 ## Web UI
 
 The app's front end is a single page in plain HTML and JavaScript, served by Spring Boot at <http://localhost:8080/>. It calls the same `/api` endpoints listed above and shows the screens each role is allowed to use:
@@ -203,18 +203,13 @@ The app's front end is a single page in plain HTML and JavaScript, served by Spr
 |---|---|
 | Teacher | My issues (with fix steps, "I've fixed it", disagree, ask for help), my files, lesson plans, notifications |
 | Coordinator | Follow-up, all issues (keep rule, remind, allow exception), review queue (classify files), files, plan review, people, restores |
-| Principal | My school, issues, files, lesson plans (with weekly totals), restores, weekly PDF report |
-| School IT | Rules (create, preview, pause, delete, approve), people and role groups, sites and settings, connection, restores, incidents, activity log |
+| Principal | My school (health score, urgent issues, trend), issues, files, lesson plans (with weekly totals), restores, weekly PDF report |
+| School IT | Rules (create, preview, pause, delete, approve), people (add, edit name and e-mail, delete) and role groups, sites and settings, connection, restores, incidents, activity log |
 | Leadership | Network overview and school trends, incidents, rules, sites, connection, activity log, weekly report |
 
 The server decides what each person may do; the UI only chooses which screens to offer. Files are in `sijill/src/main/resources/static/` (`index.html`, `app/app.js`, `app/theme.css`).
 
 The original clickable design mock-up (made-up data, no backend) is kept for reference in `sijill/docs/`.
-=======
-## Prototype
-
-Static UI prototypes are in `sijill/src/main/resources/static/` (`Sijill-Prototype.html`, `Sijill-Welcome.html`). They are served by the running app.
->>>>>>> f7086e57728570d0b6d7288afc1428e852b86cf6
 
 ## License
 
