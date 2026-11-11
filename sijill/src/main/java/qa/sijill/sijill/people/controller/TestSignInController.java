@@ -26,6 +26,7 @@ import org.springframework.web.server.ResponseStatusException;
 import qa.sijill.sijill.people.model.Person;
 import qa.sijill.sijill.people.repository.PersonRepository;
 import qa.sijill.sijill.shared.exception.ConflictException;
+import qa.sijill.sijill.shared.model.Role;
 import qa.sijill.sijill.shared.exception.UnauthenticatedException;
 
 /**
@@ -44,6 +45,19 @@ public class TestSignInController {
 
     public record PickRequest(UUID id) {}
 
+    /** The only accounts offered by test sign-in: a name (spaces ignored, matched from the start of the full name) and its role. */
+    private static final Map<String, Role> ALLOWED = Map.of(
+            "abdalwahab", Role.SCHOOL_IT, "huda", Role.PRINCIPAL, "noora", Role.LEADERSHIP, "rajaa", Role.COORDINATOR,
+            "teacher1", Role.TEACHER, "teacher2", Role.TEACHER, "student", Role.STUDENT, "parent", Role.PARENT);
+
+    private static boolean offered(Person p) {
+        if (!p.canSignIn()) {
+            return false;
+        }
+        String name = p.getDisplayName().toLowerCase(Locale.ROOT).replace(" ", "");
+        return ALLOWED.entrySet().stream().anyMatch(e -> name.startsWith(e.getKey()) && p.getRole() == e.getValue());
+    }
+
     private final PersonRepository people;
     private final boolean testMode;
 
@@ -56,7 +70,7 @@ public class TestSignInController {
     @GetMapping("/people")
     public List<PersonRef> list() {
         requireTestMode();
-        return people.findAll().stream().filter(Person::canSignIn)
+        return people.findAll().stream().filter(TestSignInController::offered)
                 .sorted(Comparator.comparing(Person::getDisplayName, String.CASE_INSENSITIVE_ORDER))
                 .map(p -> new PersonRef(p.getId(), p.getDisplayName(), p.getRole().name())).toList();
     }
@@ -66,7 +80,7 @@ public class TestSignInController {
     public Map<String, Object> byName(@Valid @RequestBody NameOnly body, HttpServletRequest request, HttpServletResponse response) {
         requireTestMode();
         String typed = body.name().trim().toLowerCase(Locale.ROOT);
-        List<Person> matches = people.findAll().stream().filter(Person::canSignIn)
+        List<Person> matches = people.findAll().stream().filter(TestSignInController::offered)
                 .filter(p -> {
                     String full = p.getDisplayName().trim().toLowerCase(Locale.ROOT);
                     return full.equals(typed) || full.split("\\s+")[0].equals(typed);
@@ -84,7 +98,7 @@ public class TestSignInController {
     @PostMapping("/pick")
     public Map<String, Object> pick(@RequestBody PickRequest body, HttpServletRequest request, HttpServletResponse response) {
         requireTestMode();
-        Person p = people.findById(body.id()).filter(Person::canSignIn)
+        Person p = people.findById(body.id()).filter(TestSignInController::offered)
                 .orElseThrow(() -> new UnauthenticatedException("That person cannot sign in."));
         return signIn(p, request, response);
     }
