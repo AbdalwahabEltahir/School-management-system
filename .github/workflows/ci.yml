@@ -28,7 +28,7 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Set up Java 21
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: "21"
@@ -36,7 +36,9 @@ jobs:
 
       # The integration tests start PostgreSQL with Testcontainers; Docker is already on the runner.
       - name: Build and run all tests
-        run: ./mvnw -B verify
+        run: |
+          chmod +x mvnw
+          ./mvnw -B verify
 
       - name: Keep the test reports
         if: always()
@@ -88,7 +90,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: actions/setup-java@v4
+      - uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: "21"
@@ -96,7 +98,9 @@ jobs:
 
       - name: Package the app
         working-directory: sijill
-        run: ./mvnw -B -q -DskipTests package
+        run: |
+          chmod +x mvnw
+          ./mvnw -B -q -DskipTests package
 
       # Same settings as the Render demo: seeded demo school, test sign-in on, Google off.
       - name: Start the app
