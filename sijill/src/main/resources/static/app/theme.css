@@ -55,7 +55,7 @@ button { font-family: inherit }
 .frame { min-height: 100vh; display: grid; grid-template-columns: 254px minmax(0, 1fr); }
 .frame.signed-out { grid-template-columns: minmax(0, 1fr); }
 .content { min-width: 0; display: flex; flex-direction: column; min-height: 100vh }
-.page { padding: 28px 32px 120px; max-width: 1500px; width: 100% }
+.page { padding: 28px 32px 120px; max-width: none; width: 100% }
 
 /* ------------------------------------------------------------------ sidebar */
 .sidebar {

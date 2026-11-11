@@ -8,6 +8,7 @@ services:
     dockerfilePath: ./sijill/Dockerfile
     dockerContext: ./sijill
     plan: free
+    autoDeployTrigger: checksPass       # deploy main only after the GitHub Actions checks pass
     healthCheckPath: /actuator/health
     envVars:
       - key: SPRING_PROFILES_ACTIVE
