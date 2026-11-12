@@ -56,6 +56,16 @@ public final class AcademicDtos {
 
     public record StageRequest(@NotNull String stage) {}
 
+    public record PointRow(int amount, String reason, String source, java.time.LocalDate on, String by) {}
+
+    public record PointsView(int total, List<PointRow> entries) {}
+
+    public record ClassPoints(UUID studentId, String name, int total) {}
+
+    public record SchoolPoints(String school, int total, float averagePerStudent, List<ClassPoints> top) {}
+
+    public record AwardRequest(@NotNull UUID studentId, int amount, @NotBlank String reason) {}
+
     public record MarkRow(UUID studentId, String name, BigDecimal value, boolean absent) {}
 
     /** A published result as the student sees it. */

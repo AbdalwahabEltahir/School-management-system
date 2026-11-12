@@ -26,6 +26,11 @@ applyLang();
 const uiLocale = () => (I18N.lang === 'ar' ? 'ar-QA-u-nu-latn' : undefined);
 
 const AR = {
+  'Points': 'النقاط', 'Points given.': 'تم منح النقاط.', 'Give points': 'منح نقاط', 'Give': 'منح', 'Class points': 'نقاط الصف', 'Reason': 'السبب', 'Recognition': 'التقدير', 'No points yet.': 'لا توجد نقاط بعد.',
+  'Each present day earns one point automatically. Add recognition with a short reason.': 'كل يوم حضور يمنح نقطة تلقائياً. أضف تقديراً مع سبب مختصر.',
+  'Points across the school: totals, average per student and the top students.': 'النقاط في المدرسة: المجموع والمتوسط لكل طالب وأفضل الطلاب.', 'Top students': 'أفضل الطلاب',
+  'Attendance is recorded by the school\'s attendance officer. You can read it here.': 'يسجّل الحضور مسؤول الحضور في المدرسة. يمكنك الاطلاع عليه هنا.',
+  'Record today. Everyone starts as present; change only the absences and leave. Each present day earns the student a point.': 'سجّل اليوم. يبدأ الجميع حاضرين؛ غيّر الغياب والإجازات فقط. كل يوم حضور يمنح الطالب نقطة.', 'No section to show yet.': 'لا توجد شعبة لعرضها بعد.',
   'Weekly grades': 'درجات الأسبوع', 'Performance matrix': 'مصفوفة الأداء', 'Matrix': 'المصفوفة', 'Stage': 'المرحلة', 'Average': 'المعدل', 'Sijil': 'سجل', 'Hifz': 'حفظ',
   'Who has submitted this week\'s grades. The school week runs Sunday to Thursday.': 'من سلّم درجات هذا الأسبوع. الأسبوع الدراسي من الأحد إلى الخميس.',
   'Every student against every assessment, with their stage.': 'كل طالب مقابل كل تقييم مع مرحلته.', 'Teacher': 'المعلم', 'Submitted': 'سُلّمت', 'Done': 'مكتمل', 'In progress': 'قيد التنفيذ', 'Not started': 'لم يبدأ', 'Overdue': 'متأخر',

@@ -64,6 +64,7 @@ class SchoolPortalTest extends WorldTestSupport {
     @Autowired AcademicSetupService setup;
     @Autowired AttendanceService attendance;
     @Autowired MarksService marks;
+    @Autowired qa.hafez.hafez.academic.service.PointsService pointsService;
     @Autowired qa.hafez.hafez.approvals.service.ApprovalService approvals;
     @Autowired NoticeService notices;
     @Autowired qa.hafez.hafez.notifications.service.NotificationService notificationService;
@@ -173,20 +174,21 @@ class SchoolPortalTest extends WorldTestSupport {
     // ------------------------------------------------------------------ attendance
 
     @Test
-    void attendanceDefaultsToPresentAndTheTeacherRecordsTodayOnly() {
+    void attendanceDefaultsToPresentTheOfficerRecordsAndTheTeacherOnlyReads() {
         School s = school();
         var teacher = user(s.w().teacher());
 
         assertThat(attendance.roster(teacher, s.b(), TODAY)).extracting(AcademicDtos.RosterRow::status).containsOnly(AttendanceStatus.PRESENT);
-        int saved = attendance.record(teacher, s.b(), TODAY, Map.of(s.s2().getId(), AttendanceStatus.ABSENT), null);
+        int saved = attendance.record(officer(s), s.b(), TODAY, Map.of(s.s2().getId(), AttendanceStatus.ABSENT), null);
 
         assertThat(saved).isEqualTo(3); // the first time everyone is saved, absentees as marked, the rest present
         assertThat(attendance.roster(teacher, s.b(), TODAY)).filteredOn(r -> r.name().equals("Bader Student"))
                 .extracting(AcademicDtos.RosterRow::status).containsExactly(AttendanceStatus.ABSENT);
         assertThat(attendance.mine(user(s.s2())).absent()).isEqualTo(1);
         assertThat(attendance.mine(user(s.s1())).present()).isEqualTo(1);
-        // the teacher can correct the same day
-        assertThat(attendance.record(teacher, s.b(), TODAY, Map.of(s.s2().getId(), AttendanceStatus.LEAVE), null)).isEqualTo(1);
+        assertThatThrownBy(() -> attendance.record(teacher, s.b(), TODAY, Map.of(), null)).isInstanceOf(ForbiddenException.class); // teachers read only
+        // the officer can correct the same day
+        assertThat(attendance.record(officer(s), s.b(), TODAY, Map.of(s.s2().getId(), AttendanceStatus.LEAVE), null)).isEqualTo(1);
         assertThat(attendance.mine(user(s.s2())).leave()).isEqualTo(1);
     }
 
@@ -196,7 +198,7 @@ class SchoolPortalTest extends WorldTestSupport {
         var teacher = user(s.w().teacher());
         var it = user(s.w().it());
 
-        assertThatThrownBy(() -> attendance.record(teacher, s.b(), YESTERDAY, Map.of(), null)).isInstanceOf(ForbiddenException.class);
+        assertThatThrownBy(() -> attendance.record(officer(s), s.b(), YESTERDAY, Map.of(), null)).isInstanceOf(ForbiddenException.class); // even the officer: past days are School IT's
         assertThatThrownBy(() -> attendance.record(it, s.b(), YESTERDAY, Map.of(s.s1().getId(), AttendanceStatus.ABSENT), " "))
                 .isInstanceOf(BadRequestException.class).hasMessageContaining("reason");
         attendance.record(it, s.b(), YESTERDAY, Map.of(s.s1().getId(), AttendanceStatus.ABSENT), "Doctor's note");
@@ -212,15 +214,45 @@ class SchoolPortalTest extends WorldTestSupport {
         School s = school();
         var teacher = user(s.w().teacher());
 
-        assertThatThrownBy(() -> attendance.record(teacher, s.b(), FRIDAY, Map.of(), null)).isInstanceOf(BadRequestException.class);
-        assertThatThrownBy(() -> attendance.record(teacher, s.b(), TODAY.plusDays(1), Map.of(), null)).isInstanceOf(BadRequestException.class).hasMessageContaining("future");
-        assertThatThrownBy(() -> attendance.record(teacher, s.b(), TODAY, Map.of(s.other().getId(), AttendanceStatus.ABSENT), null))
+        assertThatThrownBy(() -> attendance.record(officer(s), s.b(), FRIDAY, Map.of(), null)).isInstanceOf(BadRequestException.class);
+        assertThatThrownBy(() -> attendance.record(officer(s), s.b(), TODAY.plusDays(1), Map.of(), null)).isInstanceOf(BadRequestException.class).hasMessageContaining("future");
+        assertThatThrownBy(() -> attendance.record(officer(s), s.b(), TODAY, Map.of(s.other().getId(), AttendanceStatus.ABSENT), null))
                 .isInstanceOf(BadRequestException.class).hasMessageContaining("not in section");
         // a teacher who does not teach the section, and a student, cannot even read the roster
         assertThatThrownBy(() -> attendance.roster(teacher, s.c(), TODAY)).isInstanceOf(ForbiddenException.class);
         assertThatThrownBy(() -> attendance.roster(user(s.s1()), s.b(), TODAY)).isInstanceOf(ForbiddenException.class);
         assertThatThrownBy(() -> attendance.mine(teacher)).isInstanceOf(ForbiddenException.class);
     }
+
+    private qa.hafez.hafez.shared.security.CurrentUser officer(School s) {
+        return user(person(s.w().org(), s.w().school(), "officer-" + java.util.UUID.randomUUID() + "@" + s.w().school().getDomain(),
+                "Olga Officer", Role.ATTENDANCE_OFFICER, null));
+    }
+
+    @Test
+    void presentEarnsAPointAutomaticallyAndTeachersAddRecognitionWithAReason() {
+        School s = school();
+        var teacher = user(s.w().teacher());
+        var officer = officer(s);
+        attendance.record(officer, s.b(), TODAY, Map.of(s.s2().getId(), AttendanceStatus.ABSENT), null);
+
+        assertThat(pointsService.mine(user(s.s1())).total()).isEqualTo(1);        // present: +1, with the reason
+        assertThat(pointsService.mine(user(s.s1())).entries()).singleElement().satisfies(e -> assertThat(e.reason()).isEqualTo("Present at school"));
+        assertThat(pointsService.mine(user(s.s2())).total()).isZero();              // absent: nothing
+        attendance.record(officer, s.b(), TODAY, Map.of(s.s2().getId(), AttendanceStatus.PRESENT), null);
+        assertThat(pointsService.mine(user(s.s2())).total()).isEqualTo(1);          // corrected to present
+        attendance.record(officer, s.b(), TODAY, Map.of(s.s2().getId(), AttendanceStatus.ABSENT), null);
+        assertThat(pointsService.mine(user(s.s2())).total()).isZero();              // and taken back
+
+        pointsService.award(teacher, s.s1().getId(), 5, "Helped a classmate");
+        assertThat(pointsService.mine(user(s.s1())).total()).isEqualTo(6);
+        assertThat(pointsService.classTotals(teacher, s.b())).first().satisfies(r -> assertThat(r.total()).isEqualTo(6));
+        assertThatThrownBy(() -> pointsService.award(teacher, s.s1().getId(), 5, " ")).isInstanceOf(BadRequestException.class);
+        assertThatThrownBy(() -> pointsService.award(teacher, s.s1().getId(), 50, "Too many")).isInstanceOf(BadRequestException.class);
+        assertThatThrownBy(() -> pointsService.award(user(s.s1()), s.s2().getId(), 1, "Self")).isInstanceOf(ForbiddenException.class);
+        assertThat(pointsService.recognition(user(s.w().leader()))).isNotEmpty();
+    }
+
 
     // ------------------------------------------------------------------ marks and results
 
