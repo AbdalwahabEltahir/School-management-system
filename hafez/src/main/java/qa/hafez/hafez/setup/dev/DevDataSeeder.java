@@ -195,7 +195,7 @@ public class DevDataSeeder implements ApplicationRunner {
                 new AcademicDtos.MarkInput(bader.getId(), new BigDecimal("28.5"), false),
                 new AcademicDtos.MarkInput(cara.getId(), new BigDecimal("33"), false)));
         marks.submit(sara, quiz.id());
-        marks.publish(sara, section.id(), 1);
+        marks.executePublish(sara, section.id(), 1);
         marks.create(sara, section.id(), maths.getId(), 2, "Mid-term exam", new BigDecimal("100")); // still open: the teacher has work to do
 
         Instant now = Instant.now(clock);
@@ -205,7 +205,7 @@ public class DevDataSeeder implements ApplicationRunner {
         materials.add(sara, section.id(), maths.getId(), "Fractions revision notes", "https://drive.google.com/file/d/demo-fractions");
 
         if (SchoolCalendar.isSchoolDay(LocalDate.now(clock.withZone(SchoolCalendar.ZONE)))) {
-            attendance.record(sara, section.id(), LocalDate.now(clock.withZone(SchoolCalendar.ZONE)),
+            attendance.record(admin, section.id(), LocalDate.now(clock.withZone(SchoolCalendar.ZONE)),
                     Map.of(bader.getId(), AttendanceStatus.ABSENT), null);
         }
     }
