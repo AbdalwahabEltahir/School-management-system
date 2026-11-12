@@ -85,7 +85,7 @@ public class AcademicAccess {
     /** May this user see the section? Admin, principal and coordinator for their school, a teacher for theirs. */
     public Section requireView(CurrentUser user, UUID sectionId) {
         Section section = section(user, sectionId);
-        boolean ok = user.isAny(Role.SCHOOL_IT, Role.PRINCIPAL, Role.COORDINATOR) || teaches(user, sectionId)
+        boolean ok = user.isAny(Role.SCHOOL_IT, Role.PRINCIPAL, Role.COORDINATOR, Role.ATTENDANCE_OFFICER) || teaches(user, sectionId)
                 || (user.is(Role.STUDENT) && enrolments.findByStudentId(user.personId())
                         .map(e -> e.getSectionId().equals(sectionId)).orElse(false));
         if (!ok) {

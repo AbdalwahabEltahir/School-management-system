@@ -79,15 +79,15 @@ const DAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday'];
 
 const isNetworkRole = () => !!S.me && (S.me.role === 'LEADERSHIP' || S.me.role === 'EAA_ADMIN');
 const NAV = {
-  EAA_ADMIN: [['overview', 'Overview'], ['approvals', 'Approvals'], ['weekly', 'Weekly grades'], ['incidents', 'Incidents'], ['rules', 'Rules'], ['sites', 'Schools & settings'], ['connection', 'Connection'], ['activity', 'Activity log'], ['notifications', 'Notifications']],
+  EAA_ADMIN: [['overview', 'Overview'], ['approvals', 'Approvals'], ['weekly', 'Weekly grades'], ['recognition', 'Recognition'], ['incidents', 'Incidents'], ['rules', 'Rules'], ['sites', 'Schools & settings'], ['connection', 'Connection'], ['activity', 'Activity log'], ['notifications', 'Notifications']],
   ATTENDANCE_OFFICER: [['attendance', 'Attendance'], ['notices', 'Notices'], ['notifications', 'Notifications']],
-  TEACHER: [['today', 'Today'], ['attendance', 'Attendance'], ['marks', 'Marks'], ['matrix', 'Matrix'], ['approvals', 'Approvals'], ['materials', 'Study materials'], ['mine', 'My issues'], ['files', 'My files'], ['planning', 'Lesson plans'], ['notices', 'Notices'], ['notifications', 'Notifications']],
+  TEACHER: [['today', 'Today'], ['attendance', 'Attendance'], ['marks', 'Marks'], ['points', 'Points'], ['matrix', 'Matrix'], ['approvals', 'Approvals'], ['materials', 'Study materials'], ['mine', 'My issues'], ['files', 'My files'], ['planning', 'Lesson plans'], ['notices', 'Notices'], ['notifications', 'Notifications']],
   PARENT: [['children', 'My children'], ['notices', 'Notices'], ['notifications', 'Notifications']],
   STUDENT: [['mydash', 'My day'], ['results', 'My results'], ['mymaterials', 'Study materials'], ['notices', 'Notices'], ['notifications', 'Notifications']],
-  COORDINATOR: [['dashboard', 'Overview'], ['approvals', 'Approvals'], ['weekly', 'Weekly grades'], ['matrix', 'Matrix'], ['followup', 'Follow-up'], ['academic', 'Academic setup'], ['planning', 'Plan review'], ['people', 'People'], ['restores', 'Restores'], ['notifications', 'Notifications']],
-  PRINCIPAL: [['school', 'My school'], ['approvals', 'Approvals'], ['weekly', 'Weekly grades'], ['matrix', 'Matrix'], ['issues', 'Issues'], ['files', 'Files'], ['planning', 'Lesson plans'], ['restores', 'Restores'], ['notifications', 'Notifications']],
-  SCHOOL_IT: [['noticesAdmin', 'Notices'], ['approvals', 'Approvals'], ['weekly', 'Weekly grades'], ['matrix', 'Matrix'], ['rules', 'Rules'], ['people', 'People'], ['sites', 'Schools & settings'], ['connection', 'Connection'], ['restores', 'Restores'], ['incidents', 'Incidents'], ['activity', 'Activity log'], ['notifications', 'Notifications']],
-  LEADERSHIP: [['overview', 'Overview'], ['weekly', 'Weekly grades'], ['incidents', 'Incidents'], ['rules', 'Rules'], ['sites', 'Schools & settings'], ['connection', 'Connection'], ['activity', 'Activity log'], ['notifications', 'Notifications']]
+  COORDINATOR: [['dashboard', 'Overview'], ['approvals', 'Approvals'], ['weekly', 'Weekly grades'], ['matrix', 'Matrix'], ['points', 'Points'], ['followup', 'Follow-up'], ['academic', 'Academic setup'], ['planning', 'Plan review'], ['people', 'People'], ['restores', 'Restores'], ['notifications', 'Notifications']],
+  PRINCIPAL: [['school', 'My school'], ['approvals', 'Approvals'], ['weekly', 'Weekly grades'], ['matrix', 'Matrix'], ['points', 'Points'], ['recognition', 'Recognition'], ['issues', 'Issues'], ['files', 'Files'], ['planning', 'Lesson plans'], ['restores', 'Restores'], ['notifications', 'Notifications']],
+  SCHOOL_IT: [['noticesAdmin', 'Notices'], ['approvals', 'Approvals'], ['weekly', 'Weekly grades'], ['matrix', 'Matrix'], ['recognition', 'Recognition'], ['rules', 'Rules'], ['people', 'People'], ['sites', 'Schools & settings'], ['connection', 'Connection'], ['restores', 'Restores'], ['incidents', 'Incidents'], ['activity', 'Activity log'], ['notifications', 'Notifications']],
+  LEADERSHIP: [['overview', 'Overview'], ['weekly', 'Weekly grades'], ['recognition', 'Recognition'], ['incidents', 'Incidents'], ['rules', 'Rules'], ['sites', 'Schools & settings'], ['connection', 'Connection'], ['activity', 'Activity log'], ['notifications', 'Notifications']]
 };
 
 const lazy = (key, path, map) => async () => {
@@ -767,6 +767,31 @@ SCREENS.matrix = async (arg, q) => {
         ...r.values.map(v => v == null ? '–' : v), r.averagePercent == null ? '–' : r.averagePercent + '%'] }))) : empty('No assessments yet.'))}`);
 };
 
+// ---- points and recognition
+const pointsCard = v => spCard('list', 'Points', html`<p style="font-size:28px;font-weight:700;margin:0 0 8px">${v.total}</p>${v.entries.length ? table(['Points', 'Reason', 'Date'], v.entries.map(e => ({ cells: ['+' + e.amount, e.reason + (e.by ? ' · ' + e.by : ''), e.on] }))) : empty('No points yet.')}`);
+
+SCREENS.points = async (arg, q) => {
+  const sections = await get('/api/academic/sections');
+  if (!sections.length) return page('Points', null, empty('No section to show yet.'));
+  const sid = q.get('s') || sections[0].id;
+  const rows = await get('/api/points/sections/' + sid);
+  const canAward = ['TEACHER', 'COORDINATOR', 'PRINCIPAL'].includes(S.me.role);
+  return page('Points', 'Each present day earns one point automatically. Add recognition with a short reason.',
+    html`<div class="row">${sectionPicker(sections, sid, 'points')}</div>
+    ${canAward && rows.length ? card('Give points', null, html`<form data-form="award" class="row">
+      <select class="input" name="studentId">${rows.map(r => html`<option value="${r.studentId}">${r.name}</option>`)}</select>
+      <input class="input" name="amount" type="number" min="1" max="10" value="1" style="width:80px" required>
+      <input class="input" name="reason" maxlength="200" placeholder="Reason" required style="min-width:260px">
+      <button class="btn btn-primary">Give</button></form>`) : ''}
+    ${card('Class points', null, rows.length ? table(['Student', 'Points'], rows.map(r => ({ cells: [r.name, r.total] }))) : empty('No students are enrolled in this section yet.'))}`);
+};
+
+SCREENS.recognition = async () => {
+  const list = await get('/api/points/recognition');
+  return page('Recognition', 'Points across the school: totals, average per student and the top students.',
+    list.length ? html`${list.map(sc => card(sc.school, sc.total + ' points · average ' + sc.averagePerStudent + ' per student', sc.top.length ? table(['Top students', 'Points'], sc.top.map(t => ({ cells: [t.name, t.total] }))) : empty('No points yet.')))}` : empty('No schools yet.'));
+};
+
 // ---- approvals (four-eyes): what waits for a second person
 const APPROVAL_LABEL = { MARKS_PUBLISH: 'Publish marks', SITE_REMOVE: 'Remove school', DRIVE_DISCONNECT: 'Disconnect Drive', ROLE_CHANGE: 'Change role' };
 SCREENS.approvals = async () => {
@@ -850,12 +875,19 @@ SCREENS.today = async () => {
 };
 
 SCREENS.attendance = async (arg, q) => {
-  const [sections, t] = await Promise.all([get('/api/academic/sections'), get('/api/portal/teacher')]);
-  if (!sections.length) return page('Attendance', null, empty('You are not assigned to a section yet.'));
+  const sections = await get('/api/academic/sections');
+  const t = { date: new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Qatar' }) };
+  const canRecord = ['ATTENDANCE_OFFICER', 'SCHOOL_IT'].includes(S.me.role);
+  if (!sections.length) return page('Attendance', null, empty('No section to show yet.'));
   const sid = q.get('s') || sections[0].id;
   const roster = await get('/api/attendance/sections/' + sid);
   const opt = (r, v, label) => html`<label style="margin-inline-end:12px"><input type="radio" name="st_${r.studentId}" value="${v}" ${r.status === v ? raw('checked') : ''}> ${label}</label>`;
-  return page('Attendance', 'Record today. Everyone starts as present; change only the absences and leave. You can correct the same day only.',
+  if (!canRecord) {
+    return page('Attendance', 'Attendance is recorded by the school\'s attendance officer. You can read it here.',
+      html`<div class="row">${sectionPicker(sections, sid, 'attendance')} <b>${t.date}</b></div>
+      ${card('Class list', roster.length + ' student' + (roster.length === 1 ? '' : 's'), roster.length ? table(['Student', 'Status'], roster.map(r => ({ cells: [r.name, badge(r.status === 'PRESENT' ? 'b-good' : r.status === 'ABSENT' ? 'b-bad' : 'b-watch', title(r.status))] }))) : empty('No students are enrolled in this section yet.'))}`);
+  }
+  return page('Attendance', 'Record today. Everyone starts as present; change only the absences and leave. Each present day earns the student a point.',
     html`<div class="row">${sectionPicker(sections, sid, 'attendance')} <b>${t.date}</b></div>
     ${card('Class list', roster.length + ' student' + (roster.length === 1 ? '' : 's'), roster.length ? html`<form data-form="attendance" data-section="${sid}" data-date="${t.date}">
       <table class="t"><thead><tr><th>Student</th><th>Status</th></tr></thead><tbody>${roster.map(r => html`<tr><td>${r.name}</td><td>${opt(r, 'PRESENT', 'Present')}${opt(r, 'ABSENT', 'Absent')}${opt(r, 'LEAVE', 'Leave')}</td></tr>`)}</tbody></table>
@@ -917,8 +949,9 @@ SCREENS.notices = async () => {
 SCREENS.mydash = async () => {
   const st = await get('/api/enrol/status');
   if (!st.section) return waitingPage(st);
-  const d = await get('/api/portal/student');
-  return portalHome(d, { name: st.name, mine: true, sub: `Section ${sectionLabel(d.section)} · ${d.date} · Student ID ${st.studentCode}` });
+  const [d, pv] = await Promise.all([get('/api/portal/student'), get('/api/points/mine').catch(() => null)]);
+  return portalHome(d, { name: st.name, mine: true, sub: `Section ${sectionLabel(d.section)} · ${d.date} · Student ID ${st.studentCode}`,
+    below: pv ? { top: '', bottom: pointsCard(pv) } : undefined });
 };
 
 async function classRequestCard(studentId, pending) {
@@ -1072,11 +1105,11 @@ SCREENS.children = async (arg) => {
   if (!kid.section) {
     return page(welcome, kid.name + ' is not in a class yet.', html`${switcher}${await classRequestCard(kid.id, kid.pendingClass)}${addChild}`);
   }
-  const d = await get(`/api/parent/children/${id}`);
+  const [d, pv] = await Promise.all([get(`/api/parent/children/${id}`), get(`/api/points/child/${id}`).catch(() => null)]);
   const terms = [...new Set(d.results.map(r => r.term))];
   const results = terms.length ? html`${terms.map(t => spCard('list', 'Results · term ' + t, resultTable(d.results.filter(r => r.term === t))))}` : spCard('list', 'Results', empty('No results have been published yet.'));
   return portalHome(d, { name: kid.name, mine: false, sub: `Parent of ${kid.name} · Section ${kid.section} · ${d.date}`,
-    below: { top: switcher, bottom: html`<div id="sp-results" class="sp-stack">${results}</div>${addChild}` } });
+    below: { top: switcher, bottom: html`<div id="sp-results" class="sp-stack">${results}</div>${pv ? pointsCard(pv) : ''}${addChild}` } });
 };
 
 SCREENS.results = async () => {
@@ -1255,6 +1288,7 @@ const FORM = {
   docType: async f => { await put('/api/doc-types', { name: f.name, sensitivity: f.sensitivity }); invalidate('docTypes'); await refreshAfter('Saved.'); },
   setting: async (f, d) => { await put('/api/settings', { key: d.key, value: f.value }); await refreshAfter('Saved.'); },
   restoreRequest: async f => { await post('/api/backup/restores', { scope: f.scope, fileId: f.fileId || null, target: f.target || null, reason: f.reason }); await refreshAfter('Restore requested.'); },
+  award: async f => { await post('/api/points/award', { studentId: f.studentId, amount: Number(f.amount), reason: f.reason }); await refreshAfter('Points given.'); },
   attendance: async (f, d, form) => {
     const statuses = {};
     for (const [k, v] of Object.entries(f)) { if (k.startsWith('st_')) statuses[k.slice(3)] = v; }

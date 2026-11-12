@@ -47,6 +47,7 @@ public class AttendanceService {
     private final AttendanceRecordRepository records;
     private final AcademicAccess access;
     private final AuditPublisher audit;
+    private final PointsService pointsService;
 
     /** Every student of the section with their status that day (present when nothing is recorded yet). */
     @Transactional
@@ -78,6 +79,9 @@ public class AttendanceService {
      */
     @Transactional
     public int record(CurrentUser user, UUID sectionId, LocalDate date, Map<UUID, AttendanceStatus> statuses, String reason) {
+        if (!user.isAny(Role.ATTENDANCE_OFFICER, Role.SCHOOL_IT)) {
+            throw new ForbiddenException("Attendance is recorded by the school's attendance officer. Teachers can only read it.");
+        }
         Section section = requireAttendanceStaff(user, sectionId);
         LocalDate today = access.today();
         if (date.isAfter(today)) {
@@ -88,7 +92,7 @@ public class AttendanceService {
         }
         boolean admin = user.is(Role.SCHOOL_IT);
         if (!admin && !date.equals(today)) {
-            throw new ForbiddenException("Teachers can record attendance only on the same school day. "
+            throw new ForbiddenException("The attendance officer can record attendance only on the same school day. "
                     + "After that, School IT can change it with a written reason.");
         }
         if (admin && !date.equals(today) && (reason == null || reason.isBlank())) {
@@ -130,6 +134,7 @@ public class AttendanceService {
             rec.setRecordedBy(user.personId());
             rec.setReason(reason == null || reason.isBlank() ? null : reason.trim());
             records.save(rec);
+            pointsService.syncAttendance(user.orgId(), user.siteId(), student.getId(), date, wanted == AttendanceStatus.PRESENT);
             changed++;
             if (before != null) { // a correction: who, when, old and new value (FR-049)
                 audit.log(user.orgId(), user.siteId(), ActivityActions.ATTENDANCE_CHANGED).by(user)
@@ -164,7 +169,7 @@ public class AttendanceService {
     @Transactional(readOnly = true)
     public List<StudentAttendance> summary(CurrentUser user, UUID sectionId, LocalDate from, LocalDate to) {
         access.requireView(user, sectionId);
-        if (!user.isAny(Role.SCHOOL_IT, Role.PRINCIPAL, Role.COORDINATOR) && !access.teaches(user, sectionId)) {
+        if (!user.isAny(Role.SCHOOL_IT, Role.PRINCIPAL, Role.COORDINATOR, Role.ATTENDANCE_OFFICER) && !access.teaches(user, sectionId)) {
             throw new ForbiddenException("Attendance summaries are not available for your role.");
         }
         if (from == null || to == null || to.isBefore(from)) {
@@ -185,7 +190,7 @@ public class AttendanceService {
 
     /** School IT, or a teacher of the section. Students and other roles are refused. */
     private Section requireAttendanceStaff(CurrentUser user, UUID sectionId) {
-        if (user.is(Role.SCHOOL_IT)) {
+        if (user.isAny(Role.SCHOOL_IT, Role.ATTENDANCE_OFFICER)) {
             return access.section(user, sectionId);
         }
         return access.requireTeacherOf(user, sectionId);
