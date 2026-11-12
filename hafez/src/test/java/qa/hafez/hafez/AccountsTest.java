@@ -17,10 +17,11 @@ import qa.hafez.hafez.shared.exception.ConflictException;
 import qa.hafez.hafez.shared.exception.NotFoundException;
 import qa.hafez.hafez.shared.model.Role;
 
-/** Students and parents register and sign in with their own e-mail and password; the coordinator gives students a class. */
+/** Invite-only onboarding: the school issues one-time codes; students and parents then sign in with their own e-mail and password. */
 class AccountsTest extends WorldTestSupport {
 
     @Autowired AccountService accounts;
+    @Autowired qa.hafez.hafez.people.service.InvitationService invitations;
     @Autowired EnrolmentRequestService enrol;
     @Autowired ParentPortalService parentPortal;
     @Autowired AcademicSetupService academic;
@@ -34,29 +35,45 @@ class AccountsTest extends WorldTestSupport {
         return who + "-" + UUID.randomUUID().toString().substring(0, 6) + "@family-mail.test";
     }
 
-    @Test
-    void aStudentRegistersWithAnyEmailGetsAStudentIdAndSignsInWithThePassword() {
-        World w = world();
-        String email = mail("sami");
-        var student = accounts.registerStudent(w.school().getId(), "Sami Student", email, "correct horse");
-        String ip = ip();
+    private qa.hafez.hafez.people.model.Person student(World w, String name) {
+        return person(w.org(), w.school(), mail("kid"), name, Role.STUDENT, null);
+    }
 
-        assertThat(student.getRole()).isEqualTo(Role.STUDENT);
-        assertThat(student.getStudentCode()).matches("[1-9][0-9]{9}");
-        assertThat(accounts.login(email.toUpperCase(), "correct horse", ip).getId()).isEqualTo(student.getId());
-        assertThatThrownBy(() -> accounts.login(email, "wrong password", ip)).isInstanceOf(BadRequestException.class).hasMessageContaining("Wrong e-mail or password");
-        assertThatThrownBy(() -> accounts.login("nobody@family-mail.test", "correct horse", ip)).isInstanceOf(BadRequestException.class).hasMessageContaining("Wrong e-mail or password");
-        String hash = jdbc.queryForObject("SELECT password_hash FROM credentials WHERE person_id = ?", String.class, student.getId());
-        assertThat(hash).startsWith("$2").doesNotContain("correct horse"); // only a hash is stored
-        assertThatThrownBy(() -> accounts.registerStudent(w.school().getId(), "Again", email, "correct horse")).isInstanceOf(ConflictException.class);
-        assertThatThrownBy(() -> accounts.registerStudent(w.school().getId(), "Short", mail("x"), "short")).isInstanceOf(BadRequestException.class);
+    /** The school (School IT) issues a code and the student sets a password; returns the activated student. */
+    private qa.hafez.hafez.people.model.Person activated(World w, String name, String password) {
+        var kid = student(w, name);
+        var issued = invitations.issue(user(w.it()), "STUDENT", java.util.List.of(kid.getId()), null);
+        return invitations.redeemStudent(issued.code(), password, ip());
+    }
+
+    @Test
+    void thereIsNoOpenRegistrationAndAStudentActivatesWithAOneTimeCode() {
+        World w = world();
+        var kid = student(w, "Sami Student");
+        String ip = ip();
+        assertThat(kid.getStudentCode()).matches("[1-9][0-9]{9}");
+        assertThatThrownBy(() -> accounts.login(kid.getEmail(), "correct horse", ip)).isInstanceOf(BadRequestException.class); // no password yet
+
+        var issued = invitations.issue(user(w.it()), "STUDENT", java.util.List.of(kid.getId()), null);
+        assertThat(issued.code()).matches("[A-Z2-9]{4}-[A-Z2-9]{4}-[A-Z2-9]{4}");
+        String stored = jdbc.queryForObject("SELECT code_hash FROM invitations WHERE id = ?", String.class, issued.id());
+        assertThat(stored).doesNotContain(issued.code()); // only a hash is stored
+
+        assertThatThrownBy(() -> invitations.redeemStudent(issued.code(), "short", ip)).isInstanceOf(BadRequestException.class);
+        invitations.redeemStudent(issued.code().toLowerCase(), "correct horse", ip);
+        assertThat(accounts.login(kid.getEmail().toUpperCase(), "correct horse", ip).getId()).isEqualTo(kid.getId());
+        assertThatThrownBy(() -> accounts.login(kid.getEmail(), "wrong password", ip)).isInstanceOf(BadRequestException.class).hasMessageContaining("Wrong e-mail or password");
+        String hash = jdbc.queryForObject("SELECT password_hash FROM credentials WHERE person_id = ?", String.class, kid.getId());
+        assertThat(hash).startsWith("$2").doesNotContain("correct horse");
+        // the code works once
+        assertThatThrownBy(() -> invitations.redeemStudent(issued.code(), "another password", ip)).isInstanceOf(BadRequestException.class).hasMessageContaining("not valid");
     }
 
     @Test
     void fiveWrongPasswordsLockTheAccountAndStaffCannotUseAPassword() {
         World w = world();
-        String email = mail("lock");
-        accounts.registerStudent(w.school().getId(), "Lock Student", email, "correct horse");
+        var kid = activated(w, "Lock Student", "correct horse");
+        String email = kid.getEmail();
         String ip = ip();
         for (int i = 0; i < 5; i++) {
             assertThatThrownBy(() -> accounts.login(email, "nope nope", ip)).isInstanceOf(BadRequestException.class);
@@ -67,39 +84,56 @@ class AccountsTest extends WorldTestSupport {
     }
 
     @Test
-    void twoParentsUseTheSameStudentIdWithTheirOwnEmailAndPassword() {
+    void oneCodeLinksSeveralChildrenAndEachParentUsesTheirOwnCode() {
         World w = world();
-        var kid = accounts.registerStudent(w.school().getId(), "Layla Student", mail("layla"), "correct horse");
+        var layla = student(w, "Layla Student");
+        var noor = student(w, "Noor Student");
         String ip = ip();
 
-        var mum = accounts.registerParent("Mona Parent", mail("mona"), "mum password", kid.getStudentCode(), ip);
-        var dad = accounts.registerParent("Omar Parent", mail("omar"), "dad password", kid.getStudentCode(), ip);
+        var both = invitations.issue(user(w.it()), "PARENT", java.util.List.of(layla.getId(), noor.getId()), null);
+        var mum = invitations.redeemNewParent(both.code(), "Mona Parent", mail("mona"), "mum password", ip);
+        var justLayla = invitations.issue(user(w.coordinator()), "PARENT", java.util.List.of(layla.getId()), null);
+        var dad = invitations.redeemNewParent(justLayla.code(), "Omar Parent", mail("omar"), "dad password", ip);
 
         assertThat(mum.getRole()).isEqualTo(Role.PARENT);
-        assertThat(mum.getSiteId()).isEqualTo(kid.getSiteId());
-        for (var parent : new qa.hafez.hafez.people.model.Person[] {mum, dad}) {
-            assertThat(parentPortal.children(user(parent))).singleElement().satisfies(c -> assertThat(c.name()).isEqualTo("Layla Student"));
-        }
+        assertThat(parentPortal.children(user(mum))).extracting(c -> c.name()).containsExactlyInAnyOrder("Layla Student", "Noor Student");
+        assertThat(parentPortal.children(user(dad))).singleElement().satisfies(c -> assertThat(c.name()).isEqualTo("Layla Student"));
         assertThat(accounts.login(mum.getEmail(), "mum password", ip).getId()).isEqualTo(mum.getId());
-        assertThat(accounts.login(dad.getEmail(), "dad password", ip).getId()).isEqualTo(dad.getId());
-        assertThatThrownBy(() -> accounts.registerParent("Who", mail("who"), "some password", "1234567890", ip)).isInstanceOf(BadRequestException.class).hasMessageContaining("student ID");
-        assertThatThrownBy(() -> accounts.registerParent("Dup", mum.getEmail(), "some password", kid.getStudentCode(), ip)).isInstanceOf(ConflictException.class);
 
-        // a parent follows a second child later with that child's ID
-        var other = accounts.registerStudent(w.school().getId(), "Noor Student", mail("noor"), "correct horse");
-        accounts.addChild(user(mum), other.getStudentCode(), ip);
-        assertThat(parentPortal.children(user(mum))).hasSize(2);
-        assertThat(parentPortal.children(user(dad))).hasSize(1);
+        // a code is used once, and a wrong one says nothing about why
+        assertThatThrownBy(() -> invitations.redeemNewParent(both.code(), "Again", mail("again"), "some password", ip)).isInstanceOf(BadRequestException.class).hasMessageContaining("not valid");
+        assertThatThrownBy(() -> invitations.redeemNewParent("AAAA-BBBB-CCCC", "Who", mail("who"), "some password", ip)).isInstanceOf(BadRequestException.class).hasMessageContaining("not valid");
+
+        // an existing parent follows another child with a new code
+        var third = student(w, "Rima Student");
+        var more = invitations.issue(user(w.it()), "PARENT", java.util.List.of(third.getId()), null);
+        invitations.redeemForParent(user(dad), more.code(), ip);
+        assertThat(parentPortal.children(user(dad))).hasSize(2);
     }
 
     @Test
-    void guessingStudentIdsIsThrottled() {
+    void invitationsAreIssuedBySchoolStaffForTheirOwnStudentsOnly() {
         World w = world();
+        World other = world();
+        var kid = student(w, "Kid Student");
+        String ip = ip();
+        assertThatThrownBy(() -> invitations.issue(user(w.teacher()), "PARENT", java.util.List.of(kid.getId()), null)).isInstanceOf(qa.hafez.hafez.shared.exception.ForbiddenException.class);
+        assertThatThrownBy(() -> invitations.issue(user(other.it()), "PARENT", java.util.List.of(kid.getId()), null)).isInstanceOf(BadRequestException.class);
+
+        var bound = invitations.issue(user(w.it()), "PARENT", java.util.List.of(kid.getId()), "mum@family-mail.test");
+        assertThatThrownBy(() -> invitations.redeemNewParent(bound.code(), "Wrong Person", "someone-else@family-mail.test", "some password", ip)).isInstanceOf(BadRequestException.class);
+        invitations.revoke(user(w.it()), bound.id());
+        assertThatThrownBy(() -> invitations.redeemNewParent(bound.code(), "Mum", "mum@family-mail.test", "some password", ip)).isInstanceOf(BadRequestException.class).hasMessageContaining("not valid");
+        assertThat(invitations.list(user(w.it()))).anySatisfy(i -> assertThat(i.status()).isEqualTo("REVOKED"));
+    }
+
+    @Test
+    void guessingInvitationCodesIsThrottled() {
         String ip = ip();
         for (int i = 0; i < 10; i++) {
-            assertThatThrownBy(() -> accounts.registerParent("G", mail("g"), "some password", "9" + String.valueOf(System.nanoTime()).substring(0, 9), ip)).isInstanceOf(BadRequestException.class);
+            assertThatThrownBy(() -> invitations.redeemNewParent("ZZZZ-" + System.nanoTime() % 9999 + "-GUESS", "G", mail("g"), "some password", ip)).isInstanceOf(BadRequestException.class);
         }
-        assertThatThrownBy(() -> accounts.registerParent("G", mail("g"), "some password", "1111111111", ip)).isInstanceOf(ConflictException.class).hasMessageContaining("Too many");
+        assertThatThrownBy(() -> invitations.redeemNewParent("AAAA-BBBB-CCCC", "G", mail("g"), "some password", ip)).isInstanceOf(ConflictException.class).hasMessageContaining("Too many");
     }
 
     @Test
@@ -107,10 +141,11 @@ class AccountsTest extends WorldTestSupport {
         World w = world();
         var coordinator = user(w.coordinator());
         var section = academic.createSection(coordinator, 7, "B");
-        var kid = accounts.registerStudent(w.school().getId(), "Rana Student", mail("rana"), "correct horse");
-        var stranger = accounts.registerStudent(w.school().getId(), "Other Student", mail("other"), "correct horse");
+        var kid = activated(w, "Rana Student", "correct horse");
+        var stranger = activated(w, "Other Student", "correct horse");
         String ip = ip();
-        var mum = accounts.registerParent("Rana Mum", mail("ranamum"), "mum password", kid.getStudentCode(), ip);
+        var mum = invitations.redeemNewParent(invitations.issue(user(w.it()), "PARENT", java.util.List.of(kid.getId()), null).code(),
+                "Rana Mum", mail("ranamum"), "mum password", ip);
 
         assertThat(enrol.status(user(kid)).section()).isNull();
         assertThat(enrol.unenrolled(coordinator)).extracting(s -> s.studentCode()).contains(kid.getStudentCode());

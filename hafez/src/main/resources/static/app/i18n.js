@@ -26,6 +26,14 @@ applyLang();
 const uiLocale = () => (I18N.lang === 'ar' ? 'ar-QA-u-nu-latn' : undefined);
 
 const AR = {
+  'Invitations': 'الدعوات', 'Invitation code': 'رمز الدعوة', 'I have an invitation code': 'لدي رمز دعوة', 'Activate my account': 'تفعيل حسابي', 'Create my account': 'إنشاء حسابي',
+  'Your school gave you a one-time code. Choose a password of at least 8 characters.': 'أعطتك مدرستك رمزاً لمرة واحدة. اختر كلمة مرور من 8 أحرف على الأقل.',
+  'Your school gave you a one-time invitation code. It links your children to your own account.': 'أعطتك مدرستك رمز دعوة لمرة واحدة. يربط أبناءك بحسابك الخاص.',
+  'Enter the invitation code the school gave you.': 'أدخل رمز الدعوة الذي أعطتك إياه المدرسة.', 'Ask your school for an invitation code, then enter it above.': 'اطلب من مدرستك رمز دعوة ثم أدخله أعلاه.',
+  'Your school office may ask for this number.': 'قد يطلب منك مكتب المدرسة هذا الرقم.',
+  'There is no open registration. Give each family a one-time code; it works once and expires in 14 days.': 'لا يوجد تسجيل مفتوح. أعطِ كل أسرة رمزاً لمرة واحدة يعمل مرة واحدة وينتهي بعد 14 يوماً.',
+  'Issue a code': 'إصدار رمز', 'Issue code': 'إصدار الرمز', 'Codes': 'الرموز', 'No codes yet.': 'لا توجد رموز بعد.', 'Code revoked.': 'تم إلغاء الرمز.', 'Revoke': 'إلغاء',
+  'Pending': 'بانتظار الاستخدام', 'Used': 'مستخدم', 'Expired': 'منتهي', 'Revoked': 'ملغى',
   'Points': 'النقاط', 'Points given.': 'تم منح النقاط.', 'Give points': 'منح نقاط', 'Give': 'منح', 'Class points': 'نقاط الصف', 'Reason': 'السبب', 'Recognition': 'التقدير', 'No points yet.': 'لا توجد نقاط بعد.',
   'Each present day earns one point automatically. Add recognition with a short reason.': 'كل يوم حضور يمنح نقطة تلقائياً. أضف تقديراً مع سبب مختصر.',
   'Points across the school: totals, average per student and the top students.': 'النقاط في المدرسة: المجموع والمتوسط لكل طالب وأفضل الطلاب.', 'Top students': 'أفضل الطلاب',
@@ -299,7 +307,7 @@ Object.assign(AR, { 'normal': 'عادية', 'urgent': 'عاجلة', 'Needs follo
 /** Phrases built in code around numbers or names: [pattern, Arabic builder]. A builder returns null to pass. */
 const AR_RULES = [
   [/^(\d+) of (\d+) days$/, (a, b) => `${a} من ${b} أيام`],
-  [/^Welcome, parent of (.+)$/, n => 'مرحباً، وليّ أمر ' + n.replace(/ and /g, ' و')],
+  [/^Following (.+)$/, n => 'تتابع ' + n],
   [/^Welcome, (.+)$/, n => 'مرحباً، ' + n],
   [/^Parent of (.+)$/, n => 'وليّ أمر ' + n],
   [/^Section (.+)$/, n => 'الشعبة ' + n],

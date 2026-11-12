@@ -12,11 +12,11 @@ public final class AuthDtos {
 
     public record LoginRequest(@NotBlank String email, @NotBlank String password) {}
 
-    public record StudentRegistration(@NotNull UUID siteId, @NotBlank String name, @NotBlank String email, @NotBlank String password) {}
+    public record StudentInvitation(@NotBlank String code, @NotBlank String password) {}
 
-    public record ParentRegistration(@NotBlank String name, @NotBlank String email, @NotBlank String password, @NotBlank String studentCode) {}
+    public record ParentInvitation(@NotBlank String code, @NotBlank String name, @NotBlank String email, @NotBlank String password) {}
 
-    public record AddChildRequest(@NotBlank String studentCode) {}
+    public record RedeemRequest(@NotBlank String code) {}
 
     public record School(UUID id, String name) {}
 }

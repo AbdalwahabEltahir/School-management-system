@@ -23,7 +23,7 @@ import qa.hafez.hafez.shared.security.CurrentUser;
 public class ParentController {
 
     private final ParentPortalService parents;
-    private final qa.hafez.hafez.people.service.AccountService accounts;
+    private final qa.hafez.hafez.people.service.InvitationService invitations;
 
     @GetMapping("/children")
     public List<AcademicDtos.ChildView> children(CurrentUser user) {
@@ -32,9 +32,9 @@ public class ParentController {
 
     /** A parent follows one more child with that child's student ID. */
     @PostMapping("/children")
-    public List<AcademicDtos.ChildView> addChild(CurrentUser user, @Valid @RequestBody qa.hafez.hafez.people.dto.AuthDtos.AddChildRequest request,
+    public List<AcademicDtos.ChildView> addChild(CurrentUser user, @Valid @RequestBody qa.hafez.hafez.people.dto.AuthDtos.RedeemRequest request,
                                                  HttpServletRequest http) {
-        accounts.addChild(user, request.studentCode(), http.getRemoteAddr());
+        invitations.redeemForParent(user, request.code(), http.getRemoteAddr());
         return parents.children(user);
     }
 
