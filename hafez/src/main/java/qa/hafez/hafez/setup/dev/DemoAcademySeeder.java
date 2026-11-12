@@ -237,7 +237,7 @@ public class DemoAcademySeeder implements ApplicationRunner {
                 }
             }
             // Any subject teacher may publish; use the Maths teacher.
-            marks.publish(user(subs.get(0).teacher(), org, site), section, 1);
+            marks.executePublish(user(subs.get(0).teacher(), org, site), section, 1);
         }
     }
 
