@@ -18,11 +18,11 @@ The full requirements are in [Hafez — Software Requirements Specification (SRS
 ```
 Hafez/
 ├── Hafez — Software Requirements Specification (SRS).pdf
-└── hafez/                      Spring Boot application
+└── sijill/                      Spring Boot application
     ├── docker-compose.yml       Local PostgreSQL
     ├── pom.xml
     └── src/
-        ├── main/java/qa/hafez/hafez/
+        ├── main/java/qa/sijill/sijill/
         │   ├── audit/           Tamper-evident activity log, CSV exports
         │   ├── backup/          Backup runs and restore requests (approval flow)
         │   ├── checks/          Workspace connection, check runs, scheduled jobs
@@ -57,11 +57,11 @@ Code is organised by feature module (each with `controller`, `service`, `reposit
 ### 1. Start the database
 
 ```bash
-cd hafez
+cd sijill
 docker compose up -d
 ```
 
-This starts PostgreSQL on **localhost:5433** with database `hafez`, user `hafez` and password `sijill_dev`.
+This starts PostgreSQL on **localhost:5433** with database `sijill`, user `sijill` and password `sijill_dev`.
 
 ### 2. Run the app
 
@@ -87,17 +87,17 @@ Integration tests use Testcontainers, so Docker must be running.
 
 ## Configuration
 
-Settings are in [application.yml](hafez/src/main/resources/application.yml).
+Settings are in [application.yml](sijill/src/main/resources/application.yml).
 
 | Setting | Env variable | Default |
 |---|---|---|
-| Database URL | `DB_URL` | `jdbc:postgresql://localhost:5433/hafez` |
-| Database host / port / name | `DB_HOST`, `DB_PORT`, `DB_NAME` | `localhost`, `5433`, `hafez` |
-| Database credentials | `DB_USERNAME`, `DB_PASSWORD` | `hafez` / `sijill_dev` |
-| Scheduled jobs | `hafez.jobs.enabled` | `true` |
+| Database URL | `DB_URL` | `jdbc:postgresql://localhost:5433/sijill` |
+| Database host / port / name | `DB_HOST`, `DB_PORT`, `DB_NAME` | `localhost`, `5433`, `sijill` |
+| Database credentials | `DB_USERNAME`, `DB_PASSWORD` | `sijill` / `sijill_dev` |
+| Scheduled jobs | `sijill.jobs.enabled` | `true` |
 | Google Drive folder to scan | `GOOGLE_DRIVE_ROOT_FOLDER_ID` | `root` (whole My Drive) |
 
-`hafez.jobs.enabled` controls the nightly check, reminders and message delivery. Set it to `false` to turn them all off.
+`sijill.jobs.enabled` controls the nightly check, reminders and message delivery. Set it to `false` to turn them all off.
 
 ## School portal (teachers and students)
 
@@ -112,11 +112,11 @@ students, who teaches what, the weekly timetable) and **Assessments & results**,
 
 To try it with demo data run the app with the `dev` profile and sign in at `/dev/login` as `teacher`, `student` or `it`, or use the test sign-in below.
 To add a student on a real installation, list them in `extra-people` with `role: STUDENT`, then enrol them under Academic setup.
-What is and is not built is in `hafez/docs/CHANGES.md`.
+What is and is not built is in `sijill/docs/CHANGES.md`.
 
 ### Reading Google Drive
 
-Hafez reads documents from Google Drive through a **read-only** connector (`workspace/google/`). In this test setup it reads the whole My Drive of each Google account listed under `hafez.google.drive.accounts`. To limit it to one folder, set `GOOGLE_DRIVE_ROOT_FOLDER_ID` to the ID from that folder's URL, `drive.google.com/drive/folders/<ID>`.
+Hafez reads documents from Google Drive through a **read-only** connector (`workspace/google/`). In this test setup it reads the whole My Drive of each Google account listed under `sijill.google.drive.accounts`. To limit it to one folder, set `GOOGLE_DRIVE_ROOT_FOLDER_ID` to the ID from that folder's URL, `drive.google.com/drive/folders/<ID>`.
 
 1. Start the app and sign in **once** with each listed Drive account. Google asks for read-only Drive access; the app is unverified, so choose "Advanced" and then continue. The account's token is stored in the database so the nightly and five-minute checks keep working after you sign out.
 2. Open **Connection** (Leadership or School IT) and press **Run a check now**.
@@ -127,7 +127,7 @@ Things to know:
 - If a listed account has not signed in, or its Drive cannot be read, the whole check fails, so nobody's files are wrongly recorded as deleted.
 - Files that are only "shared with me" are not part of My Drive, so they are not read.
 - A Drive with more than `max-files` files (5000) makes the check fail, because a partial list would make the missing files look deleted.
-- Everyone except the listed Drive accounts counts as **outside the network** unless listed in `hafez.google.drive.internal-emails` or `internal-domains`.
+- Everyone except the listed Drive accounts counts as **outside the network** unless listed in `sijill.google.drive.internal-emails` or `internal-domains`.
 - The Drive counts as a school shared drive for rule R1 (`drive-type: SHARED`). Rule R4 needs student records in a folder whose path starts with "Student Records".
 - Scanned PDFs (no text) and unclear files go to the coordinator's **Review queue**.
 - Sharing changes do not change a file's modified time, so the five-minute check re-lists the whole Drive. That is fine for a test account.
@@ -135,7 +135,7 @@ Things to know:
 
 ### Test sign-in by name (testing only)
 
-With `hafez.signin.test-mode: true` (env `HAFEZ_SIGNIN_TEST_MODE`) the welcome page shows **Sign in with a name (testing)**: type a
+With `sijill.signin.test-mode: true` (env `SIJILL_SIGNIN_TEST_MODE`) the welcome page shows **Sign in with a name (testing)**: type a
 person's name (for example `Reem`) or pick them from a list, and you are signed in with their role. There is no password and no
 Google check, so anyone who can open the site can become any person. It is for demos only: set it to `false` for real use.
 
@@ -153,10 +153,10 @@ Once a registration exists, the app switches from the dev form login to OIDC aut
 
 ### First-run bootstrap
 
-On a new installation, uncomment the `hafez.bootstrap` block in `application.yml` to create the organisation and the first Leadership user:
+On a new installation, uncomment the `sijill.bootstrap` block in `application.yml` to create the organisation and the first Leadership user:
 
 ```yaml
-hafez:
+sijill:
   bootstrap:
     enabled: true
     org-name: Example School Network
@@ -207,9 +207,9 @@ The app's front end is a single page in plain HTML and JavaScript, served by Spr
 | School IT | Rules (create, preview, pause, delete, approve), people (add, edit name and e-mail, delete) and role groups, sites and settings, connection, restores, incidents, activity log |
 | Leadership | Network overview and school trends, incidents, rules, sites, connection, activity log, weekly report |
 
-The server decides what each person may do; the UI only chooses which screens to offer. Files are in `hafez/src/main/resources/static/` (`index.html`, `app/app.js`, `app/theme.css`).
+The server decides what each person may do; the UI only chooses which screens to offer. Files are in `sijill/src/main/resources/static/` (`index.html`, `app/app.js`, `app/theme.css`).
 
-The original clickable design mock-up (made-up data, no backend) is kept for reference in `hafez/docs/`.
+The original clickable design mock-up (made-up data, no backend) is kept for reference in `sijill/docs/`.
 
 ## License
 

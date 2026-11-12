@@ -23,7 +23,7 @@ jobs:
     timeout-minutes: 25
     defaults:
       run:
-        working-directory: hafez
+        working-directory: sijill
     steps:
       - uses: actions/checkout@v4
 
@@ -45,7 +45,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: test-reports
-          path: hafez/target/surefire-reports
+          path: sijill/target/surefire-reports
           if-no-files-found: ignore
           retention-days: 7
 
@@ -63,10 +63,10 @@ jobs:
       - name: Build the image
         uses: docker/build-push-action@v6
         with:
-          context: hafez
-          file: hafez/Dockerfile
+          context: sijill
+          file: sijill/Dockerfile
           push: false
-          tags: hafez:ci
+          tags: sijill:ci
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
@@ -97,27 +97,27 @@ jobs:
           cache: maven
 
       - name: Package the app
-        working-directory: hafez
+        working-directory: sijill
         run: |
           chmod +x mvnw
           ./mvnw -B -q -DskipTests package
 
       # Same settings as the Render demo: seeded demo school, test sign-in on, Google off.
       - name: Start the app
-        working-directory: hafez
+        working-directory: sijill
         env:
           SPRING_PROFILES_ACTIVE: dev
-          HAFEZ_BOOTSTRAP_ENABLED: "false"
-          HAFEZ_GOOGLE_DRIVE_ENABLED: "false"
-          HAFEZ_JOBS_ENABLED: "false"
-          HAFEZ_SIGNIN_TEST_MODE: "true"
+          SIJILL_BOOTSTRAP_ENABLED: "false"
+          SIJILL_GOOGLE_DRIVE_ENABLED: "false"
+          SIJILL_JOBS_ENABLED: "false"
+          SIJILL_SIGNIN_TEST_MODE: "true"
           DB_HOST: localhost
           DB_PORT: "5432"
-          DB_NAME: hafez
-          DB_USERNAME: hafez
+          DB_NAME: sijill
+          DB_USERNAME: sijill
           DB_PASSWORD: sijill_ci
           PORT: "8080"
-        run: nohup java -jar target/hafez-0.0.1-SNAPSHOT.jar > app.log 2>&1 &
+        run: nohup java -jar target/sijill-0.0.1-SNAPSHOT.jar > app.log 2>&1 &
 
       - name: Wait until healthy
         run: |
@@ -126,7 +126,7 @@ jobs:
             [ "$code" = "200" ] && exit 0
             sleep 3
           done
-          echo "App did not become healthy"; tail -n 80 hafez/app.log; exit 1
+          echo "App did not become healthy"; tail -n 80 sijill/app.log; exit 1
 
       - name: Test sign-in offers only the approved accounts
         run: |
@@ -147,4 +147,4 @@ jobs:
 
       - name: Show the app log on failure
         if: failure()
-        run: tail -n 120 hafez/app.log
+        run: tail -n 120 sijill/app.log
