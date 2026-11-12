@@ -178,7 +178,7 @@ public class FileService {
                 yield new ArrayList<>(merged.values());
             }
             case PRINCIPAL -> files.findBySiteIdAndTrashedAtIsNull(user.siteId());
-            case SCHOOL_IT, LEADERSHIP -> throw new ForbiddenException("Your role sees counts only, not individual files.");
+            case SCHOOL_IT, ATTENDANCE_OFFICER, LEADERSHIP, EAA_ADMIN -> throw new ForbiddenException("Your role sees counts only, not individual files.");
         };
     }
 

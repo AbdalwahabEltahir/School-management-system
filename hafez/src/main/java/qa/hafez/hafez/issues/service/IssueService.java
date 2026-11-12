@@ -240,7 +240,7 @@ public class IssueService {
                     ? issues.findBySiteIdOrderByOpenedAtDesc(user.siteId())
                     : issues.findBySiteIdAndSubjectIdOrderByOpenedAtDesc(user.siteId(), user.subjectId());
             case PRINCIPAL -> issues.findBySiteIdOrderByOpenedAtDesc(user.siteId());
-            case SCHOOL_IT, LEADERSHIP -> throw new ForbiddenException("Your role sees counts only, not individual issues.");
+            case SCHOOL_IT, ATTENDANCE_OFFICER, LEADERSHIP, EAA_ADMIN -> throw new ForbiddenException("Your role sees counts only, not individual issues.");
         };
         return base.stream().filter(i -> matches(user, i, filter)).sorted(urgentFirst()).toList();
     }

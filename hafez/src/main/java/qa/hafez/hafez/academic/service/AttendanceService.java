@@ -49,9 +49,11 @@ public class AttendanceService {
     private final AuditPublisher audit;
 
     /** Every student of the section with their status that day (present when nothing is recorded yet). */
-    @Transactional(readOnly = true)
+    @Transactional
     public List<RosterRow> roster(CurrentUser user, UUID sectionId, LocalDate date) {
         requireAttendanceStaff(user, sectionId);
+        audit.log(user.orgId(), user.siteId(), ActivityActions.STUDENT_RECORD_VIEWED).by(user).on("Section", sectionId)
+                .change(null, "attendance " + date).save();
         Map<UUID, AttendanceStatus> recorded = new HashMap<>();
         records.findBySectionIdAndAttendanceDate(sectionId, date).forEach(r -> recorded.put(r.getStudentId(), r.getStatus()));
         List<RosterRow> rows = new ArrayList<>();

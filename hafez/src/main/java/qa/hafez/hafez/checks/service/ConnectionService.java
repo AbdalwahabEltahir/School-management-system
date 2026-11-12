@@ -40,6 +40,7 @@ public class ConnectionService {
     private final AccessPolicy policy;
     private final ObjectProvider<WorkspaceConnector> connector;
     private final Clock clock;
+    private final qa.hafez.hafez.approvals.service.ApprovalService approvals;
 
     /** The connection screen's facts: is a connector installed, is it switched on, when did the first check run. */
     public record ConnectionStatus(boolean connectorInstalled, boolean checksEnabled, Instant firstCheckAt,
@@ -56,6 +57,21 @@ public class ConnectionService {
     @Transactional
     public void setEnabled(CurrentUser user, UUID siteId, boolean enabled) {
         Site site = connectionSite(user, siteId);
+        if (enabled) {
+            policy.requireRole(user, Role.SCHOOL_IT, Role.EAA_ADMIN);
+            applyEnabled(user, siteId, true);
+            return;
+        }
+        // Disconnecting Google Drive is an EAA administrator's decision and needs a second person's approval.
+        policy.requireRole(user, Role.EAA_ADMIN);
+        approvals.request(user, siteId, qa.hafez.hafez.approvals.ApprovalActions.DRIVE_DISCONNECT, siteId, null,
+                "Disconnect Google Drive for " + site.getName());
+    }
+
+    /** Switches checks on or off without further permission checks (callers have already authorised it). */
+    @Transactional
+    public void applyEnabled(CurrentUser user, UUID siteId, boolean enabled) {
+        Site site = sites.findById(siteId).orElseThrow(() -> new NotFoundException("The school"));
         site.setChecksEnabled(enabled);
         audit.log(site.getOrgId(), siteId, "CONNECTION_" + (enabled ? "ENABLED" : "DISABLED")).by(user)
                 .on("Site", siteId).save();
@@ -83,7 +99,7 @@ public class ConnectionService {
 
     private Site connectionSite(CurrentUser user, UUID siteId) {
         Site site = sites.findById(siteId).orElseThrow(() -> new NotFoundException("The school"));
-        policy.requireRole(user, Role.SCHOOL_IT, Role.LEADERSHIP);
+        policy.requireRole(user, Role.SCHOOL_IT, Role.LEADERSHIP, Role.EAA_ADMIN);
         policy.requireSiteAccess(user, siteId, site.getOrgId());
         return site;
     }

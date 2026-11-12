@@ -111,21 +111,21 @@ public class IncidentService {
     @Transactional(readOnly = true)
     public List<Incident> list(CurrentUser user) {
         return switch (user.role()) {
-            case LEADERSHIP -> incidents.findByOrgIdOrderByDetectedAtDesc(user.orgId());
+            case LEADERSHIP, EAA_ADMIN -> incidents.findByOrgIdOrderByDetectedAtDesc(user.orgId());
             case PRINCIPAL, SCHOOL_IT, COORDINATOR -> incidents.findBySiteIdOrderByDetectedAtDesc(user.siteId());
-            case TEACHER, STUDENT, PARENT -> throw new ForbiddenException("Incidents are not available for your role.");
+            case TEACHER, ATTENDANCE_OFFICER, STUDENT, PARENT -> throw new ForbiddenException("Incidents are not available for your role.");
         };
     }
 
     /** Marks an incident as dealt with. Coordinators and School IT for their school; Leadership for any. */
     @Transactional
     public Incident resolve(CurrentUser user, UUID incidentId) {
-        if (!user.isAny(Role.COORDINATOR, Role.SCHOOL_IT, Role.LEADERSHIP)) {
+        if (!user.isAny(Role.COORDINATOR, Role.SCHOOL_IT, Role.EAA_ADMIN)) {
             throw new ForbiddenException("Your role is not allowed to resolve incidents.");
         }
         Incident incident = incidents.findById(incidentId)
                 .filter(i -> i.getOrgId().equals(user.orgId()))
-                .filter(i -> user.is(Role.LEADERSHIP) || i.getSiteId().equals(user.siteId()))
+                .filter(i -> user.isNetwork() || i.getSiteId().equals(user.siteId()))
                 .orElseThrow(() -> new NotFoundException("The incident"));
         if (incident.getResolvedAt() != null) {
             throw new ConflictException("This incident is already resolved.");

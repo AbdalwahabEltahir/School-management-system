@@ -52,7 +52,7 @@ public class AccessPolicy {
 
     /** School IT may act on their own school; Leadership may act on any school of the organisation. */
     public void requireSiteAccess(CurrentUser user, UUID siteId, UUID siteOrgId) {
-        boolean ok = user.is(Role.LEADERSHIP)
+        boolean ok = user.isNetwork()
                 ? Objects.equals(user.orgId(), siteOrgId)
                 : sameSite(user, siteId);
         if (!ok) {
@@ -85,7 +85,7 @@ public class AccessPolicy {
         return switch (user.role()) {
             case COORDINATOR -> coordinatesSubject(user, scope.siteId(), scope.subjectId());
             case PRINCIPAL -> sameSite(user, scope.siteId());
-            case TEACHER, SCHOOL_IT, LEADERSHIP, STUDENT, PARENT -> false;
+            case TEACHER, SCHOOL_IT, ATTENDANCE_OFFICER, LEADERSHIP, EAA_ADMIN, STUDENT, PARENT -> false;
         };
     }
 

@@ -43,11 +43,12 @@ public class SiteService {
     private final SiteRepository sites;
     private final AuditPublisher audit;
     private final AccessPolicy policy;
+    private final qa.hafez.hafez.approvals.service.ApprovalService approvals;
 
     /** Leadership sees every site; everybody else sees their own. */
     @Transactional(readOnly = true)
     public List<Site> list(CurrentUser user) {
-        if (user.is(Role.LEADERSHIP)) {
+        if (user.isNetwork()) {
             return sites.findByOrgIdOrderByName(user.orgId());
         }
         return sites.findById(user.siteId()).map(List::of).orElse(List.of());
@@ -55,7 +56,7 @@ public class SiteService {
 
     @Transactional
     public Site create(CurrentUser user, SiteCommand cmd) {
-        policy.requireRole(user, Role.LEADERSHIP);
+        policy.requireRole(user, Role.EAA_ADMIN);
         if (cmd.name() == null || cmd.name().isBlank() || cmd.domain() == null || cmd.domain().isBlank()) {
             throw new BadRequestException("Please give the school a name and its workspace domain.");
         }
@@ -80,10 +81,7 @@ public class SiteService {
     public Site update(CurrentUser user, UUID siteId, SiteCommand cmd) {
         Site site = sites.findById(siteId).filter(s -> s.getOrgId().equals(user.orgId()))
                 .orElseThrow(() -> new NotFoundException("The school"));
-        if (!user.is(Role.LEADERSHIP)) {
-            policy.requireRole(user, Role.SCHOOL_IT);
-            policy.requireSameSite(user, siteId);
-        }
+        policy.requireRole(user, Role.EAA_ADMIN);
         String before = site.getName();
         if (cmd.name() != null && !cmd.name().isBlank()) {
             site.setName(cmd.name().trim());
@@ -91,7 +89,7 @@ public class SiteService {
         // Leadership may say that the "head office" is really a school (a test setup has only one workspace).
         // It then counts in the KPIs and the planning review like any school.
         if (Boolean.FALSE.equals(cmd.headOffice()) && site.isHeadOffice()) {
-            policy.requireRole(user, Role.LEADERSHIP);
+            policy.requireRole(user, Role.EAA_ADMIN);
             site.setHeadOffice(false);
             site.setScored(cmd.scored() == null || cmd.scored());
         } else if (cmd.scored() != null) {
@@ -112,17 +110,29 @@ public class SiteService {
         return site;
     }
 
-    /** Removes a site from use. History is kept and the drive is untouched; the head office cannot be removed. */
+    /**
+     * Asks to remove a site from use. Four-eyes: a different EAA administrator must approve before anything changes.
+     * History is kept and the drive is untouched; the head office cannot be removed.
+     */
     @Transactional
     public void remove(CurrentUser user, UUID siteId) {
-        policy.requireRole(user, Role.LEADERSHIP);
+        policy.requireRole(user, Role.EAA_ADMIN);
         Site site = sites.findById(siteId).filter(s -> s.getOrgId().equals(user.orgId()))
                 .orElseThrow(() -> new NotFoundException("The school"));
         if (site.isHeadOffice()) {
             throw new ConflictException("The head office cannot be removed.");
         }
+        approvals.request(user, siteId, qa.hafez.hafez.approvals.ApprovalActions.SITE_REMOVE, siteId, null,
+                "Remove the school " + site.getName());
+    }
+
+    /** Carries out an approved removal (called by the approval handler; permissions were checked there). */
+    @Transactional
+    public void executeRemove(CurrentUser approver, UUID siteId) {
+        Site site = sites.findById(siteId).filter(s -> s.getOrgId().equals(approver.orgId()))
+                .orElseThrow(() -> new NotFoundException("The school"));
         site.setActive(false);
-        audit.log(site.getOrgId(), user.siteId(), ActivityActions.SITE_REMOVED).by(user).on("Site", site.getId())
+        audit.log(site.getOrgId(), approver.siteId(), ActivityActions.SITE_REMOVED).by(approver).on("Site", site.getId())
                 .change(site.getName(), "removed").save();
     }
 }

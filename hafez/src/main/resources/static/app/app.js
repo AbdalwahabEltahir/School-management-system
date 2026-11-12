@@ -65,7 +65,7 @@ const del = p => api(p, { method: 'DELETE' });
 
 // =============================================================== state and reference data
 const S = { me: null, files: null, rules: null, people: null, sites: null, subjects: null, docTypes: null, unread: 0, flash: null };
-const ROLE_LABEL = { TEACHER: 'Teacher', COORDINATOR: 'Coordinator', PRINCIPAL: 'Principal', SCHOOL_IT: 'School IT', LEADERSHIP: 'Leadership', STUDENT: 'Student', PARENT: 'Parent' };
+const ROLE_LABEL = { TEACHER: 'Teacher', COORDINATOR: 'Coordinator', PRINCIPAL: 'Principal', SCHOOL_IT: 'School IT', LEADERSHIP: 'Leadership', EAA_ADMIN: 'EAA administrator', ATTENDANCE_OFFICER: 'Attendance officer', STUDENT: 'Student', PARENT: 'Parent' };
 const OPEN = ['OWNER_NOTIFIED', 'REMINDER_SENT', 'NEEDS_FOLLOW_UP', 'NEEDS_REVIEW', 'OWNER_DISAGREES', 'OWNER_ASKED_FOR_HELP'];
 const STATUS = {
   OWNER_NOTIFIED: ['Owner notified', 'b-internal'], REMINDER_SENT: ['Reminder sent', 'b-watch'], NEEDS_FOLLOW_UP: ['Needs follow-up', 'b-bad'],
@@ -74,16 +74,19 @@ const STATUS = {
 };
 const CHECK_TYPES = ['LOCATION', 'PUBLIC_LINK', 'OUTSIDE_SHARING', 'INTERNAL_ACCESS', 'DUPLICATES', 'SHARING_BEFORE_DATE', 'OWNER_LEAVING', 'GENERIC_OWNER', 'DELETED_OR_TRASHED'];
 const SENS = ['PUBLIC', 'INTERNAL', 'CONFIDENTIAL', 'RESTRICTED'];
-const ROLES = ['TEACHER', 'COORDINATOR', 'PRINCIPAL', 'SCHOOL_IT', 'LEADERSHIP', 'STUDENT', 'PARENT'];
+const ROLES = ['TEACHER', 'COORDINATOR', 'PRINCIPAL', 'SCHOOL_IT', 'LEADERSHIP', 'EAA_ADMIN', 'ATTENDANCE_OFFICER', 'STUDENT', 'PARENT'];
 const DAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday'];
 
+const isNetworkRole = () => !!S.me && (S.me.role === 'LEADERSHIP' || S.me.role === 'EAA_ADMIN');
 const NAV = {
+  EAA_ADMIN: [['overview', 'Overview'], ['approvals', 'Approvals'], ['incidents', 'Incidents'], ['rules', 'Rules'], ['sites', 'Schools & settings'], ['connection', 'Connection'], ['activity', 'Activity log'], ['notifications', 'Notifications']],
+  ATTENDANCE_OFFICER: [['attendance', 'Attendance'], ['notices', 'Notices'], ['notifications', 'Notifications']],
   TEACHER: [['today', 'Today'], ['attendance', 'Attendance'], ['marks', 'Marks'], ['materials', 'Study materials'], ['mine', 'My issues'], ['files', 'My files'], ['planning', 'Lesson plans'], ['notices', 'Notices'], ['notifications', 'Notifications']],
   PARENT: [['children', 'My children'], ['notices', 'Notices'], ['notifications', 'Notifications']],
   STUDENT: [['mydash', 'My day'], ['results', 'My results'], ['mymaterials', 'Study materials'], ['notices', 'Notices'], ['notifications', 'Notifications']],
   COORDINATOR: [['dashboard', 'Overview'], ['followup', 'Follow-up'], ['academic', 'Academic setup'], ['planning', 'Plan review'], ['people', 'People'], ['restores', 'Restores'], ['notifications', 'Notifications']],
   PRINCIPAL: [['school', 'My school'], ['issues', 'Issues'], ['files', 'Files'], ['planning', 'Lesson plans'], ['restores', 'Restores'], ['notifications', 'Notifications']],
-  SCHOOL_IT: [['noticesAdmin', 'Notices'], ['rules', 'Rules'], ['people', 'People'], ['sites', 'Schools & settings'], ['connection', 'Connection'], ['restores', 'Restores'], ['incidents', 'Incidents'], ['activity', 'Activity log'], ['notifications', 'Notifications']],
+  SCHOOL_IT: [['noticesAdmin', 'Notices'], ['approvals', 'Approvals'], ['rules', 'Rules'], ['people', 'People'], ['sites', 'Schools & settings'], ['connection', 'Connection'], ['restores', 'Restores'], ['incidents', 'Incidents'], ['activity', 'Activity log'], ['notifications', 'Notifications']],
   LEADERSHIP: [['overview', 'Overview'], ['incidents', 'Incidents'], ['rules', 'Rules'], ['sites', 'Schools & settings'], ['connection', 'Connection'], ['activity', 'Activity log'], ['notifications', 'Notifications']]
 };
 
@@ -92,7 +95,7 @@ const lazy = (key, path, map) => async () => {
   return S[key];
 };
 const loadFiles = () => {
-  if (['SCHOOL_IT', 'LEADERSHIP'].includes(S.me.role)) return Promise.resolve(S.files = S.files || {}); // counts only for these roles
+  if (['SCHOOL_IT', 'LEADERSHIP', 'EAA_ADMIN'].includes(S.me.role)) return Promise.resolve(S.files = S.files || {}); // counts only for these roles
   return lazy('files', S.me.role === 'TEACHER' ? '/api/files/mine' : '/api/files', f => [f.id, f])();
 };
 const loadRules = lazy('rules', '/api/rules', r => [r.id, r]);
@@ -147,7 +150,7 @@ const page = (heading, sub, body, actions, kpis) => isCoord()
   ? html`<div class="co"><header class="co-top"><div class="co-title"><span></span><div><h1>${heading}</h1>${sub ? html`<p>${sub}</p>` : ''}</div></div><div class="co-btns cx-act">${actions || ''}</div></header><div class="cx-stack">${body}</div></div>`
   : isPortal()
   ? html`<section class="sp-pagehead"><i class="sp-hero-glow"></i><span class="sp-ic sp-ic-exam">${sIc(PAGE_ICON[S.route] || 'book')}</span><div class="sp-pagehead-text"><h1>${heading}</h1>${sub ? html`<p>${sub}</p>` : ''}</div><div class="row sp-pagehead-act">${actions || ''}</div></section><div class="sp-stack">${body}</div>`
-  : S.me && S.me.role === 'LEADERSHIP'
+  : isNetworkRole()
   ? html`<div class="lo lp"><header class="lo-hero lo-hero-sm">${raw(LO_ART)}<div class="lo-hero-top"><div class="lo-hero-text"><h1>${heading}</h1>${sub ? html`<p>${sub}</p>` : ''}</div><div class="lo-hero-tools">${actions || ''}</div></div></header>
     <div class="lo-body">${kpis && kpis.length ? html`<section class="lo-kpis">${kpis.map(k => lkpi(...k))}</section>` : ''}<div class="stack-gap">${body}</div></div></div>`
   : html`<div class="page-top"><div class="page-head"><h1 class="page-title">${heading}</h1>${sub ? html`<p class="page-sub">${sub}</p>` : ''}</div><div class="row">${actions || ''}</div></div><div class="stack-gap">${body}</div>`;
@@ -669,7 +672,7 @@ SCREENS.incidents = async () => {
 SCREENS.rules = async () => {
   invalidate('rules');
   const rules = Object.values(await loadRules());
-  const it = S.me.role === 'SCHOOL_IT', canApprove = ['SCHOOL_IT', 'LEADERSHIP'].includes(S.me.role), lead = S.me.role === 'LEADERSHIP';
+  const it = S.me.role === 'EAA_ADMIN', canApprove = it, lead = it;
   const acts = r => html`<div class="row">${it ? html`<a class="btn btn-sm" href="#/rule/${r.id}">Edit</a>` : ''}${it ? html`<button class="btn btn-sm" data-act="${r.status === 'ACTIVE' ? 'pauseRule' : 'resumeRule'}" data-id="${r.id}">${r.status === 'ACTIVE' ? 'Pause' : 'Resume'}</button><button class="btn btn-sm btn-danger" data-act="deleteRule" data-id="${r.id}" data-confirm="Delete rule ${r.code}? Its open issues will be closed. Pausing is usually better.">Delete</button>` : ''}${canApprove && r.pending ? html`<button class="btn btn-sm btn-primary" data-act="approveRule" data-id="${r.id}" data-version="${r.pending.id}">Approve new version</button>` : ''}</div>`;
   const rows = rules.map(r => {
     const v = r.effective || r.pending || {};
@@ -700,7 +703,7 @@ SCREENS.rule = async id => {
       <div class="field"><label>Sensitivities (none ticked = any)</label><div class="row">${SENS.map(s => html`<label><input type="checkbox" name="sens" value="${s}" ${(v.sensitivities || []).includes(s) ? raw('checked') : ''}> ${title(s)}</label>`)}</div></div>
       ${field('Fix steps (English, one per line)', html`<textarea name="fixStepsEn" required>${v.fixStepsEn}</textarea>`)}
       ${field('Fix steps (Arabic, one per line)', html`<textarea name="fixStepsAr" dir="rtl" required>${v.fixStepsAr}</textarea>`)}
-      ${isNew ? html`<div class="field"><label><input type="checkbox" name="turnOn"> Turn on straight away</label>${S.me.role === 'LEADERSHIP' ? html`<label><input type="checkbox" name="networkWide"> Network-wide rule</label>` : ''}</div>` : ''}
+      ${isNew ? html`<div class="field"><label><input type="checkbox" name="turnOn"> Turn on straight away</label>${S.me.role === 'EAA_ADMIN' ? html`<label><input type="checkbox" name="networkWide"> Network-wide rule</label>` : ''}</div>` : ''}
       <div class="row"><button class="btn" name="mode" value="preview">Preview</button><button class="btn btn-primary" name="mode" value="save">Save</button><a class="btn" href="#/rules">Cancel</a></div>
     </form><div id="preview" style="margin-top:16px"></div></section>`);
 };
@@ -714,7 +717,7 @@ SCREENS.people = async () => {
   const rows = list.map(p => ({ cells: [html`<b>${p.displayName}</b><div class="muted">${p.email}</div>${p.studentCode ? html`<div class="muted mono">${p.studentCode}</div>` : ''}`, siteName(p.siteId),
     it ? html`<form data-form="person" data-id="${p.id}" class="row"><select name="role">${options(ROLES, p.role, x => ROLE_LABEL[x])}</select><select name="status">${options(['NEW', 'ACTIVE', 'LEAVING', 'LEFT'], p.status)}</select><button class="btn btn-sm">Save</button></form>` : html`${ROLE_LABEL[p.role]} · ${title(p.status)}`,
     p.overridden ? badge('b-watch', 'Overridden') : '',
-    html`<div class="row">${it ? html`<button class="btn btn-sm" data-act="welcome" data-id="${p.id}">Send welcome</button><button class="btn btn-sm" data-act="editPerson" data-id="${p.id}">Edit</button>` : ''}${it && p.id !== S.me.id && !['LEADERSHIP', 'SCHOOL_IT'].includes(p.role) ? html`<button class="btn btn-sm btn-danger" data-act="deletePerson" data-id="${p.id}" data-confirm="Delete this person permanently?">Delete</button>` : ''}${coord ? html`<button class="btn btn-sm" data-act="personFollowUp" data-id="${p.id}">Follow up</button>` : ''}</div>`] }));
+    html`<div class="row">${it ? html`<button class="btn btn-sm" data-act="welcome" data-id="${p.id}">Send welcome</button><button class="btn btn-sm" data-act="editPerson" data-id="${p.id}">Edit</button>` : ''}${it && p.id !== S.me.id && !['LEADERSHIP', 'EAA_ADMIN', 'SCHOOL_IT'].includes(p.role) ? html`<button class="btn btn-sm btn-danger" data-act="deletePerson" data-id="${p.id}" data-confirm="Delete this person permanently?">Delete</button>` : ''}${coord ? html`<button class="btn btn-sm" data-act="personFollowUp" data-id="${p.id}">Follow up</button>` : ''}</div>`] }));
   return page('People', 'Everyone signs in with their own school account. There are no Hafez passwords.',
     html`${card('Staff', list.length + ' people', table(['Person', 'School', 'Role and status', '', ''], rows))}
     ${it ? card('Add a person', 'They sign in with their own Google account. Use the same e-mail they sign in with.', html`<form data-form="addPerson" class="row"><input class="input" type="email" name="email" placeholder="name@school.edu" required><input class="input" name="name" placeholder="Full name" required><select name="role">${options(['TEACHER', 'COORDINATOR', 'PRINCIPAL', 'STUDENT', 'PARENT'], 'TEACHER', x => ROLE_LABEL[x])}</select><select name="studentId" title="Only for a parent: the student they follow"><option value="">Child (for a parent)</option>${list.filter(p => p.role === 'STUDENT').map(p => html`<option value="${p.id}">${p.displayName}</option>`)}</select><button class="btn btn-primary">Add person</button></form>`) : ''}
@@ -726,16 +729,27 @@ SCREENS.people = async () => {
 SCREENS.sites = async () => {
   invalidate('sites');
   const sites = await loadSites();
-  const it = S.me.role === 'SCHOOL_IT', lead = S.me.role === 'LEADERSHIP';
+  const it = S.me.role === 'SCHOOL_IT', lead = S.me.role === 'EAA_ADMIN', net = isNetworkRole();
   const settings = it ? await get('/api/settings').catch(() => []) : [];
   const schools = Object.values(sites);
   const counted = s => html`${s.scored ? 'Yes' : 'No'} ${lead ? html`<button class="btn btn-sm" data-act="toggleScored" data-id="${s.id}" data-value="${!s.scored}">${s.scored ? 'Exclude' : 'Include'}</button>` : ''}`;
   const schoolCards = html`<div class="lp-grid">${schools.map(s => html`<article class="lp-rule ${s.active ? '' : 'is-off'}"><div class="lp-rule-top"><span class="lp-code">${(s.name || '?').split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase()}</span>${s.active ? badge('b-good', 'Active') : badge('b-neutral', 'Inactive')}${s.scored ? badge('b-internal', 'Counted in KPIs') : badge('b-watch', 'Not counted')}</div><h3>${s.name}</h3><p class="mono">${s.domain}</p>
-      <div class="row"><a class="btn btn-sm" href="#/site/${s.id}">View score</a><button class="btn btn-sm" data-act="renameSchool" data-id="${s.id}" data-name="${s.name}">Rename</button><button class="btn btn-sm ${s.scored ? '' : 'btn-primary'}" data-act="toggleScored" data-id="${s.id}" data-value="${!s.scored}">${s.scored ? 'Exclude' : 'Include'}</button></div></article>`)}</div>`;
-  return page('Schools & settings', lead ? 'The schools in the network and whether they count toward the KPIs.' : null, html`
-    ${lead && schools.length ? schoolCards : card('Schools', null, schools.length ? table(['Name', 'Domain', 'Counted in KPIs', 'Status'], schools.map(s => ({ cells: [html`${s.name} ${lead ? html`<button class="btn btn-sm" data-act="renameSchool" data-id="${s.id}" data-name="${s.name}">Rename</button>` : ''}`, s.domain, counted(s), s.active ? badge('b-good', 'Active') : badge('b-neutral', 'Inactive')] }))) : empty('No school yet. Add the first one below.'))}
+      <div class="row"><a class="btn btn-sm" href="#/site/${s.id}">View score</a>${lead ? html`<button class="btn btn-sm" data-act="renameSchool" data-id="${s.id}" data-name="${s.name}">Rename</button><button class="btn btn-sm ${s.scored ? '' : 'btn-primary'}" data-act="toggleScored" data-id="${s.id}" data-value="${!s.scored}">${s.scored ? 'Exclude' : 'Include'}</button>`: ''}${lead && !s.headOffice ? html`<button class="btn btn-sm btn-danger" data-act="removeSchool" data-id="${s.id}" data-name="${s.name}">Remove</button>` : ''}</div></article>`)}</div>`;
+  return page('Schools & settings', net ? 'The schools in the network and whether they count toward the KPIs.' : null, html`
+    ${net && schools.length ? schoolCards : card('Schools', null, schools.length ? table(['Name', 'Domain', 'Counted in KPIs', 'Status'], schools.map(s => ({ cells: [html`${s.name} ${lead ? html`<button class="btn btn-sm" data-act="renameSchool" data-id="${s.id}" data-name="${s.name}">Rename</button>` : ''}`, s.domain, counted(s), s.active ? badge('b-good', 'Active') : badge('b-neutral', 'Inactive')] }))) : empty('No school yet. Add the first one below.'))}
     ${lead ? card('Add school', null, html`<form data-form="site" class="row"><input class="input" name="name" placeholder="School name" required><input class="input" name="domain" placeholder="school.edu" required><label><input type="checkbox" name="scored" checked> Counted in the KPIs</label><button class="btn btn-primary">Add school</button></form>`) : ''}
     ${it ? card('Settings', null, table(['Setting', 'Value'], settings.map(s => ({ cells: [s.key, html`<form data-form="setting" data-key="${s.key}" class="row"><input class="input" name="value" value="${s.value}"><button class="btn btn-sm">Save</button></form>`] })))) : ''}`, '', lead ? [['Schools', schools.length, '', 'brand', 'school', 'In the network'], ['Counted in KPIs', schools.filter(x => x.scored).length, '', 'good', 'check', 'Scored'], ['Not counted', schools.filter(x => !x.scored).length, '', 'watch', 'pause', 'Left out of totals'], ['Active', schools.filter(x => x.active).length, '', 'slate', 'shield', 'Connected']] : null);
+};
+
+// ---- approvals (four-eyes): what waits for a second person
+const APPROVAL_LABEL = { MARKS_PUBLISH: 'Publish marks', SITE_REMOVE: 'Remove school', DRIVE_DISCONNECT: 'Disconnect Drive', ROLE_CHANGE: 'Change role' };
+SCREENS.approvals = async () => {
+  const list = await get('/api/approvals');
+  const rows = list.map(a => ({ cells: [APPROVAL_LABEL[a.action] || a.action, a.summary, a.requestedBy, fmt(a.requestedAt),
+    badge(a.status === 'APPROVED' ? 'b-good' : a.status === 'PENDING' ? 'b-watch' : 'b-neutral', title(a.status)),
+    a.status === 'PENDING' ? html`<div class="row">${a.canDecide ? html`<button class="btn btn-sm btn-primary" data-act="approval" data-do="approve" data-id="${a.id}">Approve</button><button class="btn btn-sm btn-danger" data-act="approval" data-do="reject" data-id="${a.id}">Reject</button>` : ''}${a.mine ? html`<button class="btn btn-sm" data-act="approval" data-do="cancel" data-id="${a.id}">Withdraw</button>` : ''}</div>` : (a.decidedBy ? 'by ' + a.decidedBy : '')] }));
+  return page('Approvals', 'Sensitive actions need a second person. You cannot approve your own request.',
+    card('Requests', null, list.length ? table(['Action', 'What', 'Requested by', 'When', 'Status', ''], rows) : empty('Nothing is waiting for approval.')));
 };
 
 // ---- connection
@@ -744,12 +758,12 @@ SCREENS.connection = async (arg, q) => {
   const id = q.get('site') || S.me.siteId || (sites[0] && sites[0].id);
   if (!id) return page('Connection', null, empty('No school yet.'));
   const [st, runs] = await Promise.all([get(`/api/connection/${id}`), get(`/api/connection/${id}/checks`).catch(() => [])]);
-  const it = ['SCHOOL_IT', 'LEADERSHIP'].includes(S.me.role);
+  const it = ['SCHOOL_IT', 'EAA_ADMIN'].includes(S.me.role), eaa = S.me.role === 'EAA_ADMIN';
   return page('Connection', 'Hafez reads the school workspace with a read-only account. It can never change a file.',
     html`<div class="row"><label>School <select class="input" data-act="pickSite">${sites.map(s => html`<option value="${s.id}" ${s.id === id ? raw('selected') : ''}>${s.name}</option>`)}</select></label></div>
     ${card('Status', null, html`<div class="row">${st.connectorInstalled ? badge('b-good', 'Connector installed') : badge('b-bad', 'No connector installed')} ${st.checksEnabled ? badge('b-good', 'Checks on') : badge('b-neutral', 'Checks off')} <span class="muted">First check: ${fmt(st.firstCheckAt)}</span></div>
       ${!st.connectorInstalled ? html`<div class="callout callout-warn" style="margin-top:12px">No workspace connector is installed, so no files can be read and no checks can run.</div>` : ''}
-      ${it ? html`<div class="row" style="margin-top:12px"><button class="btn" data-act="connTest" data-id="${id}">Test connection</button><button class="btn btn-primary" data-act="connCheck" data-id="${id}">Run a check now</button><button class="btn" data-act="connDisconnect" data-id="${id}" data-confirm="Stop all checks for this school?">Disconnect</button><button class="btn" data-act="connReconnect" data-id="${id}">Reconnect</button></div>` : ''}`)}
+      ${it ? html`<div class="row" style="margin-top:12px"><button class="btn" data-act="connTest" data-id="${id}">Test connection</button><button class="btn btn-primary" data-act="connCheck" data-id="${id}">Run a check now</button>${eaa ? html`<button class="btn" data-act="connDisconnect" data-id="${id}" data-confirm="Stop all checks for this school?">Disconnect</button>` : ''}<button class="btn" data-act="connReconnect" data-id="${id}">Reconnect</button></div>` : ''}`)}
     ${card('Recent checks', null, table(['Started', 'Type', 'Status', 'Files', 'Skipped', 'Opened', 'Closed', 'Note'], runs.map(r => ({ cells: [fmt(r.startedAt), title(r.type), badge(r.status === 'SUCCEEDED' ? 'b-good' : r.status === 'FAILED' ? 'b-bad' : 'b-watch', title(r.status)), r.itemsProcessed, r.itemsSkipped, r.issuesOpened, r.issuesClosed, r.note || ''] }))))}`, '',
     [['Connector', st.connectorInstalled ? 'On' : 'Off', '', st.connectorInstalled ? 'good' : 'bad', 'plug', st.connectorInstalled ? 'Read-only account installed' : 'Nothing can be read'], ['Checks', st.checksEnabled ? 'On' : 'Off', '', st.checksEnabled ? 'good' : 'slate', 'shield', 'First check ' + fmtDate(st.firstCheckAt)], ['Files last check', runs[0] ? runs[0].itemsProcessed : 0, '', 'brand', 'clip', runs[0] ? fmt(runs[0].startedAt) : 'No check yet'], ['Failed checks', runs.filter(r => r.status === 'FAILED').length, '', runs.some(r => r.status === 'FAILED') ? 'bad' : 'good', 'warn', 'Of the recent ' + runs.length]]);
 };
@@ -765,7 +779,7 @@ SCREENS.activity = async () => {
 
 SCREENS.restores = async () => {
   const [list] = await Promise.all([get('/api/backup/restores'), loadFiles()]);
-  const role = S.me.role, requester = ['COORDINATOR', 'PRINCIPAL'].includes(role), approver = ['SCHOOL_IT', 'LEADERSHIP'].includes(role);
+  const role = S.me.role, requester = ['COORDINATOR', 'PRINCIPAL'].includes(role), approver = ['SCHOOL_IT', 'EAA_ADMIN'].includes(role);
   const files = Object.values(S.files);
   const rows = list.map(r => ({ cells: [r.fileId ? fileName(r.fileId) : title(r.scope), title(r.scope), r.reason, badge(r.status === 'RESTORED' ? 'b-good' : r.status === 'REJECTED' ? 'b-bad' : 'b-watch', title(r.status)), fmt(r.requestedAt),
     approver ? html`<div class="row">${r.status === 'REQUESTED' ? html`<button class="btn btn-sm" data-act="restore" data-do="approve" data-id="${r.id}">Approve</button><button class="btn btn-sm btn-danger" data-act="restore" data-do="reject" data-id="${r.id}">Reject</button>` : ''}${r.status === 'APPROVED' ? html`<button class="btn btn-sm btn-primary" data-act="restore" data-do="complete" data-id="${r.id}">Mark restored</button>` : ''}</div>` : ''] }));
@@ -1178,7 +1192,9 @@ const ACT = {
   trustType: async d => { await post(`/api/doc-types/${d.id}/trust`); invalidate('docTypes'); await refreshAfter('Type trusted.'); },
   connTest: async d => { const r = await post(`/api/connection/${d.id}/test`); toast((r && r.message) || 'Connection tested.'); },
   connCheck: async d => { const r = await post(`/api/connection/${d.id}/check`); await refreshAfter('Check started. Refresh in a few seconds to see the result.'); },
-  connDisconnect: async d => { const r = await post(`/api/connection/${d.id}/disconnect`); await refreshAfter('Disconnected. No checks will run until you reconnect.'); },
+  connDisconnect: async d => { await post(`/api/connection/${d.id}/disconnect`); await refreshAfter('Sent for approval. A second EAA administrator must approve before Google Drive is disconnected.'); },
+  removeSchool: async d => { if (!confirm(trText('Ask to remove') + ' ' + d.name + '?')) return; await del('/api/sites/' + d.id); await refreshAfter('Sent for approval. A second EAA administrator must approve the removal.'); },
+  approval: async d => { const note = d.do === 'reject' ? prompt(trText('Reason (optional):'), '') : null; await post(`/api/approvals/${d.id}/${d.do}`, note ? { note } : {}); await refreshAfter('Done.'); },
   connReconnect: async d => { const r = await post(`/api/connection/${d.id}/reconnect`); await refreshAfter('Reconnected.'); },
   verifyLog: async () => { const r = await get('/api/activity-log/verify'); document.getElementById('verify').innerHTML = loc(r.valid ? `<span class="ok">Log verified: ${r.entriesChecked} entries, none altered.</span>` : `<span class="err">Log broken at entry ${esc(r.firstBrokenSeq)}.</span>`).s; },
   restore: async d => { await post(`/api/backup/restores/${d.id}/${d.do}`); await refreshAfter('Updated.'); },
@@ -1425,7 +1441,7 @@ function problem(e) {
 
 async function refreshBell() { try { const r = await get('/api/notifications/unread-count'); if (r.unread !== S.unread) { S.unread = r.unread; const c = document.querySelector('.nav-item[href="#/notifications"]'); if (c) { const old = c.querySelector('.count'); if (old) old.remove(); if (S.unread) c.insertAdjacentHTML('beforeend', `<span class="count">${S.unread}</span>`); } } } catch { } }
 
-const home = () => ({ TEACHER: 'today', STUDENT: 'mydash', PARENT: 'children', COORDINATOR: 'dashboard', PRINCIPAL: 'school', SCHOOL_IT: 'noticesAdmin', LEADERSHIP: 'overview' }[S.me.role]);
+const home = () => ({ TEACHER: 'today', STUDENT: 'mydash', PARENT: 'children', COORDINATOR: 'dashboard', PRINCIPAL: 'school', SCHOOL_IT: 'noticesAdmin', LEADERSHIP: 'overview', EAA_ADMIN: 'overview', ATTENDANCE_OFFICER: 'attendance' }[S.me.role]);
 
 async function render() {
   const app = document.getElementById('app');

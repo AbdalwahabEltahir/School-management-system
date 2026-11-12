@@ -95,7 +95,7 @@ public class CheckRunService {
      */
     public JobRun start(CurrentUser user, UUID siteId) {
         Site site = sites.findById(siteId).filter(Site::isActive).orElseThrow(() -> new NotFoundException("The school"));
-        policy.requireRole(user, Role.SCHOOL_IT, Role.LEADERSHIP);
+        policy.requireRole(user, Role.SCHOOL_IT, Role.EAA_ADMIN);
         policy.requireSiteAccess(user, siteId, site.getOrgId());
         requireReady(site);
 
@@ -120,7 +120,7 @@ public class CheckRunService {
     /** "Recent checks with skipped files" (FR-8.2). */
     public List<JobRun> recent(CurrentUser user, UUID siteId) {
         Site site = sites.findById(siteId).orElseThrow(() -> new NotFoundException("The school"));
-        if (!user.isAny(Role.SCHOOL_IT, Role.LEADERSHIP)) {
+        if (!user.isAny(Role.SCHOOL_IT, Role.LEADERSHIP, Role.EAA_ADMIN)) {
             throw new ForbiddenException("Check runs are not available for your role.");
         }
         policy.requireSiteAccess(user, siteId, site.getOrgId());

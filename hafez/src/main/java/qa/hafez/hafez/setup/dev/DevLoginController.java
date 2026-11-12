@@ -45,7 +45,7 @@ public class DevLoginController {
 
     /** URL name of each role → the role it signs in as. */
     private static final Map<String, Role> ROLES = Map.of(
-            "leadership", Role.LEADERSHIP, "it", Role.SCHOOL_IT, "principal", Role.PRINCIPAL,
+            "leadership", Role.LEADERSHIP, "eaa", Role.EAA_ADMIN, "it", Role.SCHOOL_IT, "principal", Role.PRINCIPAL,
             "coordinator", Role.COORDINATOR, "teacher", Role.TEACHER, "student", Role.STUDENT, "parent", Role.PARENT);
 
     private final PersonRepository people;

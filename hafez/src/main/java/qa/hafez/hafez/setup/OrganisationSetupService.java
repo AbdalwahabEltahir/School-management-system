@@ -58,7 +58,7 @@ public class OrganisationSetupService {
         admin.setSiteId(headOffice.getId());
         admin.setEmail(adminEmail.toLowerCase());
         admin.setDisplayName(adminName);
-        admin.setRole(Role.LEADERSHIP);
+        admin.setRole(Role.EAA_ADMIN);
         admin.setStatus(PersonStatus.ACTIVE);
         people.save(admin);
 

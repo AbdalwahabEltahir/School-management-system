@@ -24,7 +24,7 @@ import qa.hafez.hafez.shared.model.Role;
 
 /**
  * First start-up: if no organisation exists yet, creates one from configuration so the first
- * Leadership person can sign in. Does nothing once an organisation exists, and nothing at all unless
+ * EAA administrator can sign in. Does nothing once an organisation exists, and nothing at all unless
  * {@code hafez.bootstrap.enabled=true}:
  * <pre>
  * hafez:
@@ -66,6 +66,12 @@ public class BootstrapRunner implements ApplicationRunner {
             setup.createOrganisation(orgName, headOfficeName, headOfficeDomain, adminEmail, adminName);
             log.info("Created organisation '{}' with first Leadership person {}", orgName, adminEmail);
         }
+        // Earlier versions made the first account a Leadership person; Leadership is read-only now, so promote it.
+        people.findByEmailIgnoreCase(adminEmail).filter(p -> p.getRole() == Role.LEADERSHIP).ifPresent(p -> {
+            p.setRole(Role.EAA_ADMIN);
+            people.save(p);
+            log.info("Promoted {} to EAA administrator", adminEmail);
+        });
         addExtraPeople();
     }
 

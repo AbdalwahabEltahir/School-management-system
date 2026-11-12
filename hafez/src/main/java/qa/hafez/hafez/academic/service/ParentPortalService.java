@@ -34,6 +34,7 @@ public class ParentPortalService {
     private final AccessPolicy policy;
     private final PortalService portal;
     private final EnrolmentRequestService requests;
+    private final qa.hafez.hafez.shared.events.AuditPublisher audit;
 
     @Transactional(readOnly = true)
     public List<ChildView> children(CurrentUser user) {
@@ -47,13 +48,15 @@ public class ParentPortalService {
                 .toList();
     }
 
-    @Transactional(readOnly = true)
+    @Transactional
     public StudentDashboard child(CurrentUser user, UUID studentId) {
         policy.requireRole(user, Role.PARENT);
         if (!links.isLinked(user.personId(), studentId)) {
             throw new NotFoundException("The child");
         }
         Person c = people.findById(studentId).orElseThrow(() -> new NotFoundException("The child"));
+        audit.log(c.getOrgId(), c.getSiteId(), qa.hafez.hafez.shared.events.ActivityActions.STUDENT_RECORD_VIEWED).by(user)
+                .on("Person", c.getId()).change(null, "parent view").save();
         return portal.studentDashboard(new CurrentUser(c.getId(), c.getOrgId(), c.getSiteId(), Role.STUDENT, null, c.getEmail(), c.getDisplayName()));
     }
 }

@@ -69,7 +69,7 @@ public class BackupService {
     /** Recent backup runs of a school: School IT and principal of that school, or Leadership for any. */
     @Transactional(readOnly = true)
     public List<JobRun> recent(CurrentUser user, UUID siteId) {
-        if (!user.isAny(Role.SCHOOL_IT, Role.PRINCIPAL, Role.LEADERSHIP)) {
+        if (!user.isAny(Role.SCHOOL_IT, Role.PRINCIPAL, Role.LEADERSHIP, Role.EAA_ADMIN)) {
             throw new ForbiddenException("Backup status is not available for your role.");
         }
         Site site = sites.findById(siteId).orElseThrow(() -> new NotFoundException("The school"));

@@ -14,12 +14,21 @@ public enum Role {
     PRINCIPAL,
     /** School IT admin (academic staff): connection, people, settings, school rules. */
     SCHOOL_IT,
-    /** Network executive team: totals, incidents and the weekly report only. */
+    /** Network executive team: read-only view of totals, incidents, reports and tickets. Changes nothing. */
     LEADERSHIP,
+    /** EAA administrator: manages schools, rules, Google Drive connections, roles and support tickets for the network. */
+    EAA_ADMIN,
+    /** Designated administrative staff who record daily attendance; teachers only read it. */
+    ATTENDANCE_OFFICER,
     /** A student of the school portal: sees only their own timetable, attendance, published results and materials. */
     STUDENT,
     /** A parent or guardian: sees only the children School IT linked to them, read-only. */
     PARENT;
+
+    /** Works across the whole network (every school) rather than inside one school. */
+    public boolean isNetwork() {
+        return this == LEADERSHIP || this == EAA_ADMIN;
+    }
 
     /**
      * Whether this role is offered the weekly report download (principals and Leadership only).
@@ -27,6 +36,6 @@ public enum Role {
      * exposes it so the UI shows the button only to these roles.
      */
     public boolean canDownloadWeeklyReport() {
-        return this == PRINCIPAL || this == LEADERSHIP;
+        return this == PRINCIPAL || this == LEADERSHIP || this == EAA_ADMIN;
     }
 }

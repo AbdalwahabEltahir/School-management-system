@@ -71,7 +71,7 @@ public class ReportService {
         if (!user.role().canDownloadWeeklyReport()) { // same rule /api/me uses to show or hide the button
             throw new ForbiddenException("The weekly report is available to principals and Leadership.");
         }
-        Report report = user.is(Role.LEADERSHIP) ? networkReport(user) : schoolReport(user);
+        Report report = user.isNetwork() ? networkReport(user) : schoolReport(user);
         audit.log(user.orgId(), user.siteId(), ActivityActions.EXPORT_CREATED).by(user)
                 .on("Report", null).change(null, "weekly-report").save();
         return render(report);

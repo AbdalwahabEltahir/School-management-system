@@ -36,6 +36,9 @@ public final class ActivityActions {
     public static final String DOC_TYPE_CHANGED = "DOC_TYPE_CHANGED";
     public static final String ROLE_GROUP_CHANGED = "ROLE_GROUP_CHANGED";
 
+    // ---- student records: who looked, who changed ----
+    public static final String STUDENT_RECORD_VIEWED = "STUDENT_RECORD_VIEWED";
+
     // ---- people ----
     public static final String PERSON_UPDATED = "PERSON_UPDATED";
     public static final String PERSON_ADDED = "PERSON_ADDED";

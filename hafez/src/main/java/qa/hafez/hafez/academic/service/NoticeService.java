@@ -90,7 +90,7 @@ public class NoticeService {
     /** The notices to show this person right now: inside their dates and meant for them. */
     @Transactional(readOnly = true)
     public List<NoticeView> current(CurrentUser user) {
-        if (user.is(Role.LEADERSHIP)) {
+        if (user.isNetwork()) {
             throw new ForbiddenException("Notices are shown to the school's own people.");
         }
         return activeFor(user);
