@@ -26,6 +26,12 @@ applyLang();
 const uiLocale = () => (I18N.lang === 'ar' ? 'ar-QA-u-nu-latn' : undefined);
 
 const AR = {
+  'Weekly grades': 'درجات الأسبوع', 'Performance matrix': 'مصفوفة الأداء', 'Matrix': 'المصفوفة', 'Stage': 'المرحلة', 'Average': 'المعدل', 'Sijil': 'سجل', 'Hifz': 'حفظ',
+  'Who has submitted this week\'s grades. The school week runs Sunday to Thursday.': 'من سلّم درجات هذا الأسبوع. الأسبوع الدراسي من الأحد إلى الخميس.',
+  'Every student against every assessment, with their stage.': 'كل طالب مقابل كل تقييم مع مرحلته.', 'Teacher': 'المعلم', 'Submitted': 'سُلّمت', 'Done': 'مكتمل', 'In progress': 'قيد التنفيذ', 'Not started': 'لم يبدأ', 'Overdue': 'متأخر',
+  '← Previous week': '→ الأسبوع السابق', 'Next week →': 'الأسبوع التالي ←', 'This week': 'هذا الأسبوع', 'Ask to publish': 'طلب النشر', 'Stage saved.': 'تم حفظ المرحلة.',
+  'Sent for approval. A principal, coordinator or School IT must approve before students see the results.': 'أُرسل للموافقة. يجب أن يوافق المدير أو المنسق أو تقنية المدرسة قبل أن يرى الطلاب النتائج.',
+  'Students see a term only after a second person approves it. Every assessment of that term must be submitted first.': 'لا يرى الطلاب الفصل إلا بعد موافقة شخص ثانٍ. يجب تسليم كل تقييمات الفصل أولاً.',
   'Approvals': 'الموافقات', 'Sensitive actions need a second person. You cannot approve your own request.': 'الإجراءات الحساسة تحتاج إلى شخص ثانٍ. لا يمكنك الموافقة على طلبك.',
   'Requests': 'الطلبات', 'Nothing is waiting for approval.': 'لا شيء بانتظار الموافقة.', 'Requested by': 'طلبه', 'Approve': 'موافقة', 'Reject': 'رفض', 'Withdraw': 'سحب', 'Remove': 'إزالة',
   'Publish marks': 'نشر الدرجات', 'Remove school': 'إزالة مدرسة', 'Disconnect Drive': 'فصل Drive', 'Change role': 'تغيير دور',

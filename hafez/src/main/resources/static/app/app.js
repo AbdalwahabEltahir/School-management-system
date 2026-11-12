@@ -79,15 +79,15 @@ const DAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday'];
 
 const isNetworkRole = () => !!S.me && (S.me.role === 'LEADERSHIP' || S.me.role === 'EAA_ADMIN');
 const NAV = {
-  EAA_ADMIN: [['overview', 'Overview'], ['approvals', 'Approvals'], ['incidents', 'Incidents'], ['rules', 'Rules'], ['sites', 'Schools & settings'], ['connection', 'Connection'], ['activity', 'Activity log'], ['notifications', 'Notifications']],
+  EAA_ADMIN: [['overview', 'Overview'], ['approvals', 'Approvals'], ['weekly', 'Weekly grades'], ['incidents', 'Incidents'], ['rules', 'Rules'], ['sites', 'Schools & settings'], ['connection', 'Connection'], ['activity', 'Activity log'], ['notifications', 'Notifications']],
   ATTENDANCE_OFFICER: [['attendance', 'Attendance'], ['notices', 'Notices'], ['notifications', 'Notifications']],
-  TEACHER: [['today', 'Today'], ['attendance', 'Attendance'], ['marks', 'Marks'], ['materials', 'Study materials'], ['mine', 'My issues'], ['files', 'My files'], ['planning', 'Lesson plans'], ['notices', 'Notices'], ['notifications', 'Notifications']],
+  TEACHER: [['today', 'Today'], ['attendance', 'Attendance'], ['marks', 'Marks'], ['matrix', 'Matrix'], ['approvals', 'Approvals'], ['materials', 'Study materials'], ['mine', 'My issues'], ['files', 'My files'], ['planning', 'Lesson plans'], ['notices', 'Notices'], ['notifications', 'Notifications']],
   PARENT: [['children', 'My children'], ['notices', 'Notices'], ['notifications', 'Notifications']],
   STUDENT: [['mydash', 'My day'], ['results', 'My results'], ['mymaterials', 'Study materials'], ['notices', 'Notices'], ['notifications', 'Notifications']],
-  COORDINATOR: [['dashboard', 'Overview'], ['followup', 'Follow-up'], ['academic', 'Academic setup'], ['planning', 'Plan review'], ['people', 'People'], ['restores', 'Restores'], ['notifications', 'Notifications']],
-  PRINCIPAL: [['school', 'My school'], ['issues', 'Issues'], ['files', 'Files'], ['planning', 'Lesson plans'], ['restores', 'Restores'], ['notifications', 'Notifications']],
-  SCHOOL_IT: [['noticesAdmin', 'Notices'], ['approvals', 'Approvals'], ['rules', 'Rules'], ['people', 'People'], ['sites', 'Schools & settings'], ['connection', 'Connection'], ['restores', 'Restores'], ['incidents', 'Incidents'], ['activity', 'Activity log'], ['notifications', 'Notifications']],
-  LEADERSHIP: [['overview', 'Overview'], ['incidents', 'Incidents'], ['rules', 'Rules'], ['sites', 'Schools & settings'], ['connection', 'Connection'], ['activity', 'Activity log'], ['notifications', 'Notifications']]
+  COORDINATOR: [['dashboard', 'Overview'], ['approvals', 'Approvals'], ['weekly', 'Weekly grades'], ['matrix', 'Matrix'], ['followup', 'Follow-up'], ['academic', 'Academic setup'], ['planning', 'Plan review'], ['people', 'People'], ['restores', 'Restores'], ['notifications', 'Notifications']],
+  PRINCIPAL: [['school', 'My school'], ['approvals', 'Approvals'], ['weekly', 'Weekly grades'], ['matrix', 'Matrix'], ['issues', 'Issues'], ['files', 'Files'], ['planning', 'Lesson plans'], ['restores', 'Restores'], ['notifications', 'Notifications']],
+  SCHOOL_IT: [['noticesAdmin', 'Notices'], ['approvals', 'Approvals'], ['weekly', 'Weekly grades'], ['matrix', 'Matrix'], ['rules', 'Rules'], ['people', 'People'], ['sites', 'Schools & settings'], ['connection', 'Connection'], ['restores', 'Restores'], ['incidents', 'Incidents'], ['activity', 'Activity log'], ['notifications', 'Notifications']],
+  LEADERSHIP: [['overview', 'Overview'], ['weekly', 'Weekly grades'], ['incidents', 'Incidents'], ['rules', 'Rules'], ['sites', 'Schools & settings'], ['connection', 'Connection'], ['activity', 'Activity log'], ['notifications', 'Notifications']]
 };
 
 const lazy = (key, path, map) => async () => {
@@ -741,6 +741,32 @@ SCREENS.sites = async () => {
     ${it ? card('Settings', null, table(['Setting', 'Value'], settings.map(s => ({ cells: [s.key, html`<form data-form="setting" data-key="${s.key}" class="row"><input class="input" name="value" value="${s.value}"><button class="btn btn-sm">Save</button></form>`] })))) : ''}`, '', lead ? [['Schools', schools.length, '', 'brand', 'school', 'In the network'], ['Counted in KPIs', schools.filter(x => x.scored).length, '', 'good', 'check', 'Scored'], ['Not counted', schools.filter(x => !x.scored).length, '', 'watch', 'pause', 'Left out of totals'], ['Active', schools.filter(x => x.active).length, '', 'slate', 'shield', 'Connected']] : null);
 };
 
+// ---- weekly grade submissions, and the student performance matrix
+const weekShift = (d, n) => { const x = new Date(d + 'T00:00:00Z'); x.setUTCDate(x.getUTCDate() + n); return x.toISOString().slice(0, 10); };
+SCREENS.weekly = async (arg, q) => {
+  const week = q.get('week') || '';
+  const rows = await get('/api/marks/weekly' + (week ? '?week=' + week : ''));
+  const cur = week || new Date().toISOString().slice(0, 10);
+  const st = { DONE: ['b-good', 'Done'], IN_PROGRESS: ['b-watch', 'In progress'], NOT_STARTED: ['b-neutral', 'Not started'], OVERDUE: ['b-bad', 'Overdue'] };
+  const late = rows.filter(r => r.status === 'OVERDUE').length;
+  return page('Weekly grades', 'Who has submitted this week\'s grades. The school week runs Sunday to Thursday.',
+    html`<div class="row"><a class="btn btn-sm" href="#/weekly?week=${weekShift(cur, -7)}">← Previous week</a><b>${week || 'This week'}</b><a class="btn btn-sm" href="#/weekly?week=${weekShift(cur, 7)}">Next week →</a></div>
+    ${card(late ? late + ' overdue' : 'Submissions', null, rows.length ? table(['School', 'Section', 'Subject', 'Teacher', 'Submitted', 'Status'], rows.map(r => ({ cells: [r.school, r.section, r.subject, r.teacher, r.submitted + ' / ' + r.assessments, badge(...st[r.status])] }))) : empty('No teaching assignments yet.'))}`);
+};
+
+SCREENS.matrix = async (arg, q) => {
+  const sections = await get('/api/academic/sections');
+  if (!sections.length) return page('Performance matrix', null, empty('No sections yet.'));
+  const sid = q.get('s') || sections[0].id;
+  const m = await get(`/api/marks/sections/${sid}/matrix`);
+  const canStage = S.me.role === 'COORDINATOR';
+  return page('Performance matrix', 'Every student against every assessment, with their stage.',
+    html`<div class="row">${sectionPicker(sections, sid, 'matrix')}</div>
+    ${card('Marks', null, m.columns.length ? table(['Student', 'Stage', ...m.columns.map(c => c.name + ' (' + c.maxMark + ')'), 'Average'],
+      m.rows.map(r => ({ cells: [r.name, canStage ? html`<select class="input" data-act="setStage" data-id="${r.studentId}">${['SIJIL', 'HIFZ'].map(x => html`<option value="${x}" ${x === r.stage ? raw('selected') : ''}>${title(x)}</option>`)}</select>` : title(r.stage),
+        ...r.values.map(v => v == null ? '–' : v), r.averagePercent == null ? '–' : r.averagePercent + '%'] }))) : empty('No assessments yet.'))}`);
+};
+
 // ---- approvals (four-eyes): what waits for a second person
 const APPROVAL_LABEL = { MARKS_PUBLISH: 'Publish marks', SITE_REMOVE: 'Remove school', DRIVE_DISCONNECT: 'Disconnect Drive', ROLE_CHANGE: 'Change role' };
 SCREENS.approvals = async () => {
@@ -852,8 +878,8 @@ SCREENS.marks = async (arg) => {
       html`${card('New assessment', null, form)}
       ${card('Assessments', null, list.length ? table(['Section', 'Subject', 'Term', 'Assessment', 'Out of', 'Status'], list.map(a => ({ go: '#/marks/' + a.id,
         cells: [a.section, a.subject, a.term, a.name, a.maxMark, a.published ? badge('b-good', 'Published') : a.submitted ? badge('b-internal', 'Submitted') : badge('b-watch', 'Open')] }))) : empty('No assessments yet. Add the first one above.'))}
-      ${card('Publish results', 'Students see a term only after you publish it. Every assessment of that term must be submitted first.', terms2.length ? table(['Section', 'Term', 'Marks', ''], terms2.map(t => ({ cells: [t.label, t.term, t.published ? badge('b-good', 'Published') : t.ready ? badge('b-internal', 'All submitted') : badge('b-watch', 'Waiting for submissions'),
-        t.published ? html`<button class="btn btn-sm btn-danger" data-act="unpublishResults" data-section="${t.sec}" data-term="${t.term}">Unpublish</button>` : html`<button class="btn btn-sm btn-primary" data-act="publishResults" data-section="${t.sec}" data-term="${t.term}" ${t.ready ? '' : raw('disabled')}>Publish</button>`] }))) : empty('Nothing to publish yet.'))}`);
+      ${card('Publish results', 'Students see a term only after a second person approves it. Every assessment of that term must be submitted first.', terms2.length ? table(['Section', 'Term', 'Marks', ''], terms2.map(t => ({ cells: [t.label, t.term, t.published ? badge('b-good', 'Published') : t.ready ? badge('b-internal', 'All submitted') : badge('b-watch', 'Waiting for submissions'),
+        t.published ? html`<button class="btn btn-sm btn-danger" data-act="unpublishResults" data-section="${t.sec}" data-term="${t.term}">Unpublish</button>` : html`<button class="btn btn-sm btn-primary" data-act="publishResults" data-section="${t.sec}" data-term="${t.term}" ${t.ready ? '' : raw('disabled')}>Ask to publish</button>`] }))) : empty('Nothing to publish yet.'))}`);
   }
   const a = list.find(x => x.id === arg);
   if (!a) throw Object.assign(new Error('That assessment was not found.'), { status: 404 });
@@ -1165,7 +1191,7 @@ const ACT = {
   removeMaterial: async d => { await del('/api/materials/' + d.id); await refreshAfter('Removed.'); },
   removeNotice: async d => { await del('/api/notices/' + d.id); await refreshAfter('Notice removed.'); },
   unlockMarks: async d => { const reason = prompt(trText('Why are you unlocking these marks?')); if (!reason) return; await post(`/api/marks/assessments/${d.id}/unlock`, { reason }); await refreshAfter('Marks unlocked. You can correct them and submit again.'); },
-  publishResults: async d => { await post(`/api/marks/sections/${d.section}/publish`, { term: Number(d.term) }); await refreshAfter('Published. Students were told.'); },
+  publishResults: async d => { await post(`/api/marks/sections/${d.section}/publish`, { term: Number(d.term) }); await refreshAfter('Sent for approval. A principal, coordinator or School IT must approve before students see the results.'); },
   unpublishResults: async d => { const reason = prompt(trText('Why are you unpublishing these results?')); if (!reason) return; await post(`/api/marks/sections/${d.section}/unpublish`, { term: Number(d.term), reason }); await refreshAfter('Results are hidden again.'); },
   addPerson: async f => { await post('/api/people', { email: f.email, name: f.name, role: f.role, studentId: f.role === 'PARENT' && f.studentId ? f.studentId : undefined }); invalidate('people'); await refreshAfter(f.email + ' can now sign in.'); },
   landing: async d => { L.view = d.view; L.mode = d.mode || 'login'; if (L.view === 'testname') L.testPeople = await get('/api/auth/test/people').catch(() => null); if (L.view === 'student' && L.mode === 'register' && !L.schools) L.schools = await get('/api/auth/schools').catch(() => []); showLanding(); },
@@ -1193,6 +1219,7 @@ const ACT = {
   connTest: async d => { const r = await post(`/api/connection/${d.id}/test`); toast((r && r.message) || 'Connection tested.'); },
   connCheck: async d => { const r = await post(`/api/connection/${d.id}/check`); await refreshAfter('Check started. Refresh in a few seconds to see the result.'); },
   connDisconnect: async d => { await post(`/api/connection/${d.id}/disconnect`); await refreshAfter('Sent for approval. A second EAA administrator must approve before Google Drive is disconnected.'); },
+  setStage: async (d, el) => { await put('/api/marks/students/' + d.id + '/stage', { stage: el.value }); toast('Stage saved.'); },
   removeSchool: async d => { if (!confirm(trText('Ask to remove') + ' ' + d.name + '?')) return; await del('/api/sites/' + d.id); await refreshAfter('Sent for approval. A second EAA administrator must approve the removal.'); },
   approval: async d => { const note = d.do === 'reject' ? prompt(trText('Reason (optional):'), '') : null; await post(`/api/approvals/${d.id}/${d.do}`, note ? { note } : {}); await refreshAfter('Done.'); },
   connReconnect: async d => { const r = await post(`/api/connection/${d.id}/reconnect`); await refreshAfter('Reconnected.'); },
@@ -1295,6 +1322,7 @@ document.addEventListener('change', e => {
   const a = e.target.dataset && e.target.dataset.act;
   if (a === 'pickSite') ACT.pickSite({}, e.target);
   if (a === 'prefLang') ACT.prefLang({}, e.target).catch(fail);
+  if (a === 'setStage') ACT.setStage({ id: e.target.dataset.id }, e.target).catch(fail);
   if (a === 'pickSection') location.hash = '#/' + e.target.dataset.route + '?s=' + e.target.value;
 });
 document.addEventListener('submit', async e => {

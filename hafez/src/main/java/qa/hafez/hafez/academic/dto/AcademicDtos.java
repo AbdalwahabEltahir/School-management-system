@@ -42,7 +42,19 @@ public final class AcademicDtos {
     public record StudentAttendance(UUID studentId, String name, long present, long absent, long leave) {}
 
     public record AssessmentView(UUID id, UUID sectionId, String section, UUID subjectId, String subject, int term,
-                                 String name, BigDecimal maxMark, boolean submitted, boolean published) {}
+                                 String name, BigDecimal maxMark, boolean submitted, boolean published, java.time.LocalDate week) {}
+
+    /** One teacher's weekly grade submission: done, still open, overdue, or no assessment this week. */
+    public record WeeklyRow(String school, String section, String subject, String teacher, int assessments, int submitted, String status) {}
+
+    public record MatrixColumn(UUID id, String name, int term, java.time.LocalDate week, BigDecimal maxMark) {}
+
+    /** A student's row of the performance matrix: marks per assessment (null = none yet) and the average percentage. */
+    public record MatrixRow(UUID studentId, String name, String stage, List<BigDecimal> values, BigDecimal averagePercent) {}
+
+    public record MatrixView(List<MatrixColumn> columns, List<MatrixRow> rows) {}
+
+    public record StageRequest(@NotNull String stage) {}
 
     public record MarkRow(UUID studentId, String name, BigDecimal value, boolean absent) {}
 

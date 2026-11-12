@@ -64,6 +64,7 @@ class SchoolPortalTest extends WorldTestSupport {
     @Autowired AcademicSetupService setup;
     @Autowired AttendanceService attendance;
     @Autowired MarksService marks;
+    @Autowired qa.hafez.hafez.approvals.service.ApprovalService approvals;
     @Autowired NoticeService notices;
     @Autowired qa.hafez.hafez.notifications.service.NotificationService notificationService;
     @Autowired MaterialService materials;
@@ -290,6 +291,12 @@ class SchoolPortalTest extends WorldTestSupport {
         assertThatThrownBy(() -> marks.publish(it, s.b(), 1)).isInstanceOf(ForbiddenException.class); // School IT does not publish
         marks.publish(teacher, s.b(), 1);
 
+        // four-eyes: asking is not enough, the students still see nothing, and the teacher cannot approve their own request
+        assertThat(marks.myResults(user(s.s1()))).isEmpty();
+        var request = approvals.list(user(s.w().principal())).stream().filter(r -> r.getAction().equals("MARKS_PUBLISH")).findFirst().orElseThrow();
+        assertThatThrownBy(() -> approvals.approve(teacher, request.getId())).isInstanceOf(ForbiddenException.class);
+        approvals.approve(user(s.w().principal()), request.getId());
+
         assertThat(count(s.s1(), NotificationKind.SYSTEM)).isEqualTo(told + 1); // "your results are published"
         assertThat(marks.myResults(user(s.s1()))).singleElement().satisfies(r -> {
             assertThat(r.assessment()).isEqualTo("Quiz 1");
@@ -303,6 +310,28 @@ class SchoolPortalTest extends WorldTestSupport {
         assertThatThrownBy(() -> marks.unpublish(teacher, s.b(), 1, "")).isInstanceOf(BadRequestException.class);
         marks.unpublish(teacher, s.b(), 1, "A mark was wrong");
         assertThat(marks.myResults(user(s.s1()))).isEmpty();
+    }
+
+    @Test
+    void thisWeeksSubmissionsAreVisibleToLeadershipAndTheMatrixShowsEveryAssessment() {
+        School s = school();
+        UUID quiz = assessment(s, "Quiz 1", 1, "40");
+        var teacher = user(s.w().teacher());
+        marks.enter(teacher, quiz, allMarks(s, "30", "20", "10"));
+
+        var before = marks.weekly(user(s.w().principal()), null);
+        assertThat(before).anySatisfy(r -> { assertThat(r.assessments()).isEqualTo(1); assertThat(r.status()).isEqualTo("IN_PROGRESS"); });
+        marks.submit(teacher, quiz);
+        assertThat(marks.weekly(user(s.w().principal()), null)).anySatisfy(r -> assertThat(r.status()).isEqualTo("DONE"));
+        assertThat(marks.weekly(user(s.w().leader()), null)).isNotNull();           // the network can read it
+        assertThatThrownBy(() -> marks.weekly(teacher, null)).isInstanceOf(ForbiddenException.class);
+
+        var matrix = marks.matrix(user(s.w().principal()), s.b());
+        assertThat(matrix.columns()).hasSize(1);
+        assertThat(matrix.rows()).hasSize(3);
+        assertThat(matrix.rows().get(0).stage()).isEqualTo("SIJIL");
+        assertThat(matrix.rows().get(0).averagePercent()).isNotNull();
+        assertThatThrownBy(() -> marks.matrix(user(s.w().leader()), s.b())).isInstanceOf(ForbiddenException.class);
     }
 
     @Test

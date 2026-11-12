@@ -57,6 +57,22 @@ public class MarksController {
         marks.unlock(user, assessmentId, request.reason());
     }
 
+    /** Weekly submission progress (school staff: their school; Leadership and EAA: every school). */
+    @GetMapping("/weekly")
+    public List<AcademicDtos.WeeklyRow> weekly(CurrentUser user, @RequestParam(required = false) java.time.LocalDate week) {
+        return marks.weekly(user, week);
+    }
+
+    @GetMapping("/sections/{sectionId}/matrix")
+    public AcademicDtos.MatrixView matrix(CurrentUser user, @PathVariable UUID sectionId) {
+        return marks.matrix(user, sectionId);
+    }
+
+    @PutMapping("/students/{studentId}/stage")
+    public void stage(CurrentUser user, @PathVariable UUID studentId, @RequestBody AcademicDtos.StageRequest request) {
+        marks.setStage(user, studentId, request.stage());
+    }
+
     @PostMapping("/sections/{sectionId}/publish")
     public void publish(CurrentUser user, @PathVariable UUID sectionId, @RequestBody AcademicDtos.PublishRequest request) {
         marks.publish(user, sectionId, request.term());
