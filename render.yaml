@@ -8,21 +8,21 @@ services:
   - type: web
     name: sijill
     runtime: docker
-    dockerfilePath: ./sijill/Dockerfile
-    dockerContext: ./sijill
+    dockerfilePath: ./hafez/Dockerfile
+    dockerContext: ./hafez
     plan: free
     autoDeployTrigger: checksPass       # deploy main only after the GitHub Actions checks pass
     healthCheckPath: /actuator/health
     envVars:
       - key: TZ
         value: Asia/Qatar               # the saved Google token times are in Qatar time (no timezone stored)
-      - key: SIJILL_GOOGLE_DRIVE_ENABLED
+      - key: HAFEZ_GOOGLE_DRIVE_ENABLED
         value: "true"                   # read the Drive of the accounts that signed in
-      - key: SIJILL_JOBS_ENABLED
+      - key: HAFEZ_JOBS_ENABLED
         value: "true"                   # nightly check, reminders (the free service only runs them while awake)
-      - key: SIJILL_SIGNIN_TEST_MODE
+      - key: HAFEZ_SIGNIN_TEST_MODE
         value: "true"                   # TESTING ONLY: sign in by name, no password. Set to false for real use.
-      - key: SIJILL_DEMO_NETWORK
+      - key: HAFEZ_DEMO_NETWORK
         value: "true"                   # adds invented Schools C-F so the leadership dashboard looks full. Remove for real use.
       - key: GOOGLE_CLIENT_ID
         sync: false                     # set in the Render dashboard, never in Git

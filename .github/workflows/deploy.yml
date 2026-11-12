@@ -3,7 +3,7 @@ name: Deploy to Render
 # Normal flow: Render watches main and deploys it once CI passes (autoDeployTrigger: checksPass in render.yaml).
 # This workflow is the manual alternative: it triggers a deploy through Render's deploy hook and then checks that the
 # site is up. Add the secret RENDER_DEPLOY_HOOK_URL (Render service > Settings > Deploy Hook) and, optionally, the
-# repository variable RENDER_URL (for example https://sijill.onrender.com).
+# repository variable RENDER_URL (for example https://hafez.onrender.com).
 on:
   workflow_dispatch:
 
