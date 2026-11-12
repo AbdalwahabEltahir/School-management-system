@@ -1,6 +1,6 @@
-# Deploying the Sijill demo on Render
+# Deploying the Hafez demo on Render
 
-The repository root has a Render Blueprint ([render.yaml](render.yaml)) that creates the app (Docker, from `sijill/Dockerfile`)
+The repository root has a Render Blueprint ([render.yaml](render.yaml)) that creates the app (Docker, from `hafez/Dockerfile`)
 and a Postgres database.
 
 1. Push this repository to GitHub.
@@ -9,7 +9,7 @@ and a Postgres database.
 
 The demo setup turns on the **test sign-in**: on the welcome page press **Sign in with a name (testing)**, type a name or pick a
 person. There is no password, so anyone who knows the link can sign in as anyone. Use it for the mentor's test only, then set
-`SIJILL_SIGNIN_TEST_MODE` to `false` in Render's Environment.
+`HAFEZ_SIGNIN_TEST_MODE` to `false` in Render's Environment.
 
 ## Demo accounts (school: "School B")
 
@@ -31,7 +31,7 @@ published marks, a notice and a study material.
 
 - Free Render services sleep after about 15 minutes idle (the first page load then takes up to a minute), and the free database
   expires after a limited period. Open the link a few minutes before the mentor does.
-- The Google Drive connector and the scheduled jobs are off in the demo (`SIJILL_GOOGLE_DRIVE_ENABLED`, `SIJILL_JOBS_ENABLED`),
+- The Google Drive connector and the scheduled jobs are off in the demo (`HAFEZ_GOOGLE_DRIVE_ENABLED`, `HAFEZ_JOBS_ENABLED`),
   so no Google credentials are needed. To use Google sign-in and Drive, set `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET`, add
   `https://<your-service>.onrender.com/login/oauth2/code/google` as a redirect URI in Google Cloud Console, and switch the
   connector on.

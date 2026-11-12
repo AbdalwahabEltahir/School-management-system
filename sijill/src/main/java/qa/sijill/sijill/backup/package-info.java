@@ -1,5 +1,0 @@
-/**
- * <h2>Module backup</h2>
- * Backup run reporting and restore requests. Sijill only tracks restores; School IT performs them with the workspace's own tools.
- */
-package qa.sijill.sijill.backup;
