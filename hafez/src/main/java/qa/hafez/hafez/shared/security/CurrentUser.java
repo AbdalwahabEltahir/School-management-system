@@ -23,6 +23,11 @@ public record CurrentUser(UUID personId, UUID orgId, UUID siteId, Role role, UUI
         return role == r;
     }
 
+    /** Leadership (read-only) or EAA admin: sees every school of the network. */
+    public boolean isNetwork() {
+        return role.isNetwork();
+    }
+
     public boolean isAny(Role... roles) {
         for (Role r : roles) {
             if (role == r) {

@@ -51,7 +51,7 @@ public class RuleQueryService {
         if (user.isAny(Role.STUDENT, Role.PARENT)) {
             throw new qa.hafez.hafez.shared.exception.ForbiddenException("The rules are for school staff.");
         }
-        boolean seesAll = user.isAny(Role.SCHOOL_IT, Role.LEADERSHIP);
+        boolean seesAll = user.isAny(Role.SCHOOL_IT, Role.LEADERSHIP, Role.EAA_ADMIN);
         return rules.findVisible(user.orgId(), user.siteId()).stream()
                 .filter(r -> seesAll || r.getStatus() == RuleStatus.ACTIVE)
                 .map(this::entry)
@@ -61,14 +61,14 @@ public class RuleQueryService {
     /** All versions of a rule, newest first (School IT and Leadership). */
     @Transactional(readOnly = true)
     public List<RuleVersion> versions(CurrentUser user, UUID ruleId) {
-        policy.requireRole(user, Role.SCHOOL_IT, Role.LEADERSHIP);
+        policy.requireRole(user, Role.SCHOOL_IT, Role.LEADERSHIP, Role.EAA_ADMIN);
         return versions.findByRuleIdOrderByVersionNumberDesc(visibleRule(user, ruleId).getId());
     }
 
     /** How many open issues deleting the rule would close (the "use Pause instead" warning). */
     @Transactional(readOnly = true)
     public long openIssueCount(CurrentUser user, UUID ruleId) {
-        policy.requireRole(user, Role.SCHOOL_IT, Role.LEADERSHIP);
+        policy.requireRole(user, Role.SCHOOL_IT, Role.LEADERSHIP, Role.EAA_ADMIN);
         return issues.findByRuleIdAndStatusIn(visibleRule(user, ruleId).getId(), IssueStatus.OPEN).size();
     }
 
@@ -107,7 +107,7 @@ public class RuleQueryService {
     Rule visibleRule(CurrentUser user, UUID ruleId) {
         return rules.findById(ruleId)
                 .filter(r -> r.getOrgId().equals(user.orgId()))
-                .filter(r -> r.isNetworkWide() || user.is(Role.LEADERSHIP) || r.getSiteId().equals(user.siteId()))
+                .filter(r -> r.isNetworkWide() || user.isNetwork() || r.getSiteId().equals(user.siteId()))
                 .orElseThrow(() -> new NotFoundException("The rule"));
     }
 }

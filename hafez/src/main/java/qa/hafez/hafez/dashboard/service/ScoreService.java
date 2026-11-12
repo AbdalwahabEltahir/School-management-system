@@ -82,7 +82,7 @@ public class ScoreService {
     @Transactional(readOnly = true)
     public SiteScore siteScore(CurrentUser user, UUID siteId) {
         Site site = sites.findById(siteId).orElseThrow(() -> new NotFoundException("The school"));
-        if (!user.isAny(Role.PRINCIPAL, Role.SCHOOL_IT, Role.LEADERSHIP)) {
+        if (!user.isAny(Role.PRINCIPAL, Role.SCHOOL_IT, Role.LEADERSHIP, Role.EAA_ADMIN)) {
             throw new ForbiddenException("The school score is not available for your role.");
         }
         policy.requireSiteAccess(user, siteId, site.getOrgId());
@@ -100,7 +100,7 @@ public class ScoreService {
     /** Leadership overview: totals across all scored schools, never individual issues. */
     @Transactional(readOnly = true)
     public NetworkOverview overview(CurrentUser user) {
-        policy.requireRole(user, Role.LEADERSHIP);
+        policy.requireRole(user, Role.LEADERSHIP, Role.EAA_ADMIN);
         List<SiteScore> schools = new ArrayList<>();
         long filesChecked = 0, open = 0, urgent = 0, followUp = 0, fixed = 0, personal = 0;
         boolean checkedYet = false;
@@ -128,7 +128,7 @@ public class ScoreService {
      */
     @Transactional(readOnly = true)
     public List<UrgentIssue> urgentIssues(CurrentUser user) {
-        policy.requireRole(user, Role.LEADERSHIP);
+        policy.requireRole(user, Role.LEADERSHIP, Role.EAA_ADMIN);
         List<UrgentIssue> out = new ArrayList<>();
         for (Site site : sites.findByOrgIdAndScoredTrueAndActiveTrueOrderByName(user.orgId())) {
             for (var i : issues.findBySiteIdAndSeverityAndStatusInOrderByOpenedAtDesc(site.getId(), Severity.URGENT, IssueStatus.OPEN)) {

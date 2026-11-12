@@ -26,6 +26,12 @@ applyLang();
 const uiLocale = () => (I18N.lang === 'ar' ? 'ar-QA-u-nu-latn' : undefined);
 
 const AR = {
+  'Approvals': 'الموافقات', 'Sensitive actions need a second person. You cannot approve your own request.': 'الإجراءات الحساسة تحتاج إلى شخص ثانٍ. لا يمكنك الموافقة على طلبك.',
+  'Requests': 'الطلبات', 'Nothing is waiting for approval.': 'لا شيء بانتظار الموافقة.', 'Requested by': 'طلبه', 'Approve': 'موافقة', 'Reject': 'رفض', 'Withdraw': 'سحب', 'Remove': 'إزالة',
+  'Publish marks': 'نشر الدرجات', 'Remove school': 'إزالة مدرسة', 'Disconnect Drive': 'فصل Drive', 'Change role': 'تغيير دور',
+  'EAA administrator': 'مسؤول الهيئة', 'Attendance officer': 'مسؤول الحضور', 'Done.': 'تم.', 'Reason (optional):': 'السبب (اختياري):',
+  'Sent for approval. A second EAA administrator must approve before Google Drive is disconnected.': 'أُرسل للموافقة. يجب أن يوافق مسؤول آخر في الهيئة قبل فصل Google Drive.',
+  'Sent for approval. A second EAA administrator must approve the removal.': 'أُرسل للموافقة. يجب أن يوافق مسؤول آخر في الهيئة على الإزالة.',
   // ---------------------------------------------------------------- shell, navigation, roles
   'School file register': 'سجل ملفات المدرسة', 'SCHOOL FILE REGISTER': 'سجل ملفات المدرسة',
   'System operational': 'النظام يعمل', 'Loading…': 'جارٍ التحميل…', 'My preferences': 'تفضيلاتي', 'Preferences': 'التفضيلات', 'Sign out': 'تسجيل الخروج',

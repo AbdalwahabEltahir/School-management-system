@@ -115,7 +115,7 @@ public class MarksService {
     /** Assessments the user may see: school staff for the school, a teacher only for the sections and subjects they teach. */
     @Transactional(readOnly = true)
     public List<AssessmentView> list(CurrentUser user, UUID sectionId) {
-        if (user.isAny(Role.STUDENT, Role.PARENT, Role.LEADERSHIP)) {
+        if (user.isAny(Role.STUDENT, Role.PARENT, Role.LEADERSHIP, Role.EAA_ADMIN)) {
             throw new ForbiddenException("Assessments are not available for your role.");
         }
         List<Assessment> rows;
@@ -140,12 +140,14 @@ public class MarksService {
     // ================================================================== entering
 
     /** Every student of the section with their mark so far. School IT may look; only the teacher enters. */
-    @Transactional(readOnly = true)
+    @Transactional
     public List<MarkRow> sheet(CurrentUser user, UUID assessmentId) {
         Assessment a = find(user, assessmentId);
         if (!user.is(Role.SCHOOL_IT) && !access.teaches(user, a.getSectionId(), a.getSubjectId())) {
             throw new ForbiddenException("You do not teach this subject to this section.");
         }
+        audit.log(user.orgId(), user.siteId(), ActivityActions.STUDENT_RECORD_VIEWED).by(user).on("Section", a.getSectionId())
+                .change(null, "marks sheet").save();
         Map<UUID, Mark> existing = new HashMap<>();
         marks.findByAssessmentId(assessmentId).forEach(m -> existing.put(m.getStudentId(), m));
         List<MarkRow> rows = new ArrayList<>();

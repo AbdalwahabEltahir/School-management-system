@@ -134,17 +134,17 @@ public class RestoreService {
         if (user.is(Role.TEACHER)) {
             throw new ForbiddenException("Restore requests are not available for your role.");
         }
-        UUID target = user.is(Role.LEADERSHIP) && siteId != null ? siteId : user.siteId();
+        UUID target = user.isNetwork() && siteId != null ? siteId : user.siteId();
         return restores.findBySiteIdOrderByCreatedAtDesc(target).stream()
                 .filter(r -> r.getOrgId().equals(user.orgId())).toList();
     }
 
     /** A request that School IT of that school, or Leadership, may act on; otherwise "not found". */
     private RestoreRequest findForApprover(CurrentUser user, UUID requestId) {
-        policy.requireRole(user, Role.SCHOOL_IT, Role.LEADERSHIP);
+        policy.requireRole(user, Role.SCHOOL_IT, Role.EAA_ADMIN);
         return restores.findById(requestId)
                 .filter(r -> r.getOrgId().equals(user.orgId()))
-                .filter(r -> user.is(Role.LEADERSHIP) || policy.sameSite(user, r.getSiteId()))
+                .filter(r -> user.isNetwork() || policy.sameSite(user, r.getSiteId()))
                 .orElseThrow(() -> new NotFoundException("The restore request"));
     }
 }

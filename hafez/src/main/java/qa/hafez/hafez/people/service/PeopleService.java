@@ -64,7 +64,7 @@ public class PeopleService {
 
     /** Order of precedence when a person is in several role groups: the most privileged wins. */
     private static final List<Role> ROLE_PRECEDENCE = List.of(
-            Role.LEADERSHIP, Role.SCHOOL_IT, Role.PRINCIPAL, Role.COORDINATOR, Role.TEACHER);
+            Role.EAA_ADMIN, Role.LEADERSHIP, Role.SCHOOL_IT, Role.PRINCIPAL, Role.COORDINATOR, Role.TEACHER);
 
     private final PersonRepository people;
     private final ParentLinks parentLinks;
@@ -72,6 +72,7 @@ public class PeopleService {
     private final SubjectRepository subjects;
     private final RoleGroupRepository roleGroups;
     private final AuditPublisher audit;
+    private final qa.hafez.hafez.approvals.service.ApprovalService approvals;
     private final ApplicationEventPublisher publisher;
     private final AccessPolicy policy;
     private final ObjectProvider<WorkspaceConnector> connector;
@@ -205,8 +206,11 @@ public class PeopleService {
             }
             person.setEmail(clean);
         }
-        if (cmd.role() != null) {
-            person.setRole(cmd.role());
+        if (cmd.role() != null && cmd.role() != person.getRole()) {
+            // Changing a role is a four-eyes action: it takes effect only when an EAA administrator approves it.
+            approvals.request(user, person.getSiteId(), qa.hafez.hafez.approvals.ApprovalActions.ROLE_CHANGE, person.getId(),
+                    cmd.role().name(), "Change the role of " + person.getDisplayName() + " from " + person.getRole()
+                            + " to " + cmd.role());
         }
         if (cmd.subjectId() != null) {
             subjects.findById(cmd.subjectId()).filter(s -> s.getSiteId().equals(person.getSiteId()))
@@ -230,6 +234,19 @@ public class PeopleService {
         return person;
     }
 
+    /** Applies an approved role change (called by the approval handler). */
+    @Transactional
+    public void applyRole(CurrentUser approver, UUID personId, Role role) {
+        Person person = people.findById(personId).filter(p -> p.getOrgId().equals(approver.orgId()))
+                .orElseThrow(() -> new NotFoundException("The person"));
+        String before = person.getRole().name();
+        person.setRole(role);
+        person.setOverridden(true);
+        people.save(person);
+        audit.log(person.getOrgId(), person.getSiteId(), ActivityActions.PERSON_UPDATED).by(approver)
+                .on("Person", person.getId()).subject(person.getSubjectId()).change(before, role.name()).save();
+    }
+
     /**
      * Permanently deletes a person of the user's school. Not allowed for yourself or for Leadership/School IT
      * accounts. A person who already has records (files, issues, marks, messages) cannot be deleted without
@@ -242,7 +259,7 @@ public class PeopleService {
         if (person.getId().equals(user.personId())) {
             throw new BadRequestException("You cannot delete your own account.");
         }
-        if (person.getRole() == Role.LEADERSHIP || person.getRole() == Role.SCHOOL_IT) {
+        if (person.getRole() == Role.LEADERSHIP || person.getRole() == Role.EAA_ADMIN || person.getRole() == Role.SCHOOL_IT) {
             throw new BadRequestException("Leadership and School IT accounts cannot be deleted here.");
         }
         String summary = person.getEmail() + " (" + person.getRole() + ")";
@@ -269,7 +286,7 @@ public class PeopleService {
         if (person.getStatus() == PersonStatus.NEW) {
             person.setStatus(PersonStatus.ACTIVE);
         }
-        publisher.publishEvent(new PersonNotice(person.getId(), NotificationKind.SYSTEM, "مرحبًا بك في Hafez",
+        publisher.publishEvent(new PersonNotice(person.getId(), NotificationKind.SYSTEM, "مرحبًا بك في " + qa.hafez.hafez.shared.config.Brand.ar(),
                 "Welcome to Hafez", "Open the welcome page to see how Hafez works."));
         audit.log(person.getOrgId(), person.getSiteId(), ActivityActions.WELCOME_SENT)
                 .by(user).on("Person", person.getId()).save();

@@ -87,18 +87,18 @@ public class AcademicSetupService {
     /** The sections the user may see: all for School IT, principal and coordinator; theirs for a teacher or student. */
     @Transactional(readOnly = true)
     public List<SectionView> sections(CurrentUser user) {
-        if (user.is(Role.LEADERSHIP)) {
+        if (user.isNetwork()) {
             throw new ForbiddenException("Sections are not available for your role.");
         }
         List<Section> all = sections.findBySiteIdOrderByGradeAscNameAsc(user.siteId());
         List<Section> visible = switch (user.role()) {
-            case SCHOOL_IT, PRINCIPAL, COORDINATOR -> all;
+            case SCHOOL_IT, PRINCIPAL, COORDINATOR, ATTENDANCE_OFFICER -> all;
             case TEACHER -> all.stream().filter(s -> access.teaches(user, s.getId())).toList();
             case STUDENT -> {
                 UUID own = enrolments.findByStudentId(user.personId()).map(Enrolment::getSectionId).orElse(null);
                 yield all.stream().filter(s -> s.getId().equals(own)).toList();
             }
-            case LEADERSHIP, PARENT -> List.of();
+            case LEADERSHIP, EAA_ADMIN, PARENT -> List.of();
         };
         Map<UUID, Long> counts = enrolments.findBySiteId(user.siteId()).stream()
                 .collect(Collectors.groupingBy(Enrolment::getSectionId, Collectors.counting()));
@@ -138,7 +138,7 @@ public class AcademicSetupService {
     /** The school's terms, for every signed-in school role. */
     @Transactional(readOnly = true)
     public List<TermView> terms(CurrentUser user) {
-        if (user.is(Role.LEADERSHIP)) {
+        if (user.isNetwork()) {
             throw new ForbiddenException("Terms are not available for your role.");
         }
         return terms.findBySiteIdOrderByNumberAsc(user.siteId()).stream().map(AcademicSetupService::termView).toList();
@@ -221,7 +221,7 @@ public class AcademicSetupService {
 
     @Transactional(readOnly = true)
     public List<AssignmentView> assignmentsOf(CurrentUser user, UUID sectionId) {
-        if (user.isAny(Role.STUDENT, Role.PARENT, Role.LEADERSHIP)) {
+        if (user.isAny(Role.STUDENT, Role.PARENT, Role.LEADERSHIP, Role.EAA_ADMIN)) {
             throw new ForbiddenException("Teaching assignments are not available for your role.");
         }
         access.requireView(user, sectionId);

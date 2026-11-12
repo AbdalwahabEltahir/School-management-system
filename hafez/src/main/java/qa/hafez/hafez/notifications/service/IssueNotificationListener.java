@@ -299,7 +299,8 @@ public class IssueNotificationListener {
     }
 
     List<Person> leadership(UUID orgId) {
-        return people.findByOrgIdAndRole(orgId, Role.LEADERSHIP).stream()
+        return java.util.stream.Stream.concat(people.findByOrgIdAndRole(orgId, Role.LEADERSHIP).stream(),
+                        people.findByOrgIdAndRole(orgId, Role.EAA_ADMIN).stream())
                 .filter(p -> p.getStatus() != PersonStatus.LEFT).toList();
     }
 

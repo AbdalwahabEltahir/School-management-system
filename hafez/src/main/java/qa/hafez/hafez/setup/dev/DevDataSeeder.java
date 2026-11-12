@@ -97,6 +97,19 @@ public class DevDataSeeder implements ApplicationRunner {
         Org org = setup.createOrganisation("Education Above All (demo)", "EAA Central", "eaa.test",
                 "lina.sabbagh@eaa.test", "Lina Sabbagh");
 
+        // Head-office team: a second EAA administrator (four-eyes needs two) and a read-only Leadership member.
+        Site head = sites.findByDomainIgnoreCase("eaa.test").orElseThrow();
+        for (String[] n : new String[][] {{"eaa.admin2", "Maha Al-Thani", "EAA_ADMIN"}, {"noora.leader", "Noora Al-Kuwari", "LEADERSHIP"}}) {
+            Person p = new Person();
+            p.setOrgId(org.getId());
+            p.setSiteId(head.getId());
+            p.setEmail(n[0] + "@eaa.test");
+            p.setDisplayName(n[1]);
+            p.setRole(Role.valueOf(n[2]));
+            p.setStatus(PersonStatus.ACTIVE);
+            people.saveAndFlush(p);
+        }
+
         Site school = new Site();
         school.setOrgId(org.getId());
         school.setName("School B");

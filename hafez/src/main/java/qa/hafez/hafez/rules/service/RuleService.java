@@ -118,7 +118,7 @@ public class RuleService {
      */
     @Transactional
     public RuleQueryService.RuleEntry create(CurrentUser user, Draft draft, boolean networkWide, boolean turnOn) {
-        policy.requireRole(user, Role.SCHOOL_IT);
+        policy.requireRole(user, Role.EAA_ADMIN);
         draft.validate();
 
         Rule rule = new Rule();
@@ -141,12 +141,9 @@ public class RuleService {
     /** Edits a rule by adding a new version. A network-wide edit waits for approval. */
     @Transactional
     public RuleQueryService.RuleEntry update(CurrentUser user, UUID ruleId, Draft draft) {
-        policy.requireRole(user, Role.SCHOOL_IT);
+        policy.requireRole(user, Role.EAA_ADMIN);
         Rule rule = queries.visibleRule(user, ruleId);
         requireNotDeleted(rule);
-        if (!rule.isNetworkWide()) {
-            policy.requireSameSite(user, rule.getSiteId());
-        }
         draft.validate();
 
         int next = versions.findFirstByRuleIdOrderByVersionNumberDesc(rule.getId())
@@ -167,7 +164,7 @@ public class RuleService {
      */
     @Transactional
     public RuleQueryService.RuleEntry approveVersion(CurrentUser user, UUID ruleId, UUID versionId) {
-        policy.requireRole(user, Role.SCHOOL_IT, Role.LEADERSHIP);
+        policy.requireRole(user, Role.EAA_ADMIN);
         Rule rule = queries.visibleRule(user, ruleId);
         if (!rule.isNetworkWide()) {
             throw new BadRequestException("Only network-wide rules need approval.");
@@ -270,10 +267,9 @@ public class RuleService {
         Rule rule = queries.visibleRule(user, ruleId);
         requireNotDeleted(rule);
         if (rule.isNetworkWide()) {
-            policy.requireRole(user, Role.LEADERSHIP);
+            policy.requireRole(user, Role.EAA_ADMIN);
         } else {
-            policy.requireRole(user, Role.SCHOOL_IT);
-            policy.requireSameSite(user, rule.getSiteId());
+            policy.requireRole(user, Role.EAA_ADMIN);
         }
         return rule;
     }

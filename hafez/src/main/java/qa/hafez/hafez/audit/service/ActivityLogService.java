@@ -90,7 +90,7 @@ public class ActivityLogService {
      */
     @Transactional(readOnly = true)
     public ChainVerification verifyChain(CurrentUser user) {
-        if (!user.isAny(Role.LEADERSHIP, Role.SCHOOL_IT)) {
+        if (!user.isAny(Role.LEADERSHIP, Role.EAA_ADMIN, Role.SCHOOL_IT)) {
             throw new ForbiddenException("Only School IT and Leadership can verify the log.");
         }
         return verifyChain(user.orgId());
@@ -153,7 +153,7 @@ public class ActivityLogService {
         var paging = PageRequest.of(Math.max(page, 0), Math.min(Math.max(size, 1), MAX_PAGE_SIZE));
         boolean filter = action != null && !action.isBlank();
         return switch (user.role()) {
-            case LEADERSHIP -> filter
+            case LEADERSHIP, EAA_ADMIN -> filter
                     ? log.findByOrgIdAndActionOrderBySeqDesc(user.orgId(), action, paging)
                     : log.findByOrgIdOrderBySeqDesc(user.orgId(), paging);
             case PRINCIPAL, SCHOOL_IT -> filter
@@ -169,7 +169,7 @@ public class ActivityLogService {
                         ? log.findBySiteIdAndSubjectIdAndActionOrderBySeqDesc(user.siteId(), user.subjectId(), action, paging)
                         : log.findBySiteIdAndSubjectIdOrderBySeqDesc(user.siteId(), user.subjectId(), paging);
             }
-            case TEACHER, STUDENT, PARENT -> throw new ForbiddenException("The activity log is not available for your role.");
+            case TEACHER, ATTENDANCE_OFFICER, STUDENT, PARENT -> throw new ForbiddenException("The activity log is not available for your role.");
         };
     }
 
