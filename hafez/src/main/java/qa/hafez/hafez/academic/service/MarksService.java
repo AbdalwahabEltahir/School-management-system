@@ -37,6 +37,7 @@ import qa.hafez.hafez.shared.exception.BadRequestException;
 import qa.hafez.hafez.shared.exception.ConflictException;
 import qa.hafez.hafez.shared.exception.ForbiddenException;
 import qa.hafez.hafez.shared.exception.NotFoundException;
+import qa.hafez.hafez.shared.util.SchoolCalendar;
 import qa.hafez.hafez.shared.model.NotificationKind;
 import qa.hafez.hafez.shared.model.Role;
 import qa.hafez.hafez.shared.security.CurrentUser;
@@ -70,6 +71,11 @@ public class MarksService {
     private final AuditPublisher audit;
     private final ApplicationEventPublisher publisher;
     private final Clock clock;
+    private final qa.hafez.hafez.approvals.service.ApprovalService approvals;
+    private final qa.hafez.hafez.academic.repository.EnrolmentRepository enrolments;
+    private final qa.hafez.hafez.academic.repository.SectionRepository sectionRepo;
+    private final qa.hafez.hafez.organisation.repository.SiteRepository siteRepo;
+    private final qa.hafez.hafez.people.repository.PersonRepository peopleRepo;
 
     // ================================================================== defining
 
@@ -106,6 +112,7 @@ public class MarksService {
         a.setTerm(term);
         a.setName(name.trim());
         a.setMaxMark(maxMark);
+        a.setWeekStart(SchoolCalendar.weekStart(access.today()));
         assessments.save(a);
         audit.log(user.orgId(), user.siteId(), ActivityActions.ASSESSMENT_CREATED).by(user).on("Section", sectionId)
                 .subject(subjectId).change(null, a.getName() + " (term " + term + ", max " + maxMark.stripTrailingZeros().toPlainString() + ")").save();
@@ -260,10 +267,34 @@ public class MarksService {
 
     // ================================================================== publishing
 
-    /** A teacher of the section makes its term visible to the students. Every assessment of that term must be submitted first. */
+    /**
+     * A teacher of the section asks to make its term visible to the students. Every assessment of that term must be
+     * submitted first. Four-eyes: nothing is published until a second person (principal, coordinator or School IT)
+     * approves it.
+     */
     @Transactional
     public void publish(CurrentUser user, UUID sectionId, int term) {
         Section section = access.requireTeacherOf(user, sectionId);
+        checkPublishable(sectionId, term, section);
+        approvals.request(user, user.siteId(), qa.hafez.hafez.approvals.ApprovalActions.MARKS_PUBLISH, sectionId,
+                String.valueOf(term), "Publish term " + term + " results of section " + AcademicAccess.label(section));
+    }
+
+    /** Whether a second person from this school may approve the publication (never the requester; checked elsewhere). */
+    public boolean sameSchool(CurrentUser user, UUID sectionId) {
+        return sectionRepo.findById(sectionId).map(s -> s.getSiteId().equals(user.siteId())).orElse(false);
+    }
+
+    /** Publishes after approval (called by the approval handler). */
+    @Transactional
+    public void executePublish(CurrentUser approver, UUID sectionId, int term) {
+        Section section = sectionRepo.findById(sectionId).orElseThrow(() -> new NotFoundException("The section"));
+        checkPublishable(sectionId, term, section);
+        CurrentUser user = approver;
+        publishNow(user, section, term);
+    }
+
+    private void checkPublishable(UUID sectionId, int term, Section section) {
         List<Assessment> ofTerm = assessments.findBySectionIdAndTerm(sectionId, term);
         if (ofTerm.isEmpty()) {
             throw new ConflictException("There are no assessments for term " + term + " of section " + AcademicAccess.label(section) + ".");
@@ -275,9 +306,13 @@ public class MarksService {
         if (publications.findBySectionIdAndTerm(sectionId, term).isPresent()) {
             throw new ConflictException("These results are already published.");
         }
+    }
+
+    private void publishNow(CurrentUser user, Section section, int term) {
+        UUID sectionId = section.getId();
         ResultPublication p = new ResultPublication();
-        p.setOrgId(user.orgId());
-        p.setSiteId(user.siteId());
+        p.setOrgId(section.getOrgId());
+        p.setSiteId(section.getSiteId());
         p.setSectionId(sectionId);
         p.setTerm(term);
         p.setPublishedAt(Instant.now(clock));
@@ -338,10 +373,107 @@ public class MarksService {
         }
     }
 
+    // ================================================================== weekly submissions
+
+    /** Who has submitted this week's grades, per teacher, section and subject. */
+    @Transactional(readOnly = true)
+    public List<qa.hafez.hafez.academic.dto.AcademicDtos.WeeklyRow> weekly(CurrentUser user, java.time.LocalDate week) {
+        if (!user.isAny(Role.SCHOOL_IT, Role.PRINCIPAL, Role.COORDINATOR, Role.LEADERSHIP, Role.EAA_ADMIN)) {
+            throw new ForbiddenException("The weekly grade overview is for school leadership.");
+        }
+        java.time.LocalDate start = SchoolCalendar.weekStart(week == null ? access.today() : week);
+        boolean overdue = access.today().isAfter(start.plusDays(4)); // the school week runs Sunday to Thursday
+        List<UUID> siteIds = user.isNetwork()
+                ? siteRepo.findByOrgIdOrderByName(user.orgId()).stream().filter(s -> s.isActive() && !s.isHeadOffice()).map(s -> s.getId()).toList()
+                : List.of(user.siteId());
+        List<qa.hafez.hafez.academic.dto.AcademicDtos.WeeklyRow> out = new ArrayList<>();
+        for (UUID siteId : siteIds) {
+            String school = siteRepo.findById(siteId).map(s -> s.getName()).orElse("");
+            Map<UUID, Section> sectionById = access.sectionsById(siteId);
+            Map<UUID, String> subjectNames = access.subjectNames(siteId);
+            List<Assessment> all = assessments.findBySiteIdOrderByTermAscNameAsc(siteId);
+            for (var ta : assignments.findBySiteId(siteId)) {
+                List<Assessment> mine = all.stream().filter(a -> a.getSectionId().equals(ta.getSectionId())
+                        && a.getSubjectId().equals(ta.getSubjectId()) && start.equals(a.getWeekStart())).toList();
+                int submitted = (int) mine.stream().filter(a -> a.getSubmittedAt() != null).count();
+                String status = mine.isEmpty() ? (overdue ? "OVERDUE" : "NOT_STARTED")
+                        : submitted == mine.size() ? "DONE" : (overdue ? "OVERDUE" : "IN_PROGRESS");
+                String teacher = peopleRepo.findById(ta.getTeacherId()).map(p -> p.getDisplayName()).orElse("");
+                out.add(new qa.hafez.hafez.academic.dto.AcademicDtos.WeeklyRow(school,
+                        AcademicAccess.label(sectionById.get(ta.getSectionId())), subjectNames.getOrDefault(ta.getSubjectId(), ""),
+                        teacher, mine.size(), submitted, status));
+            }
+        }
+        return out;
+    }
+
+    // ================================================================== performance matrix and stage
+
+    /** Students of a section against every assessment: the centralised performance matrix. */
+    @Transactional
+    public qa.hafez.hafez.academic.dto.AcademicDtos.MatrixView matrix(CurrentUser user, UUID sectionId) {
+        if (user.isAny(Role.STUDENT, Role.PARENT, Role.LEADERSHIP, Role.EAA_ADMIN, Role.ATTENDANCE_OFFICER)) {
+            throw new ForbiddenException("The performance matrix is for school staff.");
+        }
+        access.requireView(user, sectionId);
+        List<Assessment> columns = assessments.findBySectionIdOrderByTermAscNameAsc(sectionId).stream()
+                .filter(a -> user.isAny(Role.SCHOOL_IT, Role.PRINCIPAL) || access.teaches(user, sectionId, a.getSubjectId())
+                        || (user.is(Role.COORDINATOR) && access.teaches(user, sectionId)))
+                .sorted(java.util.Comparator.comparing(Assessment::getWeekStart).thenComparing(Assessment::getName)).toList();
+        Map<UUID, Map<UUID, Mark>> byAssessment = new HashMap<>();
+        for (Assessment a : columns) {
+            Map<UUID, Mark> m = new HashMap<>();
+            marks.findByAssessmentId(a.getId()).forEach(x -> m.put(x.getStudentId(), x));
+            byAssessment.put(a.getId(), m);
+        }
+        Map<UUID, qa.hafez.hafez.academic.model.Stage> stages = new HashMap<>();
+        enrolments.findBySectionId(sectionId).forEach(e -> stages.put(e.getStudentId(), e.getStage()));
+        List<qa.hafez.hafez.academic.dto.AcademicDtos.MatrixRow> rows = new ArrayList<>();
+        for (Person student : access.students(sectionId)) {
+            List<BigDecimal> values = new ArrayList<>();
+            BigDecimal pct = BigDecimal.ZERO;
+            int counted = 0;
+            for (Assessment a : columns) {
+                Mark m = byAssessment.get(a.getId()).get(student.getId());
+                BigDecimal v = m == null || m.isAbsent() ? null : m.getValue();
+                values.add(v);
+                if (v != null) {
+                    pct = pct.add(v.multiply(BigDecimal.valueOf(100)).divide(a.getMaxMark(), 2, java.math.RoundingMode.HALF_UP));
+                    counted++;
+                }
+            }
+            rows.add(new qa.hafez.hafez.academic.dto.AcademicDtos.MatrixRow(student.getId(), student.getDisplayName(),
+                    stages.getOrDefault(student.getId(), qa.hafez.hafez.academic.model.Stage.SIJIL).name(), values,
+                    counted == 0 ? null : pct.divide(BigDecimal.valueOf(counted), 1, java.math.RoundingMode.HALF_UP)));
+        }
+        audit.log(user.orgId(), user.siteId(), ActivityActions.STUDENT_RECORD_VIEWED).by(user).on("Section", sectionId)
+                .change(null, "performance matrix").save();
+        return new qa.hafez.hafez.academic.dto.AcademicDtos.MatrixView(columns.stream()
+                .map(a -> new qa.hafez.hafez.academic.dto.AcademicDtos.MatrixColumn(a.getId(), a.getName(), a.getTerm(), a.getWeekStart(), a.getMaxMark())).toList(), rows);
+    }
+
+    /** The coordinator moves a student from Sijil to Hifz (or back). Audited. */
+    @Transactional
+    public void setStage(CurrentUser user, UUID studentId, String stage) {
+        access.requireCoordinator(user);
+        qa.hafez.hafez.academic.model.Stage wanted;
+        try {
+            wanted = qa.hafez.hafez.academic.model.Stage.valueOf(stage);
+        } catch (IllegalArgumentException e) {
+            throw new BadRequestException("The stage must be SIJIL or HIFZ.");
+        }
+        var e = enrolments.findByStudentId(studentId).filter(x -> x.getSiteId().equals(user.siteId()))
+                .orElseThrow(() -> new NotFoundException("The student"));
+        String before = e.getStage().name();
+        e.setStage(wanted);
+        enrolments.save(e);
+        audit.log(user.orgId(), user.siteId(), "STUDENT_STAGE_CHANGED").by(user).on("Person", studentId).change(before, wanted.name()).save();
+    }
+
     private AssessmentView view(Assessment a, Map<UUID, Section> sectionById, Map<UUID, String> subjectNames, boolean published) {
         return new AssessmentView(a.getId(), a.getSectionId(), AcademicAccess.label(sectionById.get(a.getSectionId())),
                 a.getSubjectId(), subjectNames.getOrDefault(a.getSubjectId(), ""), a.getTerm(), a.getName(), a.getMaxMark(),
-                a.getSubmittedAt() != null, published);
+                a.getSubmittedAt() != null, published, a.getWeekStart());
     }
 
     private static String describe(Mark m) {

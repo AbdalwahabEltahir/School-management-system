@@ -24,6 +24,11 @@ public final class SchoolCalendar {
 
     private SchoolCalendar() {}
 
+    /** The Sunday that starts the school week containing the date. */
+    public static LocalDate weekStart(LocalDate date) {
+        return date.minusDays(date.getDayOfWeek().getValue() % 7);
+    }
+
     public static boolean isSchoolDay(LocalDate date) {
         DayOfWeek day = date.getDayOfWeek();
         return day != DayOfWeek.FRIDAY && day != DayOfWeek.SATURDAY;

@@ -19,4 +19,8 @@ public class Enrolment extends BaseEntity {
 
     @Column(name = "student_id", nullable = false)
     private UUID studentId;
+
+    @jakarta.persistence.Enumerated(jakarta.persistence.EnumType.STRING)
+    @Column(name = "stage", nullable = false, length = 10)
+    private Stage stage = Stage.SIJIL;
 }

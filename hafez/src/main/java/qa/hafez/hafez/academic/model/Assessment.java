@@ -31,6 +31,10 @@ public class Assessment extends BaseEntity {
     @Column(name = "max_mark", nullable = false)
     private BigDecimal maxMark;
 
+    /** The Sunday of the week the grades belong to (weekly submission, shown to school leadership). */
+    @Column(name = "week_start", nullable = false)
+    private java.time.LocalDate weekStart;
+
     @Column(name = "submitted_at", nullable = true)
     private Instant submittedAt;
 }
