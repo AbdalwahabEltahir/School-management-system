@@ -65,23 +65,34 @@ class DevLoginTest {
         mvc().perform(get("/api/issues").session(signInAs("it"))).andExpect(status().isForbidden());
     }
 
+    @Autowired qa.hafez.hafez.people.repository.PersonRepository people;
+
     @Test
-    void aStudentRegistersAndASecondDeviceSignsInWithTheSamePassword() throws Exception {
-        var site = sites.findAll().stream().filter(x -> x.isActive()).findFirst().orElseThrow();
-        String email = "web-" + java.util.UUID.randomUUID().toString().substring(0, 6) + "@family-mail.test";
-        String body = "{\"siteId\":\"" + site.getId() + "\",\"name\":\"Web Student\",\"email\":\"" + email + "\",\"password\":\"correct horse\"}";
+    void aStudentActivatesWithTheSchoolsCodeAndASecondDeviceSignsInWithTheSamePassword() throws Exception {
+        var student = people.findAll().stream().filter(p -> p.getRole() == qa.hafez.hafez.shared.model.Role.STUDENT && p.canSignIn()).findFirst().orElseThrow();
+        MockHttpSession it = signInAs("it");
+        String issued = mvc().perform(post("/api/invitations").with(csrf()).session(it).contentType("application/json")
+                        .content("{\"kind\":\"STUDENT\",\"studentIds\":[\"" + student.getId() + "\"]}"))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.code").exists()).andReturn().getResponse().getContentAsString();
+        var m = java.util.regex.Pattern.compile("\"code\":\"([^\"]+)\"").matcher(issued); m.find(); String code = m.group(1);
+
         MockHttpSession first = new MockHttpSession();
-        mvc().perform(post("/api/auth/register/student").with(csrf()).session(first).contentType("application/json").content(body))
-                .andExpect(status().isOk()).andExpect(jsonPath("$.studentCode").exists());
+        mvc().perform(post("/api/auth/redeem/student").with(csrf()).session(first).contentType("application/json")
+                        .content("{\"code\":\"" + code + "\",\"password\":\"correct horse\"}"))
+                .andExpect(status().isOk());
         mvc().perform(get("/api/me").session(first)).andExpect(status().isOk()).andExpect(jsonPath("$.role").value("STUDENT"));
 
         MockHttpSession second = new MockHttpSession();
-        String login = "{\"email\":\"" + email + "\",\"password\":\"correct horse\"}";
+        String login = "{\"email\":\"" + student.getEmail() + "\",\"password\":\"correct horse\"}";
         mvc().perform(post("/api/auth/login").with(csrf()).session(second).contentType("application/json").content(login)).andExpect(status().isOk());
         mvc().perform(get("/api/enrol/status").session(second)).andExpect(status().isOk()).andExpect(jsonPath("$.studentCode").exists());
         mvc().perform(post("/api/auth/login").with(csrf()).contentType("application/json").content(login.replace("correct horse", "wrong horse")))
                 .andExpect(status().isBadRequest());
         mvc().perform(post("/api/auth/login").contentType("application/json").content(login)).andExpect(status().isForbidden()); // no CSRF token
+        // the old open registration is gone
+        mvc().perform(post("/api/auth/register/student").with(csrf()).contentType("application/json").content("{}")).andExpect(status().is4xxClientError());
+        mvc().perform(post("/api/auth/redeem/student").with(csrf()).contentType("application/json")
+                        .content("{\"code\":\"" + code + "\",\"password\":\"another one\"}")).andExpect(status().isBadRequest()); // used once
     }
 
     @Test

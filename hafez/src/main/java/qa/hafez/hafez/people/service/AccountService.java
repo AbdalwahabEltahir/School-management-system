@@ -56,43 +56,24 @@ public class AccountService {
     private final Clock clock;
     private final PasswordEncoder encoder = new BCryptPasswordEncoder();
 
-    /** The schools a student can register at. */
-    @Transactional(readOnly = true)
-    public List<Site> schools() {
-        return sites.findAll().stream().filter(Site::isActive).sorted(java.util.Comparator.comparing(Site::getName)).toList();
+    /** Creates a parent or student account. Used only by {@link InvitationService}: there is no public registration. */
+    @Transactional
+    public Person createAccount(Site site, Role role, String name, String email, String password) {
+        return create(site, role, name, email, password);
     }
 
+    /** Sets (or resets) the password of an account the school provisioned. */
     @Transactional
-    public Person registerStudent(UUID siteId, String name, String email, String password) {
-        Site site = sites.findById(siteId).filter(Site::isActive).orElseThrow(() -> new BadRequestException("Please choose your school."));
-        Person p = create(site, Role.STUDENT, name, email, password);
-        audit.log(p.getOrgId(), p.getSiteId(), ActivityActions.PERSON_ADDED).by(p.getId()).on("Person", p.getId())
-                .change(null, p.getEmail() + " as STUDENT (registered)").save();
-        return p;
+    public void setPassword(Person person, String password) {
+        checkPassword(password);
+        jdbc.update("DELETE FROM credentials WHERE person_id = ?", person.getId());
+        jdbc.update("INSERT INTO credentials (person_id, password_hash) VALUES (?, ?)", person.getId(), encoder.encode(password));
     }
 
-    @Transactional
-    public Person registerParent(String name, String email, String password, String studentCode, String ip) {
-        Person student = findStudent(studentCode, ip);
-        Site site = sites.findById(student.getSiteId()).orElseThrow(() -> new BadRequestException(NO_STUDENT));
-        Person p = create(site, Role.PARENT, name, email, password);
-        links.link(p.getId(), student.getId());
-        audit.log(p.getOrgId(), p.getSiteId(), ActivityActions.PERSON_ADDED).by(p.getId()).on("Person", p.getId())
-                .change(null, p.getEmail() + " as PARENT of " + student.getStudentCode() + " (registered)").save();
-        return p;
-    }
-
-    /** A signed-in parent follows one more child, with that child's student ID. */
-    @Transactional
-    public void addChild(CurrentUser user, String studentCode, String ip) {
-        policy.requireRole(user, Role.PARENT);
-        Person student = findStudent(studentCode, ip);
-        if (!student.getSiteId().equals(user.siteId())) {
-            throw new BadRequestException(NO_STUDENT);
+    private static void checkPassword(String password) {
+        if (password == null || password.length() < 8 || password.getBytes(java.nio.charset.StandardCharsets.UTF_8).length > 72) {
+            throw new BadRequestException("The password must be at least 8 characters.");
         }
-        links.link(user.personId(), student.getId());
-        audit.log(user.orgId(), user.siteId(), ActivityActions.PERSON_UPDATED).by(user).on("Person", user.personId())
-                .change(null, "follows " + student.getStudentCode()).save();
     }
 
     /** Checks the e-mail and password of a student or a parent. Every failure gives the same message. */
@@ -145,9 +126,7 @@ public class AccountService {
         if (name == null || name.isBlank() || name.length() > 200) {
             throw new BadRequestException("Please give your full name.");
         }
-        if (password == null || password.length() < 8 || password.getBytes(java.nio.charset.StandardCharsets.UTF_8).length > 72) {
-            throw new BadRequestException("The password must be at least 8 characters.");
-        }
+        checkPassword(password);
         if (people.findByEmailIgnoreCase(clean).isPresent()) {
             throw new ConflictException("That e-mail already has an account. Sign in, or ask the school office.");
         }

@@ -84,9 +84,9 @@ const NAV = {
   TEACHER: [['today', 'Today'], ['attendance', 'Attendance'], ['marks', 'Marks'], ['points', 'Points'], ['matrix', 'Matrix'], ['approvals', 'Approvals'], ['materials', 'Study materials'], ['mine', 'My issues'], ['files', 'My files'], ['planning', 'Lesson plans'], ['notices', 'Notices'], ['notifications', 'Notifications']],
   PARENT: [['children', 'My children'], ['notices', 'Notices'], ['notifications', 'Notifications']],
   STUDENT: [['mydash', 'My day'], ['results', 'My results'], ['mymaterials', 'Study materials'], ['notices', 'Notices'], ['notifications', 'Notifications']],
-  COORDINATOR: [['dashboard', 'Overview'], ['approvals', 'Approvals'], ['weekly', 'Weekly grades'], ['matrix', 'Matrix'], ['points', 'Points'], ['followup', 'Follow-up'], ['academic', 'Academic setup'], ['planning', 'Plan review'], ['people', 'People'], ['restores', 'Restores'], ['notifications', 'Notifications']],
+  COORDINATOR: [['dashboard', 'Overview'], ['invitations', 'Invitations'], ['approvals', 'Approvals'], ['weekly', 'Weekly grades'], ['matrix', 'Matrix'], ['points', 'Points'], ['followup', 'Follow-up'], ['academic', 'Academic setup'], ['planning', 'Plan review'], ['people', 'People'], ['restores', 'Restores'], ['notifications', 'Notifications']],
   PRINCIPAL: [['school', 'My school'], ['approvals', 'Approvals'], ['weekly', 'Weekly grades'], ['matrix', 'Matrix'], ['points', 'Points'], ['recognition', 'Recognition'], ['issues', 'Issues'], ['files', 'Files'], ['planning', 'Lesson plans'], ['restores', 'Restores'], ['notifications', 'Notifications']],
-  SCHOOL_IT: [['noticesAdmin', 'Notices'], ['approvals', 'Approvals'], ['weekly', 'Weekly grades'], ['matrix', 'Matrix'], ['recognition', 'Recognition'], ['rules', 'Rules'], ['people', 'People'], ['sites', 'Schools & settings'], ['connection', 'Connection'], ['restores', 'Restores'], ['incidents', 'Incidents'], ['activity', 'Activity log'], ['notifications', 'Notifications']],
+  SCHOOL_IT: [['noticesAdmin', 'Notices'], ['invitations', 'Invitations'], ['approvals', 'Approvals'], ['weekly', 'Weekly grades'], ['matrix', 'Matrix'], ['recognition', 'Recognition'], ['rules', 'Rules'], ['people', 'People'], ['sites', 'Schools & settings'], ['connection', 'Connection'], ['restores', 'Restores'], ['incidents', 'Incidents'], ['activity', 'Activity log'], ['notifications', 'Notifications']],
   LEADERSHIP: [['overview', 'Overview'], ['weekly', 'Weekly grades'], ['recognition', 'Recognition'], ['incidents', 'Incidents'], ['rules', 'Rules'], ['sites', 'Schools & settings'], ['connection', 'Connection'], ['activity', 'Activity log'], ['notifications', 'Notifications']]
 };
 
@@ -792,6 +792,22 @@ SCREENS.recognition = async () => {
     list.length ? html`${list.map(sc => card(sc.school, sc.total + ' points · average ' + sc.averagePerStudent + ' per student', sc.top.length ? table(['Top students', 'Points'], sc.top.map(t => ({ cells: [t.name, t.total] }))) : empty('No points yet.')))}` : empty('No schools yet.'));
 };
 
+// ---- invitations: the school issues one-time codes (there is no open registration)
+SCREENS.invitations = async () => {
+  const [list, people] = await Promise.all([get('/api/invitations'), get('/api/people')]);
+  const students = people.filter(p => p.role === 'STUDENT');
+  const issued = S.issued; S.issued = null;
+  const st = { PENDING: 'b-watch', USED: 'b-good', EXPIRED: 'b-neutral', REVOKED: 'b-neutral' };
+  return page('Invitations', 'There is no open registration. Give each family a one-time code; it works once and expires in 14 days.',
+    html`${issued ? html`<div class="callout callout-info"><b>Code (shown only now):</b> <span class="mono" style="font-size:20px;font-weight:700;letter-spacing:.06em">${issued.code}</span><br>Valid until ${fmtDate(issued.expiresAt)}. Give it to the family; it cannot be shown again.</div>` : ''}
+    ${card('Issue a code', null, html`<form data-form="invite">
+      ${field('For', html`<select name="kind"><option value="PARENT">A parent (links one or more children)</option><option value="STUDENT">A student (sets their password)</option></select>`)}
+      ${field('Student(s)', html`<select name="studentIds" multiple size="6" required>${students.map(p => html`<option value="${p.id}">${p.displayName}</option>`)}</select>`)}
+      ${field('Parent e-mail (optional: the code then works only for this address)', html`<input class="input" type="email" name="email">`)}
+      <button class="btn btn-primary">Issue code</button></form>`)}
+    ${card('Codes', null, list.length ? table(['For', 'Student(s)', 'E-mail', 'Status', 'Expires', ''], list.map(i => ({ cells: [title(i.kind), i.students.join(', '), i.email || '', badge(st[i.status], title(i.status)), fmtDate(i.expiresAt), i.status === 'PENDING' ? html`<button class="btn btn-sm btn-danger" data-act="revokeInvite" data-id="${i.id}">Revoke</button>` : ''] }))) : empty('No codes yet.'))}`);
+};
+
 // ---- approvals (four-eyes): what waits for a second person
 const APPROVAL_LABEL = { MARKS_PUBLISH: 'Publish marks', SITE_REMOVE: 'Remove school', DRIVE_DISCONNECT: 'Disconnect Drive', ROLE_CHANGE: 'Change role' };
 SCREENS.approvals = async () => {
@@ -963,7 +979,7 @@ async function classRequestCard(studentId, pending) {
 }
 
 async function waitingPage(st) {
-  return page('Welcome, ' + st.name, 'You are not in a class yet.', html`${card('Your student ID', 'Give this ID to your parents. They use it, with their own e-mail and password, to register and follow you.', html`<p class="mono" style="font-size:26px;font-weight:700;letter-spacing:.06em;margin:0">${st.studentCode}</p>`)}${await classRequestCard(null, st.pendingClass)}`);
+  return page('Welcome, ' + st.name, 'You are not in a class yet.', html`${card('Your student ID', 'Your school office may ask for this number.', html`<p class="mono" style="font-size:26px;font-weight:700;letter-spacing:.06em;margin:0">${st.studentCode}</p>`)}${await classRequestCard(null, st.pendingClass)}`);
 }
 
 // ---- the student / parent home screen (same layout for both)
@@ -1096,11 +1112,11 @@ function portalHome(d, o) {
 // ---- parent portal: the same home screen, for each linked child
 SCREENS.children = async (arg) => {
   const kids = await get('/api/parent/children');
-  const addChild = card('Follow another child', 'Enter their student ID.', html`<form data-form="addChild" class="row"><input class="input mono" name="studentCode" placeholder="10-digit student ID" inputmode="numeric" required><button class="btn">Add child</button></form>`);
-  if (!kids.length) return page('Welcome', null, html`${card('No child linked yet', null, empty('Add your child with their student ID.'))}${addChild}`);
+  const addChild = card('Follow another child', 'Enter the invitation code the school gave you.', html`<form data-form="addChild" class="row"><input class="input mono" name="code" placeholder="XXXX-XXXX-XXXX" autocomplete="off" required><button class="btn">Add child</button></form>`);
+  if (!kids.length) return page('Welcome', null, html`${card('No child linked yet', null, empty('Ask your school for an invitation code, then enter it above.'))}${addChild}`);
   const id = kids.some(k => k.id === arg) ? arg : kids[0].id;
   const kid = kids.find(k => k.id === id);
-  const welcome = 'Welcome, parent of ' + kids.map(k => k.name).join(' and ');
+  const welcome = 'Welcome, ' + S.me.displayName;
   const switcher = kids.length > 1 ? html`<div class="row" style="margin-bottom:16px">${kids.map(k => html`<a class="btn ${k.id === id ? 'btn-primary' : ''}" href="#/children/${k.id}" style="text-decoration:none">${k.name}</a>`)}</div>` : '';
   if (!kid.section) {
     return page(welcome, kid.name + ' is not in a class yet.', html`${switcher}${await classRequestCard(kid.id, kid.pendingClass)}${addChild}`);
@@ -1108,7 +1124,7 @@ SCREENS.children = async (arg) => {
   const [d, pv] = await Promise.all([get(`/api/parent/children/${id}`), get(`/api/points/child/${id}`).catch(() => null)]);
   const terms = [...new Set(d.results.map(r => r.term))];
   const results = terms.length ? html`${terms.map(t => spCard('list', 'Results · term ' + t, resultTable(d.results.filter(r => r.term === t))))}` : spCard('list', 'Results', empty('No results have been published yet.'));
-  return portalHome(d, { name: kid.name, mine: false, sub: `Parent of ${kid.name} · Section ${kid.section} · ${d.date}`,
+  return portalHome(d, { name: S.me.displayName, mine: false, sub: `Following ${kid.name} · Section ${kid.section} · ${d.date}`,
     below: { top: switcher, bottom: html`<div id="sp-results" class="sp-stack">${results}</div>${pv ? pointsCard(pv) : ''}${addChild}` } });
 };
 
@@ -1158,7 +1174,7 @@ SCREENS.academic = async (arg, q) => {
     detail = html`
       ${card('Students', roster.length + ' enrolled', html`${table(['Student', 'E-mail'], roster.map(r => ({ cells: [r.name, r.email] })))}
         <form data-form="enrol" data-section="${sid}" class="row" style="margin-top:12px"><select class="input" name="studentEmail">${unenrolled.map(p => html`<option value="${p.email}">${p.name} · ${p.studentCode || ''} (${p.email})</option>`)}</select><button class="btn">Enrol in this section</button></form>
-        ${unenrolled.length ? '' : html`<p class="muted">Every student already has a class. New students appear here after they register.</p>`}`)}
+        ${unenrolled.length ? '' : html`<p class="muted">Every student already has a class. New students appear here once the school has added them.</p>`}`)}
       ${card('Who teaches what', null, html`${table(['Subject', 'Teacher'], assigns.map(a => ({ cells: [a.subject, a.teacher] })))}
         <form data-form="assign" data-section="${sid}" class="row" style="margin-top:12px"><select class="input" name="subjectId">${subjects.map(x => html`<option value="${x.id}">${x.name}</option>`)}</select><select class="input" name="teacherId">${staff.map(p => html`<option value="${p.id}">${p.displayName}</option>`)}</select><button class="btn">Assign</button></form>`)}
       ${card('Timetable', 'Sunday to Thursday. A section, a teacher or a room cannot be in two places in one period.', html`${weekGrid(lessons, 'teacher')}
@@ -1227,7 +1243,7 @@ const ACT = {
   publishResults: async d => { await post(`/api/marks/sections/${d.section}/publish`, { term: Number(d.term) }); await refreshAfter('Sent for approval. A principal, coordinator or School IT must approve before students see the results.'); },
   unpublishResults: async d => { const reason = prompt(trText('Why are you unpublishing these results?')); if (!reason) return; await post(`/api/marks/sections/${d.section}/unpublish`, { term: Number(d.term), reason }); await refreshAfter('Results are hidden again.'); },
   addPerson: async f => { await post('/api/people', { email: f.email, name: f.name, role: f.role, studentId: f.role === 'PARENT' && f.studentId ? f.studentId : undefined }); invalidate('people'); await refreshAfter(f.email + ' can now sign in.'); },
-  landing: async d => { L.view = d.view; L.mode = d.mode || 'login'; if (L.view === 'testname') L.testPeople = await get('/api/auth/test/people').catch(() => null); if (L.view === 'student' && L.mode === 'register' && !L.schools) L.schools = await get('/api/auth/schools').catch(() => []); showLanding(); },
+  landing: async d => { L.view = d.view; L.mode = d.mode || 'login'; if (L.view === 'testname') L.testPeople = await get('/api/auth/test/people').catch(() => null); showLanding(); },
   approveReq: async d => { await post('/api/enrol/requests/' + d.id + '/approve'); await refreshAfter('Student enrolled.'); },
   declineReq: async d => { await post('/api/enrol/requests/' + d.id + '/decline'); await refreshAfter('Request declined.'); },
   renameSchool: async d => { const name = prompt(trText('School name:'), d.name); if (!name || name === d.name) return; await put('/api/sites/' + d.id, { name }); invalidate('sites'); await refreshAfter('Renamed.'); },
@@ -1252,6 +1268,7 @@ const ACT = {
   connTest: async d => { const r = await post(`/api/connection/${d.id}/test`); toast((r && r.message) || 'Connection tested.'); },
   connCheck: async d => { const r = await post(`/api/connection/${d.id}/check`); await refreshAfter('Check started. Refresh in a few seconds to see the result.'); },
   connDisconnect: async d => { await post(`/api/connection/${d.id}/disconnect`); await refreshAfter('Sent for approval. A second EAA administrator must approve before Google Drive is disconnected.'); },
+  revokeInvite: async d => { await post(`/api/invitations/${d.id}/revoke`); await refreshAfter('Code revoked.'); },
   setStage: async (d, el) => { await put('/api/marks/students/' + d.id + '/stage', { stage: el.value }); toast('Stage saved.'); },
   removeSchool: async d => { if (!confirm(trText('Ask to remove') + ' ' + d.name + '?')) return; await del('/api/sites/' + d.id); await refreshAfter('Sent for approval. A second EAA administrator must approve the removal.'); },
   approval: async d => { const note = d.do === 'reject' ? prompt(trText('Reason (optional):'), '') : null; await post(`/api/approvals/${d.id}/${d.do}`, note ? { note } : {}); await refreshAfter('Done.'); },
@@ -1288,6 +1305,7 @@ const FORM = {
   docType: async f => { await put('/api/doc-types', { name: f.name, sensitivity: f.sensitivity }); invalidate('docTypes'); await refreshAfter('Saved.'); },
   setting: async (f, d) => { await put('/api/settings', { key: d.key, value: f.value }); await refreshAfter('Saved.'); },
   restoreRequest: async f => { await post('/api/backup/restores', { scope: f.scope, fileId: f.fileId || null, target: f.target || null, reason: f.reason }); await refreshAfter('Restore requested.'); },
+  invite: async (f, d, form) => { const ids = [...form.querySelector('[name=studentIds]').selectedOptions].map(o => o.value); S.issued = await post('/api/invitations', { kind: f.kind, studentIds: ids, email: f.email || null }); await render(); },
   award: async f => { await post('/api/points/award', { studentId: f.studentId, amount: Number(f.amount), reason: f.reason }); await refreshAfter('Points given.'); },
   attendance: async (f, d, form) => {
     const statuses = {};
@@ -1310,10 +1328,10 @@ const FORM = {
   testSignin: async f => { await post('/api/auth/test/signin', { name: f.name }); afterAuth(); },
   testPick: async d => { await post('/api/auth/test/pick', { id: d.id }); afterAuth(); },
   login: async f => { await post('/api/auth/login', { email: f.email, password: f.password }); afterAuth(); },
-  registerStudent: async f => { await post('/api/auth/register/student', { siteId: f.siteId, name: f.name, email: f.email, password: f.password }); afterAuth(); },
-  registerParent: async f => { await post('/api/auth/register/parent', { studentCode: f.studentCode, name: f.name, email: f.email, password: f.password }); afterAuth(); },
+  redeemStudent: async f => { await post('/api/auth/redeem/student', { code: f.code, password: f.password }); afterAuth(); },
+  redeemParent: async f => { await post('/api/auth/redeem/parent', { code: f.code, name: f.name, email: f.email, password: f.password }); afterAuth(); },
   enrolRequest: async (f, d) => { await post('/api/enrol/requests', { studentId: d.student || undefined, sectionId: f.sectionId }); await refreshAfter('Request sent. The coordinator will confirm it.'); },
-  addChild: async f => { await post('/api/parent/children', { studentCode: f.studentCode }); await refreshAfter('Child added.'); },
+  addChild: async f => { await post('/api/parent/children', { code: f.code }); await refreshAfter('Child added.'); },
   enrol: async (f, d) => { await post(`/api/academic/sections/${d.section}/students`, { studentEmail: f.studentEmail }); await refreshAfter('Student enrolled.'); },
   assign: async (f, d) => { await put(`/api/academic/sections/${d.section}/assignments`, { subjectId: f.subjectId, teacherId: f.teacherId }); await refreshAfter('Teacher assigned.'); },
   lesson: async (f, d) => { await post('/api/academic/timetable', { sectionId: d.section, subjectId: f.subjectId, day: Number(f.day), period: Number(f.period), room: f.room || null }); await refreshAfter('Lesson added.'); },
@@ -1475,20 +1493,19 @@ function signIn(message, dev) {
       <p class="muted" style="margin:16px 0 8px">Or pick a person:</p><div class="row" style="gap:8px;flex-wrap:wrap">${who}</div>
       <p style="margin:18px 0 0"><button class="btn btn-sm" data-act="landing" data-view="home">Back</button></p></div></div>`;
   }
-  const student = L.view === 'student', reg = L.mode === 'register';
+  const student = L.view === 'student', reg = L.mode === 'invite';
   const pw = html`${field('Password', html`<input class="input" type="password" name="password" minlength="${reg ? 8 : 1}" autocomplete="${reg ? 'new-password' : 'current-password'}" required>`)}`;
+  const code = html`${field('Invitation code', html`<input class="input mono" name="code" placeholder="XXXX-XXXX-XXXX" autocomplete="off" required>`)}`;
   const form = !reg
     ? html`<form data-form="login">${field('E-mail', html`<input class="input" type="email" name="email" autocomplete="email" required>`)}${pw}<button class="btn btn-primary" style="width:100%">Sign in</button></form>`
     : student
-      ? html`<form data-form="registerStudent">${field('School', html`<select class="input" name="siteId" required>${(L.schools || []).map(x => html`<option value="${x.id}">${x.name}</option>`)}</select>`)}
-          ${field('Full name', html`<input class="input" name="name" autocomplete="name" required>`)}${field('E-mail', html`<input class="input" type="email" name="email" autocomplete="email" required>`)}${pw}
-          <p class="muted" style="font-size:12.5px">At least 8 characters. After you register you get a student ID to give your parents.</p><button class="btn btn-primary" style="width:100%">Register</button></form>`
-      : html`<form data-form="registerParent">${field('Student ID', html`<input class="input mono" name="studentCode" placeholder="10-digit student ID" inputmode="numeric" required>`)}
-          ${field('Your full name', html`<input class="input" name="name" autocomplete="name" required>`)}${field('Your e-mail', html`<input class="input" type="email" name="email" autocomplete="email" required>`)}${pw}
-          <p class="muted" style="font-size:12.5px">Use your own e-mail and password. The student ID is on your child's home screen. Each parent registers separately with the same ID.</p><button class="btn btn-primary" style="width:100%">Register as a parent</button></form>`;
+      ? html`<form data-form="redeemStudent">${code}${pw}
+          <p class="muted" style="font-size:12.5px">Your school gave you a one-time code. Choose a password of at least 8 characters.</p><button class="btn btn-primary" style="width:100%">Activate my account</button></form>`
+      : html`<form data-form="redeemParent">${code}${field('Your full name', html`<input class="input" name="name" autocomplete="name" required>`)}${field('Your e-mail', html`<input class="input" type="email" name="email" autocomplete="email" required>`)}${pw}
+          <p class="muted" style="font-size:12.5px">Your school gave you a one-time invitation code. It links your children to your own account.</p><button class="btn btn-primary" style="width:100%">Create my account</button></form>`;
   return html`<div class="center-screen"><div class="center-card landing" style="text-align:start"><button type="button" class="card-lang" data-act="setLang">${langLabel()}</button>${logo}
     <h1 style="margin:0 0 14px;font-size:22px">${student ? 'Student portal' : 'Parent portal'}</h1>
-    <div class="row" style="margin-bottom:16px"><button class="btn ${reg ? '' : 'btn-primary'}" data-act="landing" data-view="${L.view}" data-mode="login">Sign in</button><button class="btn ${reg ? 'btn-primary' : ''}" data-act="landing" data-view="${L.view}" data-mode="register">Register</button></div>
+    <div class="row" style="margin-bottom:16px"><button class="btn ${reg ? '' : 'btn-primary'}" data-act="landing" data-view="${L.view}" data-mode="login">Sign in</button><button class="btn ${reg ? 'btn-primary' : ''}" data-act="landing" data-view="${L.view}" data-mode="invite">I have an invitation code</button></div>
     ${form}
     <p style="margin:18px 0 0"><button class="btn btn-sm" data-act="landing" data-view="home">Back</button></p></div></div>`;
 }

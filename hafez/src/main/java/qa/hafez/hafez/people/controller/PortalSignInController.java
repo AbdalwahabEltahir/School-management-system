@@ -31,24 +31,22 @@ import qa.hafez.hafez.people.service.AccountService;
 public class PortalSignInController {
 
     private final AccountService accounts;
+    private final qa.hafez.hafez.people.service.InvitationService invitations;
 
-    @GetMapping("/schools")
-    public List<AuthDtos.School> schools() {
-        return accounts.schools().stream().map(s -> new AuthDtos.School(s.getId(), s.getName())).toList();
-    }
-
-    @PostMapping("/register/student")
-    public Map<String, Object> registerStudent(@Valid @RequestBody AuthDtos.StudentRegistration r,
-                                               HttpServletRequest request, HttpServletResponse response) {
-        Person p = accounts.registerStudent(r.siteId(), r.name(), r.email(), r.password());
+    /** A parent creates their account with a one-time invitation code from the school. There is no open registration. */
+    @PostMapping("/redeem/parent")
+    public Map<String, Object> redeemParent(@Valid @RequestBody AuthDtos.ParentInvitation r,
+                                            HttpServletRequest request, HttpServletResponse response) {
+        Person p = invitations.redeemNewParent(r.code(), r.name(), r.email(), r.password(), request.getRemoteAddr());
         signIn(p, request, response);
-        return Map.of("role", p.getRole().name(), "studentCode", p.getStudentCode());
+        return Map.of("role", p.getRole().name());
     }
 
-    @PostMapping("/register/parent")
-    public Map<String, Object> registerParent(@Valid @RequestBody AuthDtos.ParentRegistration r,
-                                              HttpServletRequest request, HttpServletResponse response) {
-        Person p = accounts.registerParent(r.name(), r.email(), r.password(), r.studentCode(), request.getRemoteAddr());
+    /** A student the school added sets a password with their one-time code. */
+    @PostMapping("/redeem/student")
+    public Map<String, Object> redeemStudent(@Valid @RequestBody AuthDtos.StudentInvitation r,
+                                             HttpServletRequest request, HttpServletResponse response) {
+        Person p = invitations.redeemStudent(r.code(), r.password(), request.getRemoteAddr());
         signIn(p, request, response);
         return Map.of("role", p.getRole().name());
     }
