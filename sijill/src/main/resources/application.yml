@@ -112,6 +112,13 @@ sijill:
       - email: saintkay123@gmail.com
         name: Saint Kay
         role: COORDINATOR
+      # The two test-sign-in accounts that the copied database may not contain yet (added on every start if missing).
+      - email: hafez.eaa.it.test@gmail.com
+        name: EAA
+        role: EAA_ADMIN
+      - email: hafez.clerk.test@gmail.com
+        name: Clerk
+        role: ATTENDANCE_OFFICER
       # A student of the school portal (then enrol them in a section under Academic setup):
       # - email: a.student@gmail.com
       #   name: A Student
