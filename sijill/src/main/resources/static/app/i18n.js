@@ -305,6 +305,121 @@ Object.assign(AR, { 'normal': 'عادية', 'urgent': 'عاجلة', 'Needs follo
   'file': 'ملف', 'files': 'ملفات', 'students': 'طلاب', 'assessment': 'تقييم', 'assessments': 'تقييمات', 'rule': 'قاعدة', 'recorded': 'مسجّلة', 'people': 'شخص', 'result': 'نتيجة', 'open urgent issue': 'مشكلة عاجلة مفتوحة', 'open incident': 'حادثة مفتوحة' });
 
 /** Phrases built in code around numbers or names: [pattern, Arabic builder]. A builder returns null to pass. */
+/** Support tickets, profile and alert settings. Only adds words that have no translation yet. */
+(function () {
+  const more = {
+    'Support tickets': 'تذاكر الدعم', 'New ticket': 'تذكرة جديدة', 'Send ticket': 'إرسال التذكرة', 'Tickets': 'التذاكر', 'Back to tickets': 'العودة إلى التذاكر',
+    'Write to EAA head office. Replies and status changes appear here and in your notifications.': 'اكتب إلى المكتب الرئيسي. تظهر الردود وتغيّر الحالة هنا وفي إشعاراتك.',
+    'Your school\'s requests to EAA head office.': 'طلبات مدرستك إلى المكتب الرئيسي.',
+    'Requests from every school. Open one to assign, reply or close it.': 'طلبات من جميع المدارس. افتح تذكرة لإسنادها أو الرد عليها أو إغلاقها.',
+    'Technical problem': 'مشكلة تقنية', 'Accounts and access': 'الحسابات والصلاحيات', 'Marks and academic data': 'الدرجات والبيانات الأكاديمية', 'Google Drive': 'جوجل درايف',
+    'Security concern': 'مسألة أمنية', 'Other': 'أخرى', 'Category': 'التصنيف', 'Urgency': 'الأهمية', 'Low': 'منخفضة', 'Normal': 'عادية', 'High': 'عالية', 'Urgent': 'عاجلة',
+    'Title': 'العنوان', 'Description': 'الوصف', 'Status': 'الحالة', 'Assigned to': 'مسندة إلى', 'Updated': 'آخر تحديث', 'School': 'المدرسة',
+    'Attachment (optional: PDF, image, Word, Excel or text, up to 2 MB)': 'مرفق (اختياري: PDF أو صورة أو Word أو Excel أو نص، حتى 2 ميغابايت)',
+    'Open': 'مفتوحة', 'In progress': 'قيد المعالجة', 'Closed': 'مغلقة', 'All': 'الكل', 'By school': 'حسب المدرسة', 'Open work across the network.': 'العمل المفتوح في الشبكة.',
+    'Urgent and unresolved': 'عاجلة وغير محلولة', 'Waiting for head office': 'بانتظار المكتب الرئيسي', 'Being handled': 'قيد المتابعة', 'Resolved': 'تم حلها', 'No tickets yet.': 'لا توجد تذاكر بعد.',
+    'Handled by': 'يتولاها', 'Not assigned yet': 'لم تُسند بعد',
+    'Details': 'التفاصيل', 'Handle this ticket': 'معالجة هذه التذكرة', 'Assign to': 'إسناد إلى', 'Assign': 'إسناد', 'Close ticket': 'إغلاق التذكرة', 'Reopen': 'إعادة فتح', 'Mark in progress': 'تحديد كقيد المعالجة',
+    'Conversation': 'المحادثة', 'No replies yet.': 'لا توجد ردود بعد.', 'Reply': 'رد', 'Your reply': 'ردّك', 'Send reply': 'إرسال الرد',
+    'This ticket is closed. Open a new ticket for a new question.': 'هذه التذكرة مغلقة. افتح تذكرة جديدة لسؤال جديد.', 'Leadership can read tickets but not reply.': 'تستطيع القيادة قراءة التذاكر دون الرد.',
+    'Ticket sent to EAA head office.': 'أُرسلت التذكرة إلى المكتب الرئيسي.', 'Reply sent.': 'تم إرسال الرد.', 'Status updated.': 'تم تحديث الحالة.', 'Assigned.': 'تم الإسناد.',
+    'My profile and preferences': 'ملفي الشخصي وتفضيلاتي', 'Your details, photo, language and which alerts you receive.': 'بياناتك وصورتك ولغتك والتنبيهات التي تصلك.',
+    'Profile': 'الملف الشخصي', 'Upload photo': 'رفع صورة', 'Remove photo': 'إزالة الصورة', 'PNG or JPEG, at most 500 KB.': 'PNG أو JPEG، حتى 500 كيلوبايت.',
+    'Name': 'الاسم', 'E-mail (from your school account)': 'البريد الإلكتروني (من حساب مدرستك)', 'Phone': 'الهاتف', 'Save details': 'حفظ البيانات',
+    'Messages and alerts': 'الرسائل والتنبيهات', 'Choose the language, and which alerts reach your notifications.': 'اختر اللغة والتنبيهات التي تصل إلى إشعاراتك.', 'Alerts': 'التنبيهات',
+    'File issues': 'مشكلات الملفات', 'Problems found in files you own or oversee.': 'مشكلات في ملفات تملكها أو تشرف عليها.', 'Reminders': 'التذكيرات', 'Reminders about issues that are still open.': 'تذكيرات بالمشكلات التي ما زالت مفتوحة.',
+    'Follow-ups': 'المتابعات', 'Issues that need a coordinator.': 'مشكلات تحتاج إلى منسّق.', 'Incidents': 'الحوادث', 'Serious incidents in your school or the network.': 'حوادث خطيرة في مدرستك أو الشبكة.',
+    'Lesson plans': 'خطط الدروس', 'Submissions and reviews of lesson plans.': 'تسليم خطط الدروس ومراجعتها.', 'Weekly grade deadlines': 'مواعيد الدرجات الأسبوعية', 'A reminder when this week\'s grades are not submitted yet.': 'تذكير عندما لا تُسلَّم درجات هذا الأسبوع بعد.',
+    'School notices': 'إعلانات المدرسة', 'New notices from your school.': 'إعلانات جديدة من مدرستك.', 'New tickets, replies and status changes.': 'تذاكر وردود وتغيّر حالة جديدة.',
+    'General updates': 'تحديثات عامة', 'Welcome messages and published results.': 'رسائل الترحيب والنتائج المنشورة.', 'Security and account events': 'أحداث الأمان والحساب',
+    'Role changes, approval requests and locked accounts. Always on.': 'تغيير الأدوار وطلبات الموافقة والحسابات المقفلة. مفعّلة دائماً.',
+    'Details saved.': 'تم حفظ البيانات.', 'Photo saved.': 'تم حفظ الصورة.', 'Photo removed.': 'تمت إزالة الصورة.', 'Choose a photo first.': 'اختر صورة أولاً.', 'Choose a photo of at most 500 KB.': 'اختر صورة بحجم أقصاه 500 كيلوبايت.',
+    'The attachment is too large (at most 2 MB).': 'المرفق كبير جداً (الحد الأقصى 2 ميغابايت).'
+  };
+  for (const k of Object.keys(more)) if (!(k in AR)) AR[k] = more[k];
+})();
+
+/** Student pick-up. Only adds words that have no translation yet. */
+(function () {
+  const more = {
+    'Pick-up': 'الاستلام', 'Pick-up board': 'لوحة الاستلام',
+    'Approve who may collect your child and tell the school when you arrive.': 'حدّد من يحق له استلام طفلك وأخبر المدرسة عند وصولك.',
+    'Right now': 'الآن', 'The school sees this at once. It updates by itself.': 'تراه المدرسة فوراً ويتحدث تلقائياً.',
+    'You have not told the school you are here.': 'لم تُخبر المدرسة بوصولك.', 'Waiting for the school': 'بانتظار المدرسة', 'Being checked': 'قيد التحقق',
+    'Released': 'تم التسليم', 'Not released': 'لم يتم التسليم', 'Cancelled': 'ملغى', 'Withdraw': 'سحب الطلب',
+    'Approved collectors, and the button for when you arrive.': 'المخوَّلون بالاستلام، وزر الوصول.', 'Who is collecting?': 'من سيستلم؟', 'Me': 'أنا',
+    'I\'ve arrived': 'لقد وصلت', 'Name': 'الاسم', 'Relationship': 'صلة القرابة', 'ID ends': 'آخر أرقام الهوية', 'Phone': 'الهاتف', 'Remove': 'إزالة',
+    'Remove this collector? They will no longer be released the child.': 'إزالة هذا الشخص؟ لن يُسلَّم الطفل إليه بعد الآن.',
+    'No approved collectors yet. You can always collect your child yourself.': 'لا يوجد مخوَّلون بعد. يمكنك دائماً استلام طفلك بنفسك.',
+    'Add a collector': 'إضافة مخوَّل بالاستلام', 'Full name': 'الاسم الكامل', 'Driver': 'سائق', 'Relative': 'قريب', 'Guardian': 'وصي', 'Parent': 'ولي أمر', 'Other': 'آخر',
+    'ID number (only the last four are kept)': 'رقم الهوية (يُحفظ آخر أربعة أرقام فقط)', 'Phone (optional)': 'الهاتف (اختياري)', 'Add collector': 'إضافة',
+    'Recent releases': 'آخر عمليات التسليم', 'Collected by': 'استلمه', 'By staff member': 'بواسطة الموظف', 'When': 'الوقت',
+    'No children are linked to your account yet.': 'لا يوجد أبناء مرتبطون بحسابك بعد.',
+    'Live view, read only. It refreshes every few seconds.': 'عرض مباشر للقراءة فقط. يتحدث كل بضع ثوانٍ.',
+    'Live: it refreshes every few seconds. Check the collector\'s ID, then release the child.': 'مباشر: يتحدث كل بضع ثوانٍ. تحقق من هوية المستلم ثم سلّم الطفل.',
+    'Arrivals': 'الواصلون', 'Parents who have arrived and are waiting.': 'أولياء أمور وصلوا وينتظرون.', 'Pending pickups': 'عمليات استلام معلّقة',
+    'ID checked against the approved list. Release when the child is handed over.': 'تم التحقق من الهوية مع القائمة المعتمدة. سلّم الطفل عند تسليمه.',
+    'Completed today': 'المكتملة اليوم', 'Student': 'الطالب', 'Class': 'الصف', 'Collector': 'المستلم', 'Arrived': 'وصل', 'Result': 'النتيجة', 'By': 'بواسطة', 'Verify ID': 'تحقق من الهوية',
+    'Release': 'تسليم', 'Decline': 'رفض', 'Nobody has arrived.': 'لم يصل أحد.', 'Nothing is being checked.': 'لا شيء قيد التحقق.', 'Nothing released yet today.': 'لم يُسلَّم أحد اليوم بعد.',
+    'Release log': 'سجل التسليم', 'Chain of custody: every release is kept permanently and cannot be changed. The last 30 days are shown.': 'سلسلة الحيازة: يُحفظ كل تسليم بشكل دائم ولا يمكن تغييره. تُعرض آخر 30 يوماً.',
+    'Released by': 'سلّمه', 'Date and time': 'التاريخ والوقت', 'No releases in the last 30 days.': 'لا توجد عمليات تسليم في آخر 30 يوماً.',
+    'Why are you declining?': 'ما سبب الرفض؟', 'ID checked. You can release the child now.': 'تم التحقق من الهوية. يمكنك تسليم الطفل الآن.', 'Child released.': 'تم تسليم الطفل.',
+    'Request declined.': 'تم رفض الطلب.', 'Withdrawn.': 'تم السحب.', 'Collector removed.': 'تمت إزالة المخوَّل.', 'Collector added.': 'تمت إضافة المخوَّل.',
+    'The school has been told you have arrived.': 'تم إبلاغ المدرسة بوصولك.', 'A parent has arrived, or a child was released or not released.': 'وصول ولي أمر، أو تسليم طفل أو عدم تسليمه.'
+  };
+  for (const k of Object.keys(more)) if (!(k in AR)) AR[k] = more[k];
+})();
+
+/** Tickets to School IT or Leadership, file deletion, points. Only adds words that have no translation yet. */
+(function () {
+  const more = {
+    'School IT': 'تقنية المعلومات بالمدرسة', 'Leadership': 'القيادة', 'Send to': 'إرسال إلى', 'From': 'من', 'To': 'إلى',
+    'Write to your School IT, or to Leadership at head office. Replies and status changes appear here and in your notifications.': 'اكتب إلى تقنية المعلومات بمدرستك أو إلى القيادة في المكتب الرئيسي. تظهر الردود وتغيّر الحالة هنا وفي إشعاراتك.',
+    'Ask your School IT for help. Replies and status changes appear here and in your notifications.': 'اطلب المساعدة من تقنية المعلومات بمدرستك. تظهر الردود وتغيّر الحالة هنا وفي إشعاراتك.',
+    'Tickets that principals wrote to Leadership. Open one to assign, reply or close it.': 'تذاكر كتبها المديرون إلى القيادة. افتح تذكرة لإسنادها أو الرد عليها أو إغلاقها.',
+    'Tickets from staff at your school. Open one to assign, reply or close it.': 'تذاكر من موظفي مدرستك. افتح تذكرة لإسنادها أو الرد عليها أو إغلاقها.',
+    'Every ticket at your school, and the ones you wrote to Leadership.': 'كل تذاكر مدرستك، والتي كتبتها إلى القيادة.',
+    'Your requests to School IT.': 'طلباتك إلى تقنية المعلومات بالمدرسة.', 'Waiting': 'بالانتظار',
+    'You can read this ticket. Only the sender and the team handling it can reply.': 'يمكنك قراءة هذه التذكرة. يرد عليها المُرسِل والفريق المسؤول فقط.',
+    'Class points. Teachers give recognition points; you can view them.': 'نقاط الصف. يمنح المعلمون نقاط التقدير ويمكنك الاطلاع عليها.',
+    'Publishing shows a term to the students at once. Every assessment of that term must be submitted first.': 'النشر يُظهر الفصل للطلاب فوراً. يجب تسليم كل تقييمات الفصل أولاً.',
+    'Results published. Students can see them now.': 'تم نشر النتائج. يستطيع الطلاب رؤيتها الآن.',
+    'Google Drive disconnected.': 'تم فصل جوجل درايف.', 'Remove the school': 'إزالة المدرسة', 'School removed.': 'تمت إزالة المدرسة.',
+    'Deleting a file needs a second person. You cannot approve your own request.': 'حذف ملف يحتاج إلى شخص ثانٍ. لا يمكنك الموافقة على طلبك بنفسك.',
+    'Delete file': 'حذف ملف', 'Delete this file': 'حذف هذا الملف',
+    'Removes it from the register. A principal, coordinator or School IT must approve first. Your Google Drive is never touched.': 'يزيله من السجل. يجب أن يوافق مدير المدرسة أو المنسّق أو تقنية المعلومات أولاً. لا يتم المساس بجوجل درايف أبداً.',
+    'Ask to delete': 'طلب الحذف', 'Ask to delete this file?': 'هل تطلب حذف هذا الملف؟',
+    'Sent for approval. A principal, coordinator or School IT must approve before the file is deleted.': 'أُرسل للموافقة. يجب أن يوافق مدير المدرسة أو المنسّق أو تقنية المعلومات قبل حذف الملف.'
+  };
+  for (const k of Object.keys(more)) if (!(k in AR)) AR[k] = more[k];
+})();
+
+/** Pick-up and ticket card screens. Only adds words that have no translation yet. */
+(function () {
+  const more = {
+    'Your school\'s IT team': 'فريق تقنية المعلومات بمدرستك', 'Head office team': 'فريق المكتب الرئيسي',
+    'Can wait': 'يمكن الانتظار', 'This week': 'هذا الأسبوع', 'Soon': 'قريباً', 'Blocking work': 'يعطّل العمل',
+    'How urgent is it?': 'ما مدى الاستعجال؟', 'What is it about?': 'ما موضوع التذكرة؟', 'Title': 'العنوان', 'Description': 'الوصف',
+    'A short summary of the problem': 'ملخص قصير للمشكلة', 'What happened, and what did you expect?': 'ماذا حدث، وماذا كنت تتوقع؟',
+    'Attachment (optional)': 'مرفق (اختياري)', 'PDF, image, Word, Excel or text, up to 2 MB': 'PDF أو صورة أو Word أو Excel أو نص، حتى 2 ميجابايت',
+    'Send ticket': 'إرسال التذكرة', 'Send reply': 'إرسال الرد', 'Write your reply': 'اكتب ردك', 'Your reply': 'ردك',
+    'No tickets here yet.': 'لا توجد تذاكر هنا بعد.', 'Sent': 'أُرسلت', 'Handled by': 'يتولاها', 'Not assigned yet': 'لم تُسند بعد',
+    'Ticket sent to Leadership at head office.': 'أُرسلت التذكرة إلى القيادة في المكتب الرئيسي.', 'Ticket sent to your School IT.': 'أُرسلت التذكرة إلى تقنية المعلومات بمدرستك.',
+    'Choose who is collecting, then press the button when you arrive.': 'اختر من سيستلم الطفل، ثم اضغط الزر عند وصولك.',
+    'Who is collecting?': 'من سيستلم؟', 'Approved collectors': 'المخوَّلون بالاستلام', 'Arrived': 'وصل', 'ID checked': 'تم التحقق من الهوية',
+    'You have already told the school you have arrived for this child.': 'لقد أبلغت المدرسة بوصولك لهذا الطفل بالفعل.',
+    'Ready to release': 'جاهز للتسليم', 'Waiting': 'بالانتظار', 'just now': 'الآن', 'min': 'د', 'ID ends': 'آخر أرقام الهوية',
+    'Parent: check the ID at the gate.': 'ولي الأمر: تحقق من الهوية عند البوابة.', 'ID checked by': 'تحقق من الهوية:', 'Collector': 'المستلم',
+    'EAA IT': 'تقنية المعلومات في الهيئة', 'Attendance Clerk': 'كاتب الحضور', 'Students': 'الطلاب', 'On leave': 'في إجازة', 'All present': 'الجميع حاضر',
+    'Mark all present': 'تسجيل الجميع حاضراً', 'Save attendance': 'حفظ الحضور', 'Pick-up today': 'استلام اليوم',
+    'Parents arriving to collect their children. You can follow it live.': 'أولياء أمور يصلون لاستلام أبنائهم. يمكنك متابعة ذلك مباشرة.',
+    'Open the pick-up board': 'افتح لوحة الاستلام', 'Not taken yet': 'لم يُسجَّل بعد',
+    'Next school day: Sunday': 'يوم الدراسة القادم: الأحد', 'Today is a day off. Here is what your week starts with.': 'اليوم عطلة. هذا ما يبدأ به أسبوعك.',
+    'Today is a day off. Attendance is recorded Sunday to Thursday, so you can read the lists but not save.': 'اليوم عطلة. يُسجَّل الحضور من الأحد إلى الخميس، لذا يمكنك قراءة القوائم دون الحفظ.'
+  };
+  for (const k of Object.keys(more)) if (!(k in AR)) AR[k] = more[k];
+})();
+
 const AR_RULES = [
   [/^(\d+) of (\d+) days$/, (a, b) => `${a} من ${b} أيام`],
   [/^Following (.+)$/, n => 'تتابع ' + n],

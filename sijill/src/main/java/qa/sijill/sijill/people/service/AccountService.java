@@ -54,6 +54,7 @@ public class AccountService {
     private final AttemptLimiter limiter;
     private final AccessPolicy policy;
     private final Clock clock;
+    private final org.springframework.context.ApplicationEventPublisher events;
     private final PasswordEncoder encoder = new BCryptPasswordEncoder();
 
     /** Creates a parent or student account. Used only by {@link InvitationService}: there is no public registration. */
@@ -99,6 +100,8 @@ public class AccountService {
             int failed = ((Number) row.get("failed_attempts")).intValue() + 1;
             if (failed >= MAX_WRONG) {
                 jdbc.update("UPDATE credentials SET failed_attempts = 0, locked_until = ? WHERE person_id = ?", Timestamp.from(now.plus(LOCK)), personId);
+                events.publishEvent(new qa.sijill.sijill.shared.events.PersonNotice(personId, qa.sijill.sijill.shared.model.NotificationKind.SECURITY,
+                        "تم قفل حسابك مؤقتاً", "Your account was locked", "Too many wrong passwords. It unlocks after 15 minutes. If this was not you, tell your school."));
             } else {
                 jdbc.update("UPDATE credentials SET failed_attempts = ? WHERE person_id = ?", failed, personId);
             }

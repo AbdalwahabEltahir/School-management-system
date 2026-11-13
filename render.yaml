@@ -23,7 +23,7 @@ services:
       - key: SIJILL_SIGNIN_TEST_MODE
         value: "true"                   # TESTING ONLY: sign in by name, no password. Set to false for real use.
       - key: SIJILL_DEMO_NETWORK
-        value: "true"                   # adds invented Schools C-F so the leadership dashboard looks full. Remove for real use.
+        value: "true"                   # tops the network up to five invented schools (A-E) so the leadership dashboard looks full. Remove for real use.
       - key: GOOGLE_CLIENT_ID
         sync: false                     # set in the Render dashboard, never in Git
       - key: GOOGLE_CLIENT_SECRET

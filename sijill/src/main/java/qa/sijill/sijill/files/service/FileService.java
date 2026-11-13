@@ -57,6 +57,8 @@ public class FileService {
     private final AccessPolicy policy;
     private final ObjectProvider<WorkspaceConnector> connector;
     private final Clock clock;
+    private final qa.sijill.sijill.approvals.service.ApprovalService approvals;
+    private final qa.sijill.sijill.shared.events.AuditPublisher audit;
 
     // ================================================================== ingest (stage 1 → database)
 
@@ -188,6 +190,32 @@ public class FileService {
         SchoolFile file = requireVisible(user, fileId);
         return new FileDetails(file, profiles.findByFileId(fileId).orElse(null),
                 permissions.findByFileId(fileId), snapshots.findByFileIdOrderByCreatedAtDesc(fileId));
+    }
+
+    /**
+     * A teacher (the owner) or a coordinator asks to delete a file from Hafez's register. This is the one action that
+     * needs a second person's approval; the drive itself is never touched.
+     */
+    @Transactional
+    public void requestDelete(CurrentUser user, UUID fileId) {
+        if (!user.isAny(qa.sijill.sijill.shared.model.Role.TEACHER, qa.sijill.sijill.shared.model.Role.COORDINATOR)) {
+            throw new ForbiddenException("Only the file's owner or the subject coordinator can ask to delete a file.");
+        }
+        SchoolFile file = requireVisible(user, fileId);
+        if (file.getTrashedAt() != null) {
+            throw new qa.sijill.sijill.shared.exception.ConflictException("This file is already deleted.");
+        }
+        approvals.request(user, file.getSiteId(), qa.sijill.sijill.approvals.ApprovalActions.FILE_DELETE, file.getId(), null,
+                "Delete the file \"" + file.getName() + "\" from the register");
+    }
+
+    /** Carries out an approved deletion (called by the approval handler, which has checked who may approve). */
+    @Transactional
+    public void executeDelete(CurrentUser approver, UUID fileId) {
+        SchoolFile file = files.findById(fileId).filter(f -> f.getSiteId().equals(approver.siteId())).orElseThrow(() -> new NotFoundException("The file"));
+        file.setTrashedAt(Instant.now(clock));
+        audit.log(file.getOrgId(), file.getSiteId(), qa.sijill.sijill.shared.events.ActivityActions.FILE_DELETED).by(approver)
+                .on("SchoolFile", file.getId()).subject(file.getSubjectId()).change(file.getName(), "deleted from the register").save();
     }
 
     /** The file if the user may see it, otherwise "not found". */

@@ -81,7 +81,7 @@ public class NoticeService {
         for (Role role : roles) {
             for (Person p : people.findBySiteIdAndRole(n.getSiteId(), role)) {
                 if (p.getId().equals(author.personId()) || p.getStatus() == PersonStatus.LEFT) continue;
-                publisher.publishEvent(new PersonNotice(p.getId(), NotificationKind.SYSTEM, "إشعار جديد: " + n.getTitleAr(),
+                publisher.publishEvent(new PersonNotice(p.getId(), NotificationKind.NOTICE, "إشعار جديد: " + n.getTitleAr(),
                         "New notice: " + n.getTitleEn(), n.getBodyEn().length() > 900 ? n.getBodyEn().substring(0, 900) + "…" : n.getBodyEn()));
             }
         }

@@ -3,6 +3,7 @@ package qa.sijill.sijill.people.dto;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import java.time.Instant;
+import java.util.List;
 import java.util.UUID;
 
 import qa.sijill.sijill.people.model.Person;
@@ -30,11 +31,13 @@ public final class PeopleDtos {
 
     /** The signed-in person with their preferences ("My preferences", FR-11.2). */
     public record MeView(UUID id, String email, String displayName, String role, UUID siteId, UUID subjectId,
-                         String language, String digestMode, boolean canDownloadWeeklyReport) {
+                         String language, String digestMode, boolean canDownloadWeeklyReport,
+                         String phone, boolean hasPhoto, List<String> muted, List<String> alertKinds) {
         public static MeView from(Person p) {
             return new MeView(p.getId(), p.getEmail(), p.getDisplayName(), p.getRole().name(), p.getSiteId(),
                     p.getSubjectId(), p.getLanguage().name(), p.getDigestMode().name(),
-                    p.getRole().canDownloadWeeklyReport());
+                    p.getRole().canDownloadWeeklyReport(), p.getPhone(), p.getPhoto() != null,
+                    p.mutedSet().stream().map(Enum::name).sorted().toList(), PeopleService.alertKindsFor(p.getRole()));
         }
     }
 
@@ -44,7 +47,14 @@ public final class PeopleDtos {
         }
     }
 
-    public record PreferencesRequest(Language language, DigestMode digestMode) {}
+    /** Language, summary mode and (when sent) the alert kinds the person switched off. Null leaves a field as it is. */
+    public record PreferencesRequest(Language language, DigestMode digestMode, List<String> muted) {}
+
+    /** Personal details a person edits on their own profile. */
+    public record ProfileRequest(String displayName, String phone) {}
+
+    /** A profile photo as base64 text. */
+    public record PhotoRequest(String data) {}
 
     /** School IT's override. Null fields are left as they are. */
     public record UpdatePersonRequest(Role role, PersonStatus status, UUID subjectId, Boolean generic, String name, String email) {

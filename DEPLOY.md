@@ -11,21 +11,56 @@ The demo setup turns on the **test sign-in**: on the welcome page press **Sign i
 person. There is no password, so anyone who knows the link can sign in as anyone. Use it for the mentor's test only, then set
 `SIJILL_SIGNIN_TEST_MODE` to `false` in Render's Environment.
 
-## Demo accounts (school: "School B")
+## The sign-in screen: exactly ten accounts
 
-| Name | Role | Type this |
+Test sign-in offers only these accounts, matched on the person's whole name and role (the list is in `TestSignInController`; CI fails
+if anything else is offered):
+
+| Name | Role |
+|---|---|
+| Abdalwahab | School IT |
+| Clerk | Attendance Clerk |
+| EAA | EAA IT (the only role that adds, edits and removes rules and schools) |
+| Huda | Principal |
+| Nora | Leadership |
+| Parent | Parent |
+| Rajaa | Coordinator |
+| Student | Student |
+| Teacher1, Teacher2 | Teachers |
+
+The invented demo people in the five schools are never offered, so they cannot be used to sign in. For these ten accounts to exist on
+Render, copy the local database across with `scripts/copy-db-to-render.ps1`.
+
+## Demo schools and accounts
+
+The demo network has exactly five invented schools, each with about four months of attendance, weekly grades, points, notices,
+file issues and support tickets. Every school improves over the months, from strong (A, B) to struggling and climbing (D, E).
+
+| School | Domain | How it is doing |
 |---|---|---|
-| Lina Sabbagh | Leadership (whole network) | `Lina` |
-| Omar Fathi | School IT | `Omar` |
-| Reem Khalil | Principal | `Reem` |
-| Huda Saleh | Coordinator (Mathematics) | `Huda` |
-| Sara Mansour | Teacher (Mathematics) | `Sara` |
-| Layla Haddad | Teacher (English) | `Layla` |
-| Amal Student, Bader Student, Cara Student | Students (class 7B) | `Amal`, `Bader`, `Cara` |
-| Maha Parent | Parent (follows Amal and Bader) | `Maha` |
+| A: Al Noor Academy | alnoor-academy.edu.qa | strong |
+| B: Al Rayyan Model School | rayyan-model.edu.qa | good |
+| C: Doha Heritage School | doha-heritage.edu.qa | in the middle, improving |
+| D: Al Khor Preparatory School | alkhor-prep.edu.qa | struggling, recovering |
+| E: Al Wakrah Independent School | wakrah-independent.edu.qa | struggling, climbing fast |
 
-The demo includes four files with real rule results (public link, personal drive, exam shared early), a class with a timetable,
-published marks, a notice and a study material.
+School A (built first, with the network team) has these accounts:
+
+| Name | Role |
+|---|---|
+| Lina Sabbagh, Maha Al-Thani | EAA administrators (two, so the four-eyes rule can be tried) |
+| Noora Al-Kuwari | Leadership (read only) |
+| Omar Fathi | School IT |
+| Reem Khalil | Principal |
+| Huda Saleh | Coordinator (Mathematics) |
+| Sara Mansour, Layla Haddad | Teachers (Mathematics, English) |
+| Yasmin Al-Attiyah | Attendance officer |
+| Amal Al-Sulaiti, Bader Al-Mohannadi, Dana Al-Kuwari | Students (class 7B) |
+| Maha Al-Sulaiti | Parent (follows Amal and Bader) |
+
+Schools B to E each have a principal, School IT, an attendance officer, three coordinators, three teachers, twelve students and
+three parents. Their names are printed in the application log when the school is created. On a database that already holds
+schools, the seed counts them towards the five and only adds the missing ones (a database with two schools gets C, D and E).
 
 ## Notes
 

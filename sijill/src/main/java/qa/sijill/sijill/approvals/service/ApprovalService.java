@@ -31,14 +31,17 @@ public class ApprovalService {
     private final ApprovalRequestRepository requests;
     private final AuditPublisher audit;
     private final Clock clock;
+    private final org.springframework.context.ApplicationEventPublisher events;
     private final org.springframework.beans.factory.ObjectProvider<ApprovalHandler> handlerBeans;
     private volatile Map<String, ApprovalHandler> handlerMap;
 
     ApprovalService(ApprovalRequestRepository requests, AuditPublisher audit, Clock clock,
+                    org.springframework.context.ApplicationEventPublisher events,
                     org.springframework.beans.factory.ObjectProvider<ApprovalHandler> handlerBeans) {
         this.requests = requests;
         this.audit = audit;
         this.clock = clock;
+        this.events = events;
         this.handlerBeans = handlerBeans;
     }
 
@@ -73,6 +76,8 @@ public class ApprovalService {
         requests.save(r);
         audit.log(r.getOrgId(), siteId, "APPROVAL_REQUESTED").by(user).on("ApprovalRequest", r.getId())
                 .change(null, action + ": " + r.getSummary()).save();
+        events.publishEvent(new qa.sijill.sijill.shared.events.ApprovalAlert(r.getOrgId(), siteId,
+                handlers().get(action).approvers(), user.personId(), r.getRequestedByName() + ": " + r.getSummary()));
         return r;
     }
 
@@ -151,5 +156,12 @@ public class ApprovalService {
         requests.save(r);
         audit.log(r.getOrgId(), r.getSiteId(), "APPROVAL_" + status.name()).by(user).on("ApprovalRequest", r.getId())
                 .change(r.getAction(), r.getSummary()).save();
+        if (status != ApprovalStatus.CANCELLED) {
+            boolean ok = status == ApprovalStatus.APPROVED;
+            events.publishEvent(new qa.sijill.sijill.shared.events.PersonNotice(r.getRequestedBy(),
+                    qa.sijill.sijill.shared.model.NotificationKind.SECURITY,
+                    ok ? "تمت الموافقة على طلبك" : "تم رفض طلبك", ok ? "Your request was approved" : "Your request was rejected",
+                    r.getSummary()));
+        }
     }
 }

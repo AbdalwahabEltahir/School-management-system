@@ -59,6 +59,12 @@ public class FileController {
     }
 
     /** The coordinator answers an unclear file; it is re-checked straight away. */
+    /** Asks to delete a file from the register. Waits for a second person's approval. */
+    @org.springframework.web.bind.annotation.PostMapping("/{fileId}/delete-request")
+    public void requestDelete(CurrentUser user, @PathVariable UUID fileId) {
+        files.requestDelete(user, fileId);
+    }
+
     @PutMapping("/{fileId}/classification")
     public FileDtos.ProfileView classify(CurrentUser user, @PathVariable UUID fileId,
                                          @Valid @RequestBody FileDtos.ClassifyRequest request) {

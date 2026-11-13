@@ -69,8 +69,8 @@ public class PointsService {
     /** A teacher (or coordinator, principal) rewards a student of their school. */
     @Transactional
     public AcademicDtos.PointRow award(CurrentUser user, UUID studentId, int amount, String reason) {
-        if (!user.isAny(Role.TEACHER, Role.COORDINATOR, Role.PRINCIPAL)) {
-            throw new ForbiddenException("Only teachers can award points.");
+        if (!user.isAny(Role.TEACHER, Role.COORDINATOR)) {
+            throw new ForbiddenException("Only teachers award points. The principal can view them.");
         }
         if (amount < 1 || amount > MAX_MANUAL) {
             throw new BadRequestException("Points must be between 1 and " + MAX_MANUAL + ".");
@@ -146,7 +146,7 @@ public class PointsService {
     /** School-wide recognition: each school's total, average per student and top students. */
     @Transactional(readOnly = true)
     public List<AcademicDtos.SchoolPoints> recognition(CurrentUser user) {
-        if (!user.isAny(Role.PRINCIPAL, Role.COORDINATOR, Role.SCHOOL_IT, Role.LEADERSHIP, Role.EAA_ADMIN)) {
+        if (!user.isAny(Role.PRINCIPAL, Role.COORDINATOR, Role.SCHOOL_IT, Role.LEADERSHIP)) {
             throw new ForbiddenException("Recognition analytics are for school leadership.");
         }
         var schools = user.isNetwork()

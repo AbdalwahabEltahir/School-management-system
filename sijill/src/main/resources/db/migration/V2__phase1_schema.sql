@@ -1,5 +1,5 @@
 -- =====================================================================================
--- V2: Phase 1 schema for Hafez Files (proposal section 7, "Data model").
+-- V2: Phase 1 schema for Sijill Files (proposal section 7, "Data model").
 --
 -- Conventions
 --   * Every school-scoped table carries id, created_at, org_id and site_id (see BaseEntity).

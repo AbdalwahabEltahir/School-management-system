@@ -25,7 +25,6 @@ import qa.sijill.sijill.shared.exception.BadRequestException;
 import qa.sijill.sijill.shared.exception.ForbiddenException;
 import qa.sijill.sijill.shared.model.Role;
 import qa.sijill.sijill.shared.security.CurrentUser;
-import qa.sijill.sijill.shared.util.SchoolCalendar;
 
 /**
  * Attendance (SMS FR-024 to FR-027).
@@ -86,9 +85,6 @@ public class AttendanceService {
         LocalDate today = access.today();
         if (date.isAfter(today)) {
             throw new BadRequestException("Attendance cannot be recorded for a future day.");
-        }
-        if (!SchoolCalendar.isSchoolDay(date)) {
-            throw new BadRequestException("Attendance is recorded on school days, Sunday to Thursday.");
         }
         boolean admin = user.is(Role.SCHOOL_IT);
         if (!admin && !date.equals(today)) {
