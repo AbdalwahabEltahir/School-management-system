@@ -47,6 +47,20 @@ class PeopleEditTest extends WorldTestSupport {
     }
 
     @Test
+    void schoolItAddsAnAttendanceClerkButCannotGiveOrTakeNetworkRoles() {
+        World w = world();
+        var clerk = peopleService.add(user(w.it()), "clerk@" + w.school().getDomain(), "Clerk", Role.ATTENDANCE_OFFICER, null);
+        assertThat(clerk.getRole()).isEqualTo(Role.ATTENDANCE_OFFICER);
+
+        // promoting someone to EAA IT or Leadership is not School IT's job
+        assertThatThrownBy(() -> peopleService.update(user(w.it()), w.teacher().getId(),
+                new PeopleService.UpdateCommand(Role.EAA_ADMIN, null, null, null)))
+                .isInstanceOf(qa.sijill.sijill.shared.exception.ForbiddenException.class);
+        assertThatThrownBy(() -> peopleService.saveRoleGroup(user(w.it()), "all-staff@" + w.school().getDomain(), Role.LEADERSHIP))
+                .isInstanceOf(qa.sijill.sijill.shared.exception.ForbiddenException.class);
+    }
+
+    @Test
     void thePrincipalCanReadTheSchoolsPeopleButNotChangeThem() {
         World w = world();
 

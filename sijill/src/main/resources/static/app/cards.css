@@ -1,0 +1,190 @@
+/* =====================================================================================
+   Pick-up and support-ticket screens: modern card components.
+   Theme-neutral (works inside the portal, coordinator, leadership and teacher looks).
+   Logical properties only, so everything mirrors in right-to-left.
+   ===================================================================================== */
+.pk, .tk { --a: #8A1538; --a-d: #650E2A; --a-bg: #FCEFF3; --a-line: #F6D3DF; --ok: #12A66E; --ok-bg: #E7F7EF; --ok-d: #0B7A4F; --wn: #F2A20C; --wn-bg: #FEF3DC; --wn-d: #8A5A00; --ink: #1B1E2B; --ink2: #4B5263; --ink3: #7A8194; --ln: #E6E8EF }
+
+/* ---------- shared bits */
+.pk-av { flex: none; width: 44px; height: 44px; border-radius: 50%; display: grid; place-items: center; font-weight: 800; font-size: 16px; color: #fff; background: linear-gradient(135deg, #B03060, #650E2A) }
+.pk-av-sm { width: 36px; height: 36px; font-size: 14px }
+.pk-chip { display: inline-flex; align-items: center; gap: 6px; min-height: 26px; padding: 0 10px; border-radius: 999px; background: #F0F1F6; color: var(--ink2, #4B5263); font-size: 12px; font-weight: 600; white-space: nowrap }
+.pk-chip-ok { background: #E7F7EF; color: #0B7A4F }
+.pk-chip-wn { background: #FEF3DC; color: #8A5A00 }
+.pk-chip-bad { background: #FCEFF3; color: #650E2A }
+.pk-btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 46px; padding: 0 20px; border-radius: 14px; border: 1px solid #DFE2EB; background: #fff; color: #1B1E2B; font: inherit; font-weight: 700; font-size: 14.5px; cursor: pointer; text-decoration: none }
+.pk-btn:hover { background: #F6F7FB; text-decoration: none; color: #1B1E2B }
+.pk-btn:disabled { opacity: .55; cursor: not-allowed }
+.pk-btn-go { background: linear-gradient(135deg, #B03060, #8A1538 60%, #650E2A); border-color: #650E2A; color: #fff; box-shadow: 0 8px 20px rgba(138, 21, 56, .3) }
+.pk-btn-go:hover { background: linear-gradient(135deg, #8A1538, #650E2A); color: #fff }
+.pk-btn-ok { background: #12A66E; border-color: #0B7A4F; color: #fff; box-shadow: 0 8px 20px rgba(18, 166, 110, .28) }
+.pk-btn-ok:hover { background: #0B7A4F; color: #fff }
+.pk-btn-no { background: #FCEFF3; border-color: #F6D3DF; color: #650E2A }
+.pk-btn-no:hover { background: #F6D3DF; color: #650E2A }
+.pk-btn-block { width: 100%; min-height: 56px; font-size: 17px }
+.pk-btn-sm { min-height: 38px; padding: 0 14px; font-size: 13px; border-radius: 11px }
+.pk-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 14px }
+.pk-sub { margin: 0 0 10px; font-size: 12px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: #7A8194 }
+.pk-sub:not(:first-child) { margin-top: 22px }
+
+/* ---------- progress tracker */
+.pk-steps { display: flex; align-items: flex-start; margin: 4px 0 0; padding: 0; list-style: none }
+.pk-steps li { position: relative; flex: 1; display: flex; flex-direction: column; align-items: center; gap: 6px; text-align: center; font-size: 12px; font-weight: 600; color: #7A8194 }
+.pk-steps li::before { content: ''; position: absolute; top: 15px; inset-inline-end: 50%; width: 100%; height: 3px; background: #E6E8EF; z-index: 0 }
+.pk-steps li:first-child::before { display: none }
+.pk-steps i { position: relative; z-index: 1; width: 32px; height: 32px; border-radius: 50%; display: grid; place-items: center; background: #fff; border: 3px solid #E6E8EF; font-style: normal; font-size: 14px; font-weight: 800; color: #7A8194 }
+.pk-steps .on { color: #1B1E2B }
+.pk-steps .on i { border-color: #8A1538; color: #8A1538 }
+.pk-steps .on::before, .pk-steps .done::before { background: #8A1538 }
+.pk-steps .done { color: #0B7A4F }
+.pk-steps .done i { background: #12A66E; border-color: #12A66E; color: #fff }
+.pk-steps .done::before { background: #12A66E }
+.pk-steps .bad i { background: #8A1538; border-color: #8A1538; color: #fff }
+.pk-steps .bad { color: #650E2A }
+.pk-live { display: flex; flex-direction: column; gap: 14px }
+.pk-now { display: grid; gap: 10px; padding: 16px; border: 1px solid #E6E8EF; border-radius: 18px; background: #FAFAFC }
+.pk-now-top { display: flex; align-items: center; gap: 12px; flex-wrap: wrap }
+.pk-now-top b { font-size: 16px }
+.pk-now-top .pk-chip { margin-inline-start: auto }
+.pk-now small { color: #4B5263 }
+.pk-note { padding: 10px 14px; border-radius: 12px; background: #FCEFF3; color: #650E2A; font-weight: 600; font-size: 13.5px }
+.pk-idle { margin: 0; color: #7A8194 }
+
+/* ---------- parent: a child */
+.pk-child-head { display: flex; align-items: center; gap: 14px; margin-bottom: 18px }
+.pk-child-head b { display: block; font-size: 18px; line-height: 1.2 }
+.pk-child-head small { color: #7A8194 }
+.pk-who { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px; margin: 0 0 14px }
+.pk-who label { position: relative; display: flex; align-items: center; gap: 12px; padding: 12px 14px; border: 2px solid #E6E8EF; border-radius: 16px; background: #fff; cursor: pointer; transition: border-color .15s, background .15s }
+.pk-who label:hover { border-color: #D9A9B8 }
+.pk-who input { position: absolute; opacity: 0; inset: 0; cursor: pointer }
+.pk-who label:has(input:checked) { border-color: #8A1538; background: #FCEFF3; box-shadow: 0 0 0 4px rgba(138, 21, 56, .1) }
+.pk-who label:has(input:focus-visible) { outline: 3px solid rgba(138, 21, 56, .35); outline-offset: 2px }
+.pk-who span b { display: block; font-size: 14px }
+.pk-who span small { color: #7A8194; font-size: 12px }
+.pk-person { display: flex; align-items: center; gap: 12px; padding: 14px; border: 1px solid #E6E8EF; border-radius: 16px; background: #fff }
+.pk-person > div { flex: 1; min-width: 0 }
+.pk-person b { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap }
+.pk-person small { display: block; color: #7A8194; font-size: 12px }
+.pk-add { margin-top: 18px; border: 1px dashed #D9A9B8; border-radius: 16px; background: #FFFBFC }
+.pk-add > summary { list-style: none; cursor: pointer; padding: 14px 16px; font-weight: 700; color: #8A1538; display: flex; align-items: center; gap: 8px }
+.pk-add > summary::-webkit-details-marker { display: none }
+.pk-add > summary::before { content: '+'; display: grid; place-items: center; width: 24px; height: 24px; border-radius: 50%; background: #8A1538; color: #fff; font-size: 16px; line-height: 1 }
+.pk-add[open] > summary::before { content: '–' }
+.pk-add form { padding: 0 16px 16px; display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 0 14px; align-items: end }
+.pk-add form .pk-btn { grid-column: 1 / -1 }
+.pk-hist { display: flex; flex-direction: column; gap: 8px; margin: 0; padding: 0; list-style: none }
+.pk-hist li { display: flex; align-items: center; gap: 10px; padding: 10px 14px; border-radius: 12px; background: #F6F7FB; font-size: 13.5px }
+.pk-hist li span:last-child { margin-inline-start: auto; color: #7A8194; font-size: 12.5px; text-align: end }
+
+/* ---------- staff board */
+.pk-stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px }
+.pk-stat { padding: 16px 18px; border-radius: 18px; background: #fff; border: 1px solid #E6E8EF; display: flex; flex-direction: column; gap: 2px }
+.pk-stat b { font-size: 32px; line-height: 1; letter-spacing: -.02em }
+.pk-stat small { color: #4B5263; font-weight: 600 }
+.pk-stat-wn { background: #FEF3DC; border-color: #F6DCA3 }
+.pk-stat-ok { background: #E7F7EF; border-color: #BFE8D4 }
+.pk-stat-bd { background: #FCEFF3; border-color: #F6D3DF }
+.pk-q { display: flex; flex-direction: column; gap: 12px; padding: 16px; border-radius: 18px; background: #fff; border: 1px solid #E6E8EF; border-inline-start: 6px solid #F2A20C; box-shadow: 0 6px 18px rgba(23, 24, 28, .06) }
+.pk-q-ready { border-inline-start-color: #12A66E }
+.pk-q-top { display: flex; align-items: center; gap: 12px }
+.pk-q-top b { display: block; font-size: 16px; line-height: 1.2 }
+.pk-q-top small { color: #7A8194 }
+.pk-q-time { margin-inline-start: auto; text-align: end; font-size: 12px; color: #7A8194; white-space: nowrap }
+.pk-q-time b { display: block; font-size: 15px; color: #1B1E2B }
+.pk-q-who { padding: 12px 14px; border-radius: 14px; background: #F6F7FB; display: grid; gap: 4px; font-size: 13.5px }
+.pk-q-who b { font-size: 15px }
+.pk-q-who .id { font-family: ui-monospace, Consolas, monospace; font-weight: 800; letter-spacing: .1em; font-size: 16px; color: #8A1538 }
+.pk-q-act { display: flex; gap: 8px }
+.pk-q-act .pk-btn { flex: 1 }
+.pk-q-act .pk-btn-no { flex: 0 0 auto }
+.pk-done { display: flex; flex-direction: column; gap: 8px }
+.pk-done > div { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; padding: 10px 14px; border: 1px solid #E6E8EF; border-radius: 14px; background: #fff }
+.pk-done .when { margin-inline-start: auto; color: #7A8194; font-size: 12.5px }
+.pk-empty { padding: 22px 16px; border: 1px dashed #D9D6D0; border-radius: 16px; text-align: center; color: #7A8194; background: #FAFAFC }
+
+/* ---------- support tickets: list */
+.tk-list { display: flex; flex-direction: column; gap: 12px }
+.tk-card { position: relative; display: grid; grid-template-columns: 1fr auto; gap: 8px 16px; align-items: center; padding: 16px 18px; border: 1px solid #E6E8EF; border-inline-start: 6px solid #DFE2EB; border-radius: 18px; background: #fff; cursor: pointer; transition: box-shadow .15s, transform .15s }
+.tk-card:hover { box-shadow: 0 10px 26px rgba(23, 24, 28, .09); transform: translateY(-1px) }
+.tk-card:focus-visible { outline: 3px solid rgba(138, 21, 56, .35); outline-offset: 2px }
+.tk-u-URGENT { border-inline-start-color: #8A1538 } .tk-u-HIGH { border-inline-start-color: #D9667F } .tk-u-NORMAL { border-inline-start-color: #F2A20C } .tk-u-LOW { border-inline-start-color: #9AA1B3 }
+.tk-closed { opacity: .72 }
+.tk-card h3 { margin: 0; font-size: 16px; line-height: 1.3; color: #1B1E2B }
+.tk-meta { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px }
+.tk-side { display: flex; flex-direction: column; align-items: flex-end; gap: 6px; text-align: end; font-size: 12px; color: #7A8194 }
+.tk-who { grid-column: 1 / -1; font-size: 12.5px; color: #4B5263 }
+@media (max-width: 640px) { .tk-card { grid-template-columns: 1fr } .tk-side { align-items: flex-start; text-align: start; flex-direction: row; flex-wrap: wrap } .pk-stats { grid-template-columns: 1fr 1fr 1fr; gap: 8px } .pk-stat { padding: 12px } .pk-stat b { font-size: 24px } }
+
+/* ---------- support tickets: compose */
+.tk-pick { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 10px }
+.tk-pick label { position: relative; display: flex; flex-direction: column; gap: 2px; padding: 12px 14px; border: 2px solid #E6E8EF; border-radius: 14px; background: #fff; cursor: pointer; transition: border-color .15s, background .15s }
+.tk-pick label:hover { border-color: #D9A9B8 }
+.tk-pick input { position: absolute; opacity: 0; inset: 0; cursor: pointer }
+.tk-pick label:has(input:checked) { border-color: #8A1538; background: #FCEFF3; box-shadow: 0 0 0 4px rgba(138, 21, 56, .1) }
+.tk-pick label:has(input:focus-visible) { outline: 3px solid rgba(138, 21, 56, .35); outline-offset: 2px }
+.tk-pick b { font-size: 14px } .tk-pick small { color: #7A8194; font-size: 12px }
+.tk-urg { grid-template-columns: repeat(4, minmax(0, 1fr)) }
+.tk-urg label { align-items: center; text-align: center; padding: 10px 6px }
+@media (max-width: 560px) { .tk-urg { grid-template-columns: repeat(2, minmax(0, 1fr)) } }
+.tk-form { display: grid; gap: 4px }
+.tk-form .lbl { display: block; margin: 12px 0 6px; font-weight: 700; font-size: 13px }
+.tk-form .input, .tk-form select, .tk-form textarea { width: 100%; min-height: 46px; padding: 0 14px; border: 1px solid #DFE2EB; border-radius: 12px; font: inherit; background: #fff; color: #1B1E2B }
+.tk-form textarea { min-height: 130px; padding: 12px 14px; resize: vertical }
+.tk-form .input:focus, .tk-form select:focus, .tk-form textarea:focus { outline: none; border-color: #8A1538; box-shadow: 0 0 0 4px rgba(138, 21, 56, .12) }
+.tk-drop { display: flex; align-items: center; gap: 12px; padding: 14px 16px; border: 2px dashed #D9D6D0; border-radius: 14px; background: #FAFAFC; color: #4B5263; cursor: pointer }
+.tk-drop:hover { border-color: #8A1538 }
+.tk-drop input { max-width: 100% }
+.tk-send { margin-top: 14px; display: flex; justify-content: flex-end }
+
+/* ---------- support tickets: detail */
+.tk-flow { display: flex; align-items: flex-start; margin: 0 0 18px; padding: 0; list-style: none }
+.tk-flow li { position: relative; flex: 1; display: flex; flex-direction: column; align-items: center; gap: 6px; font-size: 12.5px; font-weight: 600; color: #7A8194; text-align: center }
+.tk-flow li::before { content: ''; position: absolute; top: 15px; inset-inline-end: 50%; width: 100%; height: 3px; background: #E6E8EF }
+.tk-flow li:first-child::before { display: none }
+.tk-flow i { position: relative; z-index: 1; width: 32px; height: 32px; border-radius: 50%; display: grid; place-items: center; background: #fff; border: 3px solid #E6E8EF; font-style: normal; font-size: 14px; font-weight: 800 }
+.tk-flow .done i, .tk-flow .on i { background: #8A1538; border-color: #8A1538; color: #fff }
+.tk-flow .done::before, .tk-flow .on::before { background: #8A1538 }
+.tk-flow .on { color: #1B1E2B }
+.tk-flow .shut i { background: #12A66E; border-color: #12A66E }
+.tk-flow .shut::before { background: #12A66E }
+.tk-body { white-space: pre-wrap; padding: 14px 16px; border-radius: 14px; background: #F6F7FB; margin: 0 0 12px }
+.tk-facts { display: flex; flex-wrap: wrap; gap: 8px }
+.tk-chat { display: flex; flex-direction: column; gap: 12px }
+.tk-msg { max-width: min(640px, 88%); display: flex; flex-direction: column; gap: 4px }
+.tk-msg .by { font-size: 12px; color: #7A8194 }
+.tk-msg .by b { color: #1B1E2B }
+.tk-msg .txt { white-space: pre-wrap; padding: 12px 16px; border-radius: 18px; border-end-start-radius: 4px; background: #F0F1F6 }
+.tk-msg.mine { align-self: flex-end }
+.tk-msg.mine .by { text-align: end }
+.tk-msg.mine .txt { background: #8A1538; color: #fff; border-end-start-radius: 18px; border-end-end-radius: 4px }
+.tk-manage { display: flex; flex-wrap: wrap; gap: 10px; align-items: flex-end }
+.tk-manage .grow { flex: 1 1 220px }
+.tk-manage select { width: 100%; min-height: 46px; padding: 0 14px; border: 1px solid #DFE2EB; border-radius: 12px; font: inherit; background: #fff }
+.tk-states { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px }
+
+/* ---------- attendance desk (attendance clerk) */
+.at { display: flex; flex-direction: column; gap: 14px }
+.at-stats4 { grid-template-columns: repeat(4, minmax(0, 1fr)) }
+@media (max-width: 640px) { .at-stats4 { grid-template-columns: repeat(2, minmax(0, 1fr)) } }
+.at-classes { display: flex; flex-wrap: wrap; gap: 10px }
+.at-class { display: flex; flex-direction: column; gap: 2px; min-width: 130px; padding: 12px 16px; border: 2px solid #E6E8EF; border-radius: 16px; background: #fff; color: #1B1E2B; text-decoration: none }
+.at-class:hover { border-color: #D9A9B8; text-decoration: none; color: #1B1E2B }
+.at-class.on { border-color: #8A1538; background: #FCEFF3; box-shadow: 0 0 0 4px rgba(138, 21, 56, .1) }
+.at-class b { font-size: 18px }
+.at-class span { font-size: 12.5px; color: #7A8194 }
+.at-class em { font-style: normal; font-size: 12px; font-weight: 700; color: #0B7A4F }
+.at-class em.bad { color: #8A1538 }
+.at-bar { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap }
+.at-list { display: flex; flex-direction: column; gap: 8px }
+.at-row { display: flex; align-items: center; gap: 12px; padding: 10px 14px; border: 1px solid #E6E8EF; border-radius: 16px; background: #fff; flex-wrap: wrap }
+.at-row > b { flex: 1 1 160px; min-width: 0 }
+.at-seg { display: inline-flex; gap: 6px; padding: 4px; border-radius: 14px; background: #F0F1F6 }
+.at-seg label { position: relative; cursor: pointer }
+.at-seg input { position: absolute; opacity: 0; inset: 0; cursor: pointer }
+.at-seg span { display: inline-flex; align-items: center; justify-content: center; min-width: 78px; min-height: 40px; padding: 0 14px; border-radius: 11px; font-weight: 700; font-size: 13.5px; color: #4B5263; transition: background .12s, color .12s }
+.at-seg label:hover span { background: #fff }
+.at-seg .at-p input:checked + span { background: #12A66E; color: #fff }
+.at-seg .at-a input:checked + span { background: #8A1538; color: #fff }
+.at-seg .at-l input:checked + span { background: #F2A20C; color: #fff }
+.at-seg input:focus-visible + span { outline: 3px solid rgba(138, 21, 56, .35); outline-offset: 2px }

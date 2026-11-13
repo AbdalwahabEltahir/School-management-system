@@ -31,6 +31,36 @@ public class AuthController {
     /** Saves message language and per-issue / daily summary at once. */
     @PutMapping("/preferences")
     public PeopleDtos.MeView updatePreferences(CurrentUser user, @RequestBody PeopleDtos.PreferencesRequest request) {
-        return PeopleDtos.MeView.from(people.updatePreferences(user, request.language(), request.digestMode()));
+        return PeopleDtos.MeView.from(people.updatePreferences(user, request.language(), request.digestMode(), request.muted()));
+    }
+
+    /** Personal details: name and contact number. */
+    @PutMapping("/profile")
+    public PeopleDtos.MeView updateProfile(CurrentUser user, @RequestBody PeopleDtos.ProfileRequest request) {
+        return PeopleDtos.MeView.from(people.updateProfile(user, request.displayName(), request.phone()));
+    }
+
+    @PutMapping("/photo")
+    public PeopleDtos.MeView setPhoto(CurrentUser user, @RequestBody PeopleDtos.PhotoRequest request) {
+        return PeopleDtos.MeView.from(people.setPhoto(user, request.data()));
+    }
+
+    @org.springframework.web.bind.annotation.DeleteMapping("/photo")
+    public PeopleDtos.MeView clearPhoto(CurrentUser user) {
+        return PeopleDtos.MeView.from(people.clearPhoto(user));
+    }
+
+    /** The person's own photo (never anyone else's). */
+    @GetMapping("/photo")
+    public org.springframework.http.ResponseEntity<byte[]> photo(CurrentUser user) {
+        var p = people.me(user);
+        if (p.getPhoto() == null) {
+            return org.springframework.http.ResponseEntity.notFound().build();
+        }
+        return org.springframework.http.ResponseEntity.ok()
+                .contentType(org.springframework.http.MediaType.parseMediaType(p.getPhotoType()))
+                .header("X-Content-Type-Options", "nosniff")
+                .header("Cache-Control", "private, no-cache")
+                .body(p.getPhoto());
     }
 }

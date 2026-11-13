@@ -72,7 +72,6 @@ public class PeopleService {
     private final SubjectRepository subjects;
     private final RoleGroupRepository roleGroups;
     private final AuditPublisher audit;
-    private final qa.sijill.sijill.approvals.service.ApprovalService approvals;
     private final ApplicationEventPublisher publisher;
     private final AccessPolicy policy;
     private final ObjectProvider<WorkspaceConnector> connector;
@@ -95,9 +94,9 @@ public class PeopleService {
         return people.findById(user.personId()).orElseThrow(() -> new NotFoundException("Your account"));
     }
 
-    /** "My preferences": message language and per-issue vs daily summary. Saved at once. */
+    /** "My preferences": message language, per-issue vs daily summary, and which kinds of alert to receive. Saved at once. */
     @Transactional
-    public Person updatePreferences(CurrentUser user, Language language, DigestMode digestMode) {
+    public Person updatePreferences(CurrentUser user, Language language, DigestMode digestMode, List<String> muted) {
         Person person = me(user);
         if (language != null) {
             person.setLanguage(language);
@@ -105,13 +104,95 @@ public class PeopleService {
         if (digestMode != null) {
             person.setDigestMode(digestMode);
         }
+        if (muted != null) {
+            java.util.Set<NotificationKind> kinds = java.util.EnumSet.noneOf(NotificationKind.class);
+            for (String k : muted) {
+                try {
+                    kinds.add(NotificationKind.valueOf(k));
+                } catch (IllegalArgumentException e) {
+                    throw new BadRequestException("Unknown kind of alert.");
+                }
+            }
+            person.setMuted(kinds);
+        }
+        return person;
+    }
+
+    /** The alert kinds a person of this role can receive, so the settings page lists only what applies to them. */
+    public static List<String> alertKindsFor(Role role) {
+        return switch (role) {
+            case STUDENT, ATTENDANCE_OFFICER -> List.of("NOTICE", "SYSTEM", "SECURITY");
+            case PARENT -> List.of("COLLECTION", "NOTICE", "SYSTEM", "SECURITY");
+            case LEADERSHIP, EAA_ADMIN -> List.of("INCIDENT", "TICKET", "NOTICE", "SYSTEM", "SECURITY");
+            case PRINCIPAL -> List.of("ISSUE", "INCIDENT", "GRADES", "TICKET", "NOTICE", "PLANNING", "SYSTEM", "SECURITY");
+            case SCHOOL_IT -> List.of("ISSUE", "INCIDENT", "NOTICE", "SYSTEM", "SECURITY");
+            case COORDINATOR -> List.of("ISSUE", "REMINDER", "FOLLOW_UP", "GRADES", "COLLECTION", "NOTICE", "PLANNING", "SYSTEM", "SECURITY");
+            case TEACHER -> List.of("ISSUE", "REMINDER", "GRADES", "COLLECTION", "NOTICE", "PLANNING", "SYSTEM", "SECURITY");
+        };
+    }
+
+    private static final int MAX_PHOTO_BYTES = 512 * 1024;
+
+    /** The person's own profile: display name and contact number. Logged. */
+    @Transactional
+    public Person updateProfile(CurrentUser user, String displayName, String phone) {
+        Person person = me(user);
+        String name = displayName == null ? "" : displayName.strip();
+        if (name.length() < 2 || name.length() > 200) {
+            throw new BadRequestException("Your name must be between 2 and 200 characters.");
+        }
+        String number = phone == null ? "" : phone.strip();
+        if (number.length() > 30 || !number.matches("[0-9 +()-]*")) {
+            throw new BadRequestException("Enter a phone number using digits, spaces, + ( ) and - only.");
+        }
+        String before = person.getDisplayName() + (person.getPhone() == null ? "" : ", " + person.getPhone());
+        person.setDisplayName(name);
+        person.setPhone(number.isEmpty() ? null : number);
+        audit.log(person.getOrgId(), person.getSiteId(), ActivityActions.PROFILE_UPDATED).by(user).on("Person", person.getId())
+                .change(before, name + (number.isEmpty() ? "" : ", " + number)).save();
+        return person;
+    }
+
+    /** A profile photo: a small PNG or JPEG. The type is read from the file's own bytes, never from the client. */
+    @Transactional
+    public Person setPhoto(CurrentUser user, String base64) {
+        byte[] bytes;
+        try {
+            bytes = java.util.Base64.getMimeDecoder().decode(base64 == null ? "" : base64);
+        } catch (IllegalArgumentException e) {
+            throw new BadRequestException("The photo could not be read.");
+        }
+        if (bytes.length == 0 || bytes.length > MAX_PHOTO_BYTES) {
+            throw new BadRequestException("Choose a photo of at most 500 KB.");
+        }
+        String type;
+        if (bytes.length > 8 && (bytes[0] & 0xFF) == 0x89 && bytes[1] == 'P' && bytes[2] == 'N' && bytes[3] == 'G') {
+            type = "image/png";
+        } else if (bytes.length > 3 && (bytes[0] & 0xFF) == 0xFF && (bytes[1] & 0xFF) == 0xD8 && (bytes[2] & 0xFF) == 0xFF) {
+            type = "image/jpeg";
+        } else {
+            throw new BadRequestException("The photo must be a PNG or JPEG image.");
+        }
+        Person person = me(user);
+        person.setPhoto(bytes);
+        person.setPhotoType(type);
+        audit.log(person.getOrgId(), person.getSiteId(), ActivityActions.PROFILE_UPDATED).by(user).on("Person", person.getId())
+                .change(null, "photo changed").save();
+        return person;
+    }
+
+    @Transactional
+    public Person clearPhoto(CurrentUser user) {
+        Person person = me(user);
+        person.setPhoto(null);
+        person.setPhotoType(null);
         return person;
     }
 
     // ================================================================== School IT actions
 
     /** Roles School IT may give a new person. Leadership and School IT accounts are not created from this screen. */
-    private static final List<Role> ADDABLE = List.of(Role.TEACHER, Role.COORDINATOR, Role.PRINCIPAL, Role.STUDENT, Role.PARENT);
+    private static final List<Role> ADDABLE = List.of(Role.TEACHER, Role.COORDINATOR, Role.PRINCIPAL, Role.ATTENDANCE_OFFICER, Role.STUDENT, Role.PARENT);
 
     /**
      * Adds a person to the user's school so they can sign in with their Google account. Sign-in checks that the
@@ -135,7 +216,7 @@ public class PeopleService {
             throw new BadRequestException("Please give the person's name.");
         }
         if (role == null || !ADDABLE.contains(role)) {
-            throw new BadRequestException("Choose Teacher, Coordinator, Principal, Student or Parent.");
+            throw new BadRequestException("Choose Teacher, Coordinator, Principal, Attendance Clerk, Student or Parent.");
         }
         String domain = clean.substring(clean.indexOf('@') + 1);
         boolean knownDomain = sites.findByOrgIdOrderByName(user.orgId()).stream()
@@ -182,6 +263,9 @@ public class PeopleService {
         Person person = ownSchoolPerson(user, personId);
         String before = person.getRole() + "/" + person.getStatus();
         PersonStatus oldStatus = person.getStatus();
+        if (person.getRole().isNetwork() && cmd.status() != null && cmd.status() != person.getStatus()) {
+            requireNotNetworkRole(person.getRole(), null);
+        }
 
         if (cmd.name() != null) {
             if (cmd.name().isBlank() || cmd.name().length() > 200) {
@@ -207,10 +291,8 @@ public class PeopleService {
             person.setEmail(clean);
         }
         if (cmd.role() != null && cmd.role() != person.getRole()) {
-            // Changing a role is a four-eyes action: it takes effect only when an EAA administrator approves it.
-            approvals.request(user, person.getSiteId(), qa.sijill.sijill.approvals.ApprovalActions.ROLE_CHANGE, person.getId(),
-                    cmd.role().name(), "Change the role of " + person.getDisplayName() + " from " + person.getRole()
-                            + " to " + cmd.role());
+            requireNotNetworkRole(person.getRole(), cmd.role());
+            applyRole(user, person.getId(), cmd.role());   // takes effect at once; logged, and the person is told
         }
         if (cmd.subjectId() != null) {
             subjects.findById(cmd.subjectId()).filter(s -> s.getSiteId().equals(person.getSiteId()))
@@ -245,6 +327,8 @@ public class PeopleService {
         people.save(person);
         audit.log(person.getOrgId(), person.getSiteId(), ActivityActions.PERSON_UPDATED).by(approver)
                 .on("Person", person.getId()).subject(person.getSubjectId()).change(before, role.name()).save();
+        publisher.publishEvent(new PersonNotice(person.getId(), NotificationKind.SECURITY, "تم تغيير دورك",
+                "Your role was changed", "Your role is now " + role.name().replace('_', ' ').toLowerCase(java.util.Locale.ROOT) + "."));
     }
 
     /**
@@ -391,6 +475,7 @@ public class PeopleService {
         if (directoryGroup == null || directoryGroup.isBlank() || role == null) {
             throw new BadRequestException("Please give the directory group and the role.");
         }
+        requireNotNetworkRole(null, role);
         RoleGroup group = roleGroups.findByOrgId(user.orgId()).stream()
                 .filter(g -> g.getDirectoryGroup().equalsIgnoreCase(directoryGroup.trim())).findFirst()
                 .orElseGet(() -> {
@@ -413,6 +498,14 @@ public class PeopleService {
     private void announceStatusChange(Person person, PersonStatus oldStatus) {
         if (oldStatus != person.getStatus()) {
             publisher.publishEvent(new PersonStatusChanged(person.getId(), person.getEmail(), person.getStatus().name()));
+        }
+    }
+
+    /** School IT works inside one school: the network roles (EAA IT, Leadership) are never given or taken away here. */
+    private static void requireNotNetworkRole(Role from, Role to) {
+        if ((from != null && from.isNetwork()) || (to != null && to.isNetwork())) {
+            throw new qa.sijill.sijill.shared.exception.ForbiddenException(
+                    "The network roles (EAA IT and Leadership) are not managed by School IT.");
         }
     }
 

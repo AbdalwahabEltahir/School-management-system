@@ -43,7 +43,6 @@ public class SiteService {
     private final SiteRepository sites;
     private final AuditPublisher audit;
     private final AccessPolicy policy;
-    private final qa.sijill.sijill.approvals.service.ApprovalService approvals;
 
     /** Leadership sees every site; everybody else sees their own. */
     @Transactional(readOnly = true)
@@ -111,8 +110,7 @@ public class SiteService {
     }
 
     /**
-     * Asks to remove a site from use. Four-eyes: a different EAA administrator must approve before anything changes.
-     * History is kept and the drive is untouched; the head office cannot be removed.
+     * Removes a site from use (EAA administrators only, logged). History is kept and the drive is untouched.
      */
     @Transactional
     public void remove(CurrentUser user, UUID siteId) {
@@ -122,8 +120,7 @@ public class SiteService {
         if (site.isHeadOffice()) {
             throw new ConflictException("The head office cannot be removed.");
         }
-        approvals.request(user, siteId, qa.sijill.sijill.approvals.ApprovalActions.SITE_REMOVE, siteId, null,
-                "Remove the school " + site.getName());
+        executeRemove(user, siteId);
     }
 
     /** Carries out an approved removal (called by the approval handler; permissions were checked there). */

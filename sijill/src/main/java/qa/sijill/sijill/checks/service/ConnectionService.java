@@ -40,7 +40,6 @@ public class ConnectionService {
     private final AccessPolicy policy;
     private final ObjectProvider<WorkspaceConnector> connector;
     private final Clock clock;
-    private final qa.sijill.sijill.approvals.service.ApprovalService approvals;
 
     /** The connection screen's facts: is a connector installed, is it switched on, when did the first check run. */
     public record ConnectionStatus(boolean connectorInstalled, boolean checksEnabled, Instant firstCheckAt,
@@ -62,10 +61,9 @@ public class ConnectionService {
             applyEnabled(user, siteId, true);
             return;
         }
-        // Disconnecting Google Drive is an EAA administrator's decision and needs a second person's approval.
+        // Disconnecting Google Drive is an EAA administrator's decision. It is logged.
         policy.requireRole(user, Role.EAA_ADMIN);
-        approvals.request(user, siteId, qa.sijill.sijill.approvals.ApprovalActions.DRIVE_DISCONNECT, siteId, null,
-                "Disconnect Google Drive for " + site.getName());
+        applyEnabled(user, siteId, false);
     }
 
     /** Switches checks on or off without further permission checks (callers have already authorised it). */

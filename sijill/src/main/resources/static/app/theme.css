@@ -641,3 +641,4 @@ a.lo-tr:hover { box-shadow: 0 6px 16px rgba(23, 23, 26, .10); border-color: #D9A
 .lo-kpi-sub b { color: var(--lo-c); font-weight: 700 }
 .lo-explain { margin: 4px 0 12px; font-size: 15px; color: #2E2E33 }
 .lo-explain b { color: #17171A }
+.who-photo { background-size: cover; background-position: center; color: transparent }

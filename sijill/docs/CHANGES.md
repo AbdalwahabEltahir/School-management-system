@@ -113,3 +113,33 @@ On the real database the new migration (V5) applies automatically at start-up.
 - **Unchanged (needs your decision):** School IT still unlocks submitted marks, publishes and unpublishes results,
   corrects attendance after the day, and runs notices.
 - Tests: 101, 0 failures.
+
+## Update: support tickets, personal settings, alerts, five-school demo
+
+- **EAA support tickets.** A head teacher (principal) opens a ticket (title, description, category, urgency, optional
+  attachment up to 2 MB). EAA administrators see every school's tickets, assign, reply and move them between Open, In
+  progress and Closed; Leadership reads but cannot change. New `support` module, `/api/support/*`, tables in V14.
+- **My profile and preferences.** Every role can edit name and phone, upload a photo, choose the message language and
+  switch individual alert types off. Security alerts cannot be switched off.
+- **Alerts.** Weekly grade deadline reminder (Thursday 09:00), school notices, ticket updates and security/account events
+  (role changed, approval waiting, request decided, account locked) each have their own alert type.
+- **Demo data.** Exactly five invented schools (A to E) with realistic names and domains, no placeholder accounts, and
+  about four months of attendance, weekly grades, points, notices, file-health scores and support tickets. All five
+  improve over time; D and E start low and climb. The old School C-F and "Demo Academy" are gone.
+- **Student pick-up and collection** is built (see the next section). **Not built yet:** multi-factor sign-in.
+- Migration V2 was restored to its original text (a comment had been renamed, which made Flyway refuse to start).
+
+## Update: student pick-up, and a simpler approval model
+
+- **Student pick-up and collection.** Parents register approved collectors (driver, relative, guardian, other; only the last
+  four characters of the ID are kept) and press **I've arrived**. The class teachers and coordinators are alerted, a live board
+  shows Arrivals, Pending pickups (ID being checked) and Completed today, and a child is released only after a teacher or
+  coordinator verifies the collector, who must still be on the approved list. Every release is written to a chain-of-custody log
+  (student, collector, staff member, exact time) that the database refuses to change or delete. New `pickup` module, V15.
+- **Approvals.** Only deleting a file needs a second person now. Publishing marks (by the teacher), role changes, removing a
+  school and disconnecting Google Drive happen directly and are logged.
+- **Points** are given by teachers (and coordinators); the principal only views them.
+- **Tickets.** Staff write to their school's School IT; principals can also write to Leadership. V16.
+- Assumptions made for pick-up (the design questions were not answered, so the recommended answers were used): collectors work
+  as soon as the parent adds them, teachers and coordinators can both release, only the ID's last four characters are checked
+  (no photo), "I've arrived" works on any school day at any hour, and there is no location check.

@@ -41,6 +41,9 @@ public class NotificationService {
     /** Stores one bell entry for a person. */
     @Transactional
     public void send(Person recipient, NotificationKind kind, String title, String body, UUID issueId) {
+        if (recipient.hasMuted(kind)) {
+            return; // the person switched this kind of alert off in their settings
+        }
         Notification n = new Notification();
         n.setOrgId(recipient.getOrgId());
         n.setSiteId(recipient.getSiteId());
@@ -58,6 +61,22 @@ public class NotificationService {
     public void on(PersonNotice notice) {
         people.findById(notice.personId()).ifPresent(p -> send(p, notice.kind(),
                 MessageTemplates.title(p.getLanguage(), notice.titleAr(), notice.titleEn()), notice.body(), null));
+    }
+
+    /** A sensitive action is waiting: tell the people who could approve it (never the one who asked). */
+    @EventListener
+    @Transactional
+    public void on(qa.sijill.sijill.shared.events.ApprovalAlert alert) {
+        for (qa.sijill.sijill.shared.model.Role role : alert.approvers()) {
+            List<Person> candidates = role.isNetwork() ? people.findByOrgIdAndRole(alert.orgId(), role)
+                    : people.findBySiteIdAndRole(alert.siteId(), role);
+            for (Person p : candidates) {
+                if (!p.getId().equals(alert.exceptPersonId()) && p.canSignIn()) {
+                    send(p, NotificationKind.SECURITY, MessageTemplates.title(p.getLanguage(), "طلب بانتظار موافقتك", "A request needs your approval"),
+                            alert.summary(), null);
+                }
+            }
+        }
     }
 
     // =============================================================== reading (the header bell)

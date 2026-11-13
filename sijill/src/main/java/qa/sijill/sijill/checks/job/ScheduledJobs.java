@@ -45,6 +45,7 @@ public class ScheduledJobs {
     private final ExceptionService exceptions;
     private final MessageDispatchService dispatcher;
     private final PlanningService planning;
+    private final qa.sijill.sijill.academic.service.MarksService marks;
     private final SiteRepository sites;
 
     @Scheduled(cron = "0 0 2 * * *", zone = ZONE)
@@ -80,6 +81,12 @@ public class ScheduledJobs {
     @Scheduled(cron = "0 0 8 * * THU", zone = ZONE)
     public void planningReminders() {
         job("planning-reminders", () -> log.info("Reminded {} teachers", planning.remindMissing()));
+    }
+
+    /** Thursday morning: remind teachers whose weekly grades are not submitted yet. */
+    @Scheduled(cron = "0 0 9 * * THU", zone = ZONE)
+    public void weeklyGradeReminders() {
+        job("weekly-grades", () -> log.info("Reminded {} teachers about weekly grades", marks.remindWeekly()));
     }
 
     private void forEachSite(JobType type) {

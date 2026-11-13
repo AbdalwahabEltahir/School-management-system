@@ -1,11 +1,9 @@
 package qa.sijill.sijill.approvals;
 
-/** The actions that need a second person's approval. */
+/** The actions that need a second person's approval. Only deleting a file does. */
 public final class ApprovalActions {
     private ApprovalActions() {}
 
-    public static final String MARKS_PUBLISH = "MARKS_PUBLISH";
-    public static final String SITE_REMOVE = "SITE_REMOVE";
-    public static final String DRIVE_DISCONNECT = "DRIVE_DISCONNECT";
-    public static final String ROLE_CHANGE = "ROLE_CHANGE";
+    /** Removing a file from Hafez's register. The drive itself is never touched. */
+    public static final String FILE_DELETE = "FILE_DELETE";
 }

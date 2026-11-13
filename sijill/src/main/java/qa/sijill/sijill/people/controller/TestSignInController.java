@@ -45,18 +45,23 @@ public class TestSignInController {
 
     public record PickRequest(UUID id) {}
 
-    /** The only accounts offered by test sign-in: a name (spaces ignored, matched from the start of the full name) and its role. */
-    private static final Map<String, Role> ALLOWED = Map.of(
-            "abdalwahab", Role.SCHOOL_IT, "huda", Role.PRINCIPAL, "noora", Role.LEADERSHIP, "nora", Role.LEADERSHIP, "rajaa", Role.COORDINATOR,
-            "teacher1", Role.TEACHER, "teacher2", Role.TEACHER, "student", Role.STUDENT, "parent", Role.PARENT,
-            "eaa", Role.EAA_ADMIN);
+    /**
+     * The only accounts offered by test sign-in: the person's <b>whole</b> display name (spaces and case ignored) and the role
+     * they must have. Exact matching keeps the invented demo people (for example a demo principal called "Huda Al-Sada")
+     * off the list, so a deployed copy shows exactly these ten accounts and no others.
+     */
+    private static final Map<String, Role> ALLOWED = Map.ofEntries(
+            Map.entry("abdalwahab", Role.SCHOOL_IT), Map.entry("huda", Role.PRINCIPAL), Map.entry("noora", Role.LEADERSHIP),
+            Map.entry("nora", Role.LEADERSHIP), Map.entry("rajaa", Role.COORDINATOR), Map.entry("teacher1", Role.TEACHER),
+            Map.entry("teacher2", Role.TEACHER), Map.entry("student", Role.STUDENT), Map.entry("parent", Role.PARENT),
+            Map.entry("eaa", Role.EAA_ADMIN), Map.entry("clerk", Role.ATTENDANCE_OFFICER));
 
     private static boolean offered(Person p) {
         if (!p.canSignIn()) {
             return false;
         }
         String name = p.getDisplayName().toLowerCase(Locale.ROOT).replace(" ", "");
-        return ALLOWED.entrySet().stream().anyMatch(e -> name.startsWith(e.getKey()) && p.getRole() == e.getValue());
+        return ALLOWED.entrySet().stream().anyMatch(e -> name.equals(e.getKey()) && p.getRole() == e.getValue());
     }
 
     private final PersonRepository people;

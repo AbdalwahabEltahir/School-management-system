@@ -210,11 +210,10 @@ class SchoolPortalTest extends WorldTestSupport {
     }
 
     @Test
-    void attendanceRefusesWeekendsFutureDaysAndStudentsOfAnotherSection() {
+    void attendanceRefusesFutureDaysAndStudentsOfAnotherSection() {
         School s = school();
         var teacher = user(s.w().teacher());
 
-        assertThatThrownBy(() -> attendance.record(officer(s), s.b(), FRIDAY, Map.of(), null)).isInstanceOf(BadRequestException.class);
         assertThatThrownBy(() -> attendance.record(officer(s), s.b(), TODAY.plusDays(1), Map.of(), null)).isInstanceOf(BadRequestException.class).hasMessageContaining("future");
         assertThatThrownBy(() -> attendance.record(officer(s), s.b(), TODAY, Map.of(s.other().getId(), AttendanceStatus.ABSENT), null))
                 .isInstanceOf(BadRequestException.class).hasMessageContaining("not in section");
@@ -250,7 +249,8 @@ class SchoolPortalTest extends WorldTestSupport {
         assertThatThrownBy(() -> pointsService.award(teacher, s.s1().getId(), 5, " ")).isInstanceOf(BadRequestException.class);
         assertThatThrownBy(() -> pointsService.award(teacher, s.s1().getId(), 50, "Too many")).isInstanceOf(BadRequestException.class);
         assertThatThrownBy(() -> pointsService.award(user(s.s1()), s.s2().getId(), 1, "Self")).isInstanceOf(ForbiddenException.class);
-        assertThat(pointsService.recognition(user(s.w().leader()))).isNotEmpty();
+        assertThat(pointsService.recognition(user(s.w().principal()))).isNotEmpty();
+        assertThatThrownBy(() -> pointsService.recognition(user(s.w().leader()))).isInstanceOf(ForbiddenException.class); // EAA IT does not see student points
     }
 
 
@@ -323,12 +323,7 @@ class SchoolPortalTest extends WorldTestSupport {
         assertThatThrownBy(() -> marks.publish(it, s.b(), 1)).isInstanceOf(ForbiddenException.class); // School IT does not publish
         marks.publish(teacher, s.b(), 1);
 
-        // four-eyes: asking is not enough, the students still see nothing, and the teacher cannot approve their own request
-        assertThat(marks.myResults(user(s.s1()))).isEmpty();
-        var request = approvals.list(user(s.w().principal())).stream().filter(r -> r.getAction().equals("MARKS_PUBLISH")).findFirst().orElseThrow();
-        assertThatThrownBy(() -> approvals.approve(teacher, request.getId())).isInstanceOf(ForbiddenException.class);
-        approvals.approve(user(s.w().principal()), request.getId());
-
+        // no approval step: the teacher's publication is final
         assertThat(count(s.s1(), NotificationKind.SYSTEM)).isEqualTo(told + 1); // "your results are published"
         assertThat(marks.myResults(user(s.s1()))).singleElement().satisfies(r -> {
             assertThat(r.assessment()).isEqualTo("Quiz 1");
@@ -355,7 +350,7 @@ class SchoolPortalTest extends WorldTestSupport {
         assertThat(before).anySatisfy(r -> { assertThat(r.assessments()).isEqualTo(1); assertThat(r.status()).isEqualTo("IN_PROGRESS"); });
         marks.submit(teacher, quiz);
         assertThat(marks.weekly(user(s.w().principal()), null)).anySatisfy(r -> assertThat(r.status()).isEqualTo("DONE"));
-        assertThat(marks.weekly(user(s.w().leader()), null)).isNotNull();           // the network can read it
+        assertThatThrownBy(() -> marks.weekly(user(s.w().leader()), null)).isInstanceOf(ForbiddenException.class); // EAA IT does not see grades
         assertThatThrownBy(() -> marks.weekly(teacher, null)).isInstanceOf(ForbiddenException.class);
 
         var matrix = marks.matrix(user(s.w().principal()), s.b());

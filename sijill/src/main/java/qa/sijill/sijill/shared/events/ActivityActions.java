@@ -75,4 +75,19 @@ public final class ActivityActions {
     public static final String NOTICE_PUBLISHED = "NOTICE_PUBLISHED";
     public static final String NOTICE_REMOVED = "NOTICE_REMOVED";
     public static final String MATERIAL_ADDED = "MATERIAL_ADDED";
+    // ---- support tickets and personal settings ----
+    public static final String TICKET_CREATED = "TICKET_CREATED";
+    public static final String TICKET_REPLIED = "TICKET_REPLIED";
+    public static final String TICKET_ASSIGNED = "TICKET_ASSIGNED";
+    public static final String TICKET_STATUS_CHANGED = "TICKET_STATUS_CHANGED";
+    public static final String PROFILE_UPDATED = "PROFILE_UPDATED";
+    public static final String FILE_DELETED = "FILE_DELETED";
+    // ---- student pick-up ----
+    public static final String PICKUP_COLLECTOR_ADDED = "PICKUP_COLLECTOR_ADDED";
+    public static final String PICKUP_COLLECTOR_REMOVED = "PICKUP_COLLECTOR_REMOVED";
+    public static final String PICKUP_ARRIVED = "PICKUP_ARRIVED";
+    public static final String PICKUP_VERIFIED = "PICKUP_VERIFIED";
+    public static final String PICKUP_RELEASED = "PICKUP_RELEASED";
+    public static final String PICKUP_DECLINED = "PICKUP_DECLINED";
+    public static final String PICKUP_CANCELLED = "PICKUP_CANCELLED";
 }

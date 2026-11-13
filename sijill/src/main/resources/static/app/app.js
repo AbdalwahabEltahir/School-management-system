@@ -65,7 +65,7 @@ const del = p => api(p, { method: 'DELETE' });
 
 // =============================================================== state and reference data
 const S = { me: null, files: null, rules: null, people: null, sites: null, subjects: null, docTypes: null, unread: 0, flash: null };
-const ROLE_LABEL = { TEACHER: 'Teacher', COORDINATOR: 'Coordinator', PRINCIPAL: 'Principal', SCHOOL_IT: 'School IT', LEADERSHIP: 'Leadership', EAA_ADMIN: 'EAA administrator', ATTENDANCE_OFFICER: 'Attendance officer', STUDENT: 'Student', PARENT: 'Parent' };
+const ROLE_LABEL = { TEACHER: 'Teacher', COORDINATOR: 'Coordinator', PRINCIPAL: 'Principal', SCHOOL_IT: 'School IT', LEADERSHIP: 'Leadership', EAA_ADMIN: 'EAA IT', ATTENDANCE_OFFICER: 'Attendance Clerk', STUDENT: 'Student', PARENT: 'Parent' };
 const OPEN = ['OWNER_NOTIFIED', 'REMINDER_SENT', 'NEEDS_FOLLOW_UP', 'NEEDS_REVIEW', 'OWNER_DISAGREES', 'OWNER_ASKED_FOR_HELP'];
 const STATUS = {
   OWNER_NOTIFIED: ['Owner notified', 'b-internal'], REMINDER_SENT: ['Reminder sent', 'b-watch'], NEEDS_FOLLOW_UP: ['Needs follow-up', 'b-bad'],
@@ -79,15 +79,15 @@ const DAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday'];
 
 const isNetworkRole = () => !!S.me && (S.me.role === 'LEADERSHIP' || S.me.role === 'EAA_ADMIN');
 const NAV = {
-  EAA_ADMIN: [['overview', 'Overview'], ['approvals', 'Approvals'], ['weekly', 'Weekly grades'], ['recognition', 'Recognition'], ['incidents', 'Incidents'], ['rules', 'Rules'], ['sites', 'Schools & settings'], ['connection', 'Connection'], ['activity', 'Activity log'], ['notifications', 'Notifications']],
-  ATTENDANCE_OFFICER: [['attendance', 'Attendance'], ['notices', 'Notices'], ['notifications', 'Notifications']],
-  TEACHER: [['today', 'Today'], ['attendance', 'Attendance'], ['marks', 'Marks'], ['points', 'Points'], ['matrix', 'Matrix'], ['approvals', 'Approvals'], ['materials', 'Study materials'], ['mine', 'My issues'], ['files', 'My files'], ['planning', 'Lesson plans'], ['notices', 'Notices'], ['notifications', 'Notifications']],
-  PARENT: [['children', 'My children'], ['notices', 'Notices'], ['notifications', 'Notifications']],
+  EAA_ADMIN: [['overview', 'Overview'], ['incidents', 'Incidents'], ['support', 'Support tickets'], ['rules', 'Rules'], ['sites', 'Schools & settings'], ['connection', 'Connection'], ['approvals', 'Approvals'], ['restores', 'Restores'], ['activity', 'Activity log'], ['notifications', 'Notifications']],
+  ATTENDANCE_OFFICER: [['attendance', 'Attendance'], ['pickup', 'Pick-up board'], ['support', 'Support tickets'], ['notices', 'Notices'], ['notifications', 'Notifications']],
+  TEACHER: [['today', 'Today'], ['pickup', 'Pick-up board'], ['attendance', 'Attendance'], ['marks', 'Marks'], ['points', 'Points'], ['matrix', 'Matrix'], ['approvals', 'Approvals'], ['support', 'Support tickets'], ['materials', 'Study materials'], ['mine', 'My issues'], ['files', 'My files'], ['planning', 'Lesson plans'], ['notices', 'Notices'], ['notifications', 'Notifications']],
+  PARENT: [['children', 'My children'], ['pickup', 'Pick-up'], ['notices', 'Notices'], ['notifications', 'Notifications']],
   STUDENT: [['mydash', 'My day'], ['results', 'My results'], ['mymaterials', 'Study materials'], ['notices', 'Notices'], ['notifications', 'Notifications']],
-  COORDINATOR: [['dashboard', 'Overview'], ['invitations', 'Invitations'], ['approvals', 'Approvals'], ['weekly', 'Weekly grades'], ['matrix', 'Matrix'], ['points', 'Points'], ['followup', 'Follow-up'], ['academic', 'Academic setup'], ['planning', 'Plan review'], ['people', 'People'], ['restores', 'Restores'], ['notifications', 'Notifications']],
-  PRINCIPAL: [['school', 'My school'], ['approvals', 'Approvals'], ['weekly', 'Weekly grades'], ['matrix', 'Matrix'], ['points', 'Points'], ['recognition', 'Recognition'], ['issues', 'Issues'], ['files', 'Files'], ['planning', 'Lesson plans'], ['restores', 'Restores'], ['notifications', 'Notifications']],
-  SCHOOL_IT: [['noticesAdmin', 'Notices'], ['invitations', 'Invitations'], ['approvals', 'Approvals'], ['weekly', 'Weekly grades'], ['matrix', 'Matrix'], ['recognition', 'Recognition'], ['rules', 'Rules'], ['people', 'People'], ['sites', 'Schools & settings'], ['connection', 'Connection'], ['restores', 'Restores'], ['incidents', 'Incidents'], ['activity', 'Activity log'], ['notifications', 'Notifications']],
-  LEADERSHIP: [['overview', 'Overview'], ['weekly', 'Weekly grades'], ['recognition', 'Recognition'], ['incidents', 'Incidents'], ['rules', 'Rules'], ['sites', 'Schools & settings'], ['connection', 'Connection'], ['activity', 'Activity log'], ['notifications', 'Notifications']]
+  COORDINATOR: [['dashboard', 'Overview'], ['pickup', 'Pick-up board'], ['invitations', 'Invitations'], ['approvals', 'Approvals'], ['support', 'Support tickets'], ['weekly', 'Weekly grades'], ['matrix', 'Matrix'], ['points', 'Points'], ['followup', 'Follow-up'], ['academic', 'Academic setup'], ['planning', 'Plan review'], ['people', 'People'], ['restores', 'Restores'], ['notifications', 'Notifications']],
+  PRINCIPAL: [['school', 'My school'], ['pickup', 'Pick-up board'], ['approvals', 'Approvals'], ['weekly', 'Weekly grades'], ['matrix', 'Matrix'], ['points', 'Points'], ['recognition', 'Recognition'], ['issues', 'Issues'], ['files', 'Files'], ['planning', 'Lesson plans'], ['support', 'Support tickets'], ['restores', 'Restores'], ['notifications', 'Notifications']],
+  SCHOOL_IT: [['noticesAdmin', 'Notices'], ['pickup', 'Pick-up board'], ['support', 'Support tickets'], ['invitations', 'Invitations'], ['approvals', 'Approvals'], ['weekly', 'Weekly grades'], ['matrix', 'Matrix'], ['recognition', 'Recognition'], ['rules', 'Rules'], ['people', 'People'], ['sites', 'Schools & settings'], ['connection', 'Connection'], ['restores', 'Restores'], ['incidents', 'Incidents'], ['activity', 'Activity log'], ['notifications', 'Notifications']],
+  LEADERSHIP: [['overview', 'Overview'], ['weekly', 'Weekly grades'], ['recognition', 'Recognition'], ['incidents', 'Incidents'], ['support', 'Support tickets'], ['rules', 'Rules'], ['sites', 'Schools & settings'], ['connection', 'Connection'], ['activity', 'Activity log'], ['notifications', 'Notifications']]
 };
 
 const lazy = (key, path, map) => async () => {
@@ -129,9 +129,9 @@ const sevBadge = s => badge(s === 'URGENT' ? 'b-urgent' : 'b-normal', title(s));
 const sensBadge = s => s ? badge('b-' + s.toLowerCase(), title(s)) : badge('b-neutral', 'Not classified');
 const isCoord = () => !!S.me && (S.me.role === 'COORDINATOR' || S.me.role === 'SCHOOL_IT'); // coordinator and School IT share the flat staff look
 const cxHeading = h => { h = String(h || ''); return /term|timetable|lesson/i.test(h) ? SPI.calendar : /subject/i.test(h) ? SPI.book : /document|file/i.test(h) ? CO_P.file : /student|class|teach|people|section/i.test(h) ? SPI.users : /request|review/i.test(h) ? CO_P.check : null; };
-const cxPath = h => cxHeading(h) || ({ followup: CO_P.clock, academic: SPI.calendar, planning: LIC.clip, people: SPI.users, restores: 'M3 12a9 9 0 109-9M3 4v5h5', notifications: LIC.bell, issues: LIC.warn, issue: LIC.warn, files: CO_P.file, file: CO_P.file, review: CO_P.check, prefs: SPI.gear, noticesAdmin: SPI.megaphone, rules: LIC.shield, sites: LIC.school, connection: LIC.plug, incidents: LIC.warn, activity: SPI.pulse }[S.route] || CO_P.file);
+const cxPath = h => cxHeading(h) || ({ followup: CO_P.clock, academic: SPI.calendar, planning: LIC.clip, people: SPI.users, restores: 'M3 12a9 9 0 109-9M3 4v5h5', notifications: LIC.bell, issues: LIC.warn, issue: LIC.warn, files: CO_P.file, file: CO_P.file, review: CO_P.check, prefs: SPI.gear, noticesAdmin: SPI.megaphone, rules: LIC.shield, sites: LIC.school, connection: LIC.plug, incidents: LIC.warn, activity: SPI.pulse, pickup: SPI.users }[S.route] || CO_P.file);
 const isPortal = () => !!S.me && (S.me.role === 'STUDENT' || S.me.role === 'PARENT');
-const PAGE_ICON = { mydash: 'calendar', children: 'users', results: 'list', mymaterials: 'folder', notices: 'megaphone', notifications: 'bell', prefs: 'gear' };
+const PAGE_ICON = { mydash: 'calendar', children: 'users', results: 'list', mymaterials: 'folder', notices: 'megaphone', notifications: 'bell', prefs: 'gear', pickup: 'users' };
 const empty = t => isCoord() ? html`<div class="cx-empty">${t}</div>` : isPortal() ? html`<div class="sp-empty"><span class="sp-ic sp-ic-soft">${sIc(PAGE_ICON[S.route] || 'book')}</span>${t}</div>` : html`<div class="empty">${t}</div>`;
 const card = (heading, sub, body, extra) => isCoord()
   ? html`<section class="cx-card"><div class="cx-ch"><span class="cx-ci">${coIcon(cxPath(heading))}</span><div><h2>${heading}</h2>${sub ? html`<small>${sub}</small>` : ''}</div>${extra ? html`<div class="cx-ex">${extra}</div>` : ''}</div>${body}</section>`
@@ -339,6 +339,7 @@ SCREENS.file = async id => {
     ${card('What Hafez understood', null, p ? html`<div class="row"><b>${p.docType}</b> ${sensBadge(p.sensitivity)} <span class="muted">${Math.round(p.confidence * 100)}% sure</span> ${p.needsReview ? badge('b-watch', 'Needs review') : ''}</div>
       <ul>${p.evidence.map(e => html`<li>${e}</li>`)}</ul>` : empty('Not classified yet.'))}
     ${classify}
+    ${['TEACHER', 'COORDINATOR'].includes(S.me.role) && !f.trashed ? card('Delete this file', 'Removes it from the register. A principal, coordinator or School IT must approve first. Your Google Drive is never touched.', html`<button class="btn btn-danger" data-act="deleteFileRequest" data-id="${id}" data-confirm="Ask to delete this file?">Ask to delete</button>`) : ''}
     ${card('Who can open it', null, table(['Who', 'Type', 'Access', 'Outside'], d.permissions.map(x => ({ cells: [x.grantee, title(x.targetType), title(x.accessLevel), x.external ? badge('b-bad', 'Outside') : 'No'] }))))}
     ${card('Issues on this file', null, d.issues.length ? issueTable(d.issues) : empty('No issues.'))}
     ${card('History', null, d.history.length ? table(['When', 'Drive', 'Folder', 'Permissions'], d.history.map(h => ({ cells: [fmt(h.at), title(h.driveType), h.folderPath || '', h.permissionCount] }))) : empty('No snapshots yet.'))}`,
@@ -679,7 +680,7 @@ SCREENS.rules = async () => {
     return { cells: [r.code, html`<b>${v.name}</b><div class="muted">${v.whyItMatters || ''}</div>`, title(v.checkType), sevBadge(v.severity), r.status === 'ACTIVE' ? badge('b-good', 'Active') : badge('b-neutral', title(r.status)), r.openIssues, acts(r)] };
   });
   const cards = html`<div class="lp-grid">${rules.map(r => { const v = r.effective || r.pending || {}; return html`<article class="lp-rule ${r.status === 'ACTIVE' ? '' : 'is-off'}"><div class="lp-rule-top"><span class="lp-code">${r.code}</span>${sevBadge(v.severity)}${r.status === 'ACTIVE' ? badge('b-good', 'Active') : badge('b-neutral', title(r.status))}${r.pending ? badge('b-watch', 'New version waiting') : ''}</div>
-      <h3>${v.name}</h3><p>${v.whyItMatters || ''}</p><div class="lp-meta"><span>${title(v.checkType)}</span><span class="${r.openIssues ? 'lo-red' : ''}">${r.openIssues} open issue${r.openIssues === 1 ? '' : 's'}</span></div>${r.pending ? acts(r) : ''}</article>`; })}</div>`;
+      <h3>${v.name}</h3><p>${v.whyItMatters || ''}</p><div class="lp-meta"><span>${title(v.checkType)}</span><span class="${r.openIssues ? 'lo-red' : ''}">${r.openIssues} open issue${r.openIssues === 1 ? '' : 's'}</span></div>${acts(r)}</article>`; })}</div>`;
   const kp = [['Active rules', rules.filter(r => r.status === 'ACTIVE').length, '', 'good', 'shield', 'Checked on every scan'], ['Paused or off', rules.filter(r => r.status !== 'ACTIVE').length, '', 'slate', 'pause', 'Not checking now'], ['Waiting for approval', rules.filter(r => r.pending).length, '', 'brand', 'list', 'New versions'], ['Open issues', rules.reduce((a, r) => a + (r.openIssues || 0), 0), '', 'bad', 'warn', 'Caused by these rules']];
   return page('Rules', 'What Hafez checks. Changing a rule creates a new version that is approved before it applies.',
     lead ? (rules.length ? cards : card('Rules', null, empty('No rules yet.'))) : card('Rules', rules.length + ' rules', table(['Code', 'Rule', 'Check', 'Severity', 'Status', 'Open issues', ''], rows)),
@@ -715,13 +716,13 @@ SCREENS.people = async () => {
   const list = Object.values(people), it = S.me.role === 'SCHOOL_IT', coord = S.me.role === 'COORDINATOR';
   const groups = it ? await get('/api/people/role-groups').catch(() => []) : [];
   const rows = list.map(p => ({ cells: [html`<b>${p.displayName}</b><div class="muted">${p.email}</div>${p.studentCode ? html`<div class="muted mono">${p.studentCode}</div>` : ''}`, siteName(p.siteId),
-    it ? html`<form data-form="person" data-id="${p.id}" class="row"><select name="role">${options(ROLES, p.role, x => ROLE_LABEL[x])}</select><select name="status">${options(['NEW', 'ACTIVE', 'LEAVING', 'LEFT'], p.status)}</select><button class="btn btn-sm">Save</button></form>` : html`${ROLE_LABEL[p.role]} · ${title(p.status)}`,
+    it && !['LEADERSHIP', 'EAA_ADMIN'].includes(p.role) ? html`<form data-form="person" data-id="${p.id}" class="row"><select name="role">${options(ROLES.filter(x => x !== 'LEADERSHIP' && x !== 'EAA_ADMIN'), p.role, x => ROLE_LABEL[x])}</select><select name="status">${options(['NEW', 'ACTIVE', 'LEAVING', 'LEFT'], p.status)}</select><button class="btn btn-sm">Save</button></form>` : html`${ROLE_LABEL[p.role]} · ${title(p.status)}`,
     p.overridden ? badge('b-watch', 'Overridden') : '',
     html`<div class="row">${it ? html`<button class="btn btn-sm" data-act="welcome" data-id="${p.id}">Send welcome</button><button class="btn btn-sm" data-act="editPerson" data-id="${p.id}">Edit</button>` : ''}${it && p.id !== S.me.id && !['LEADERSHIP', 'EAA_ADMIN', 'SCHOOL_IT'].includes(p.role) ? html`<button class="btn btn-sm btn-danger" data-act="deletePerson" data-id="${p.id}" data-confirm="Delete this person permanently?">Delete</button>` : ''}${coord ? html`<button class="btn btn-sm" data-act="personFollowUp" data-id="${p.id}">Follow up</button>` : ''}</div>`] }));
   return page('People', 'Everyone signs in with their own school account. There are no Hafez passwords.',
     html`${card('Staff', list.length + ' people', table(['Person', 'School', 'Role and status', '', ''], rows))}
-    ${it ? card('Add a person', 'They sign in with their own Google account. Use the same e-mail they sign in with.', html`<form data-form="addPerson" class="row"><input class="input" type="email" name="email" placeholder="name@school.edu" required><input class="input" name="name" placeholder="Full name" required><select name="role">${options(['TEACHER', 'COORDINATOR', 'PRINCIPAL', 'STUDENT', 'PARENT'], 'TEACHER', x => ROLE_LABEL[x])}</select><select name="studentId" title="Only for a parent: the student they follow"><option value="">Child (for a parent)</option>${list.filter(p => p.role === 'STUDENT').map(p => html`<option value="${p.id}">${p.displayName}</option>`)}</select><button class="btn btn-primary">Add person</button></form>`) : ''}
-    ${it ? card('Role groups', 'A directory group gives its members a role at their next sync.', html`${table(['Directory group', 'Role'], groups.map(g => ({ cells: [g.directoryGroup, ROLE_LABEL[g.role]] })))}<form data-form="roleGroup" class="row" style="margin-top:12px"><input class="input" name="directoryGroup" placeholder="group@school.edu" required><select name="role">${options(ROLES, 'TEACHER', x => ROLE_LABEL[x])}</select><button class="btn">Save mapping</button></form>`) : ''}`,
+    ${it ? card('Add a person', 'They sign in with their own Google account. Use the same e-mail they sign in with.', html`<form data-form="addPerson" class="row"><input class="input" type="email" name="email" placeholder="name@school.edu" required><input class="input" name="name" placeholder="Full name" required><select name="role">${options(['TEACHER', 'COORDINATOR', 'PRINCIPAL', 'ATTENDANCE_OFFICER', 'STUDENT', 'PARENT'], 'TEACHER', x => ROLE_LABEL[x])}</select><select name="studentId" title="Only for a parent: the student they follow"><option value="">Child (for a parent)</option>${list.filter(p => p.role === 'STUDENT').map(p => html`<option value="${p.id}">${p.displayName}</option>`)}</select><button class="btn btn-primary">Add person</button></form>`) : ''}
+    ${it ? card('Role groups', 'A directory group gives its members a role at their next sync.', html`${table(['Directory group', 'Role'], groups.map(g => ({ cells: [g.directoryGroup, ROLE_LABEL[g.role]] })))}<form data-form="roleGroup" class="row" style="margin-top:12px"><input class="input" name="directoryGroup" placeholder="group@school.edu" required><select name="role">${options(ROLES.filter(x => x !== 'LEADERSHIP' && x !== 'EAA_ADMIN'), 'TEACHER', x => ROLE_LABEL[x])}</select><button class="btn">Save mapping</button></form>`) : ''}`,
     it ? html`<button class="btn" data-act="syncPeople">Sync directory now</button>` : '');
 };
 
@@ -775,8 +776,8 @@ SCREENS.points = async (arg, q) => {
   if (!sections.length) return page('Points', null, empty('No section to show yet.'));
   const sid = q.get('s') || sections[0].id;
   const rows = await get('/api/points/sections/' + sid);
-  const canAward = ['TEACHER', 'COORDINATOR', 'PRINCIPAL'].includes(S.me.role);
-  return page('Points', 'Each present day earns one point automatically. Add recognition with a short reason.',
+  const canAward = ['TEACHER', 'COORDINATOR'].includes(S.me.role);
+  return page('Points', S.me.role === 'PRINCIPAL' ? 'Class points. Teachers give recognition points; you can view them.' : 'Each present day earns one point automatically. Add recognition with a short reason.',
     html`<div class="row">${sectionPicker(sections, sid, 'points')}</div>
     ${canAward && rows.length ? card('Give points', null, html`<form data-form="award" class="row">
       <select class="input" name="studentId">${rows.map(r => html`<option value="${r.studentId}">${r.name}</option>`)}</select>
@@ -809,13 +810,13 @@ SCREENS.invitations = async () => {
 };
 
 // ---- approvals (four-eyes): what waits for a second person
-const APPROVAL_LABEL = { MARKS_PUBLISH: 'Publish marks', SITE_REMOVE: 'Remove school', DRIVE_DISCONNECT: 'Disconnect Drive', ROLE_CHANGE: 'Change role' };
+const APPROVAL_LABEL = { FILE_DELETE: 'Delete file' };
 SCREENS.approvals = async () => {
   const list = await get('/api/approvals');
   const rows = list.map(a => ({ cells: [APPROVAL_LABEL[a.action] || a.action, a.summary, a.requestedBy, fmt(a.requestedAt),
     badge(a.status === 'APPROVED' ? 'b-good' : a.status === 'PENDING' ? 'b-watch' : 'b-neutral', title(a.status)),
     a.status === 'PENDING' ? html`<div class="row">${a.canDecide ? html`<button class="btn btn-sm btn-primary" data-act="approval" data-do="approve" data-id="${a.id}">Approve</button><button class="btn btn-sm btn-danger" data-act="approval" data-do="reject" data-id="${a.id}">Reject</button>` : ''}${a.mine ? html`<button class="btn btn-sm" data-act="approval" data-do="cancel" data-id="${a.id}">Withdraw</button>` : ''}</div>` : (a.decidedBy ? 'by ' + a.decidedBy : '')] }));
-  return page('Approvals', 'Sensitive actions need a second person. You cannot approve your own request.',
+  return page('Approvals', 'Deleting a file needs a second person. You cannot approve your own request.',
     card('Requests', null, list.length ? table(['Action', 'What', 'Requested by', 'When', 'Status', ''], rows) : empty('Nothing is waiting for approval.')));
 };
 
@@ -860,10 +861,210 @@ SCREENS.restores = async () => {
     ${card('Requests', null, table(['What', 'Scope', 'Reason', 'Status', 'Requested', ''], rows))}`);
 };
 
-SCREENS.prefs = async () => page('My preferences', isPortal() ? 'Choose how Hafez talks to you.' : null, card('Messages', null, html`<form data-form="prefs">
-  ${field('Language of messages', html`<select name="language" data-act="prefLang">${options(['EN', 'AR', 'BOTH'], S.me.language, x => ({ EN: 'English', AR: 'Arabic', BOTH: 'English and Arabic' }[x]))}</select>`)}
-  ${field('How to receive them', html`<select name="digestMode">${options(['PER_ISSUE', 'DAILY'], S.me.digestMode, x => x === 'DAILY' ? 'One daily summary' : 'One message per issue')}</select>`)}
-  <button class="btn btn-primary">Save</button></form>`));
+// ---- my profile and preferences (every role)
+const ALERTS = {
+  ISSUE: ['File issues', 'Problems found in files you own or oversee.'],
+  REMINDER: ['Reminders', 'Reminders about issues that are still open.'],
+  FOLLOW_UP: ['Follow-ups', 'Issues that need a coordinator.'],
+  INCIDENT: ['Incidents', 'Serious incidents in your school or the network.'],
+  PLANNING: ['Lesson plans', 'Submissions and reviews of lesson plans.'],
+  GRADES: ['Weekly grade deadlines', 'A reminder when this week\'s grades are not submitted yet.'],
+  NOTICE: ['School notices', 'New notices from your school.'],
+  TICKET: ['Support tickets', 'New tickets, replies and status changes.'],
+  SYSTEM: ['General updates', 'Welcome messages and published results.'],
+  COLLECTION: ['Pick-up', 'A parent has arrived, or a child was released or not released.'],
+  SECURITY: ['Security and account events', 'Role changes, approval requests and locked accounts. Always on.']
+};
+const fileToBase64 = file => new Promise((resolve, reject) => { const r = new FileReader(); r.onload = () => resolve(String(r.result).split(',')[1] || ''); r.onerror = () => reject(new Error('The file could not be read.')); r.readAsDataURL(file); });
+const initialsOf = name => (name || '?').split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase();
+const avatar = initials => S.me.hasPhoto
+  ? html`<span class="who-av who-photo" style="background-image:url('/api/me/photo?v=${S.photoV || 0}')"></span>`
+  : html`<span class="who-av">${initials}</span>`;
+SCREENS.prefs = async () => {
+  const me = S.me, kinds = me.alertKinds || [], muted = me.muted || [];
+  return page('My profile and preferences', 'Your details, photo, language and which alerts you receive.', html`
+    ${card('Profile', null, html`
+      <div class="row" style="align-items:center;gap:16px;margin-bottom:12px">${avatar(initialsOf(me.displayName))}
+        <div><input type="file" id="photoFile" accept="image/png,image/jpeg"> <small class="muted">PNG or JPEG, at most 500 KB.</small>
+          <div class="row" style="margin-top:6px"><button type="button" class="btn btn-sm" data-act="photoSave">Upload photo</button>${me.hasPhoto ? html`<button type="button" class="btn btn-sm btn-danger" data-act="photoRemove">Remove photo</button>` : ''}</div></div></div>
+      <form data-form="profile">
+        ${field('Name', html`<input class="input" name="displayName" value="${me.displayName}" required minlength="2" maxlength="200">`)}
+        ${field('E-mail (from your school account)', html`<input class="input" value="${me.email}" disabled>`)}
+        ${field('Phone', html`<input class="input" name="phone" value="${me.phone || ''}" maxlength="30" inputmode="tel">`)}
+        <button class="btn btn-primary">Save details</button></form>`)}
+    ${card('Messages and alerts', 'Choose the language, and which alerts reach your notifications.', html`<form data-form="prefs">
+      ${field('Language of messages', html`<select name="language" data-act="prefLang">${options(['EN', 'AR', 'BOTH'], me.language, x => ({ EN: 'English', AR: 'Arabic', BOTH: 'English and Arabic' }[x]))}</select>`)}
+      ${field('How to receive them', html`<select name="digestMode">${options(['PER_ISSUE', 'DAILY'], me.digestMode, x => x === 'DAILY' ? 'One daily summary' : 'One message per issue')}</select>`)}
+      <div class="field"><label>Alerts</label>${kinds.map(k => html`<label class="row" style="gap:8px;font-weight:400;align-items:flex-start"><input type="checkbox" name="alert_${k}" ${k !== 'SECURITY' && muted.includes(k) ? '' : raw('checked')} ${k === 'SECURITY' ? raw('disabled') : ''}><span><b>${ALERTS[k][0]}</b><br><small class="muted">${ALERTS[k][1]}</small></span></label>`)}</div>
+      <button class="btn btn-primary">Save</button></form>`)}`);
+};
+
+// ---- support tickets: a head teacher writes to EAA head office; EAA triages, replies and closes
+const TICKET_CAT = { TECHNICAL: 'Technical problem', ACCOUNTS: 'Accounts and access', ACADEMIC_DATA: 'Marks and academic data', GOOGLE_DRIVE: 'Google Drive', SECURITY: 'Security concern', OTHER: 'Other' };
+const TICKET_URG = { LOW: 'Low', NORMAL: 'Normal', HIGH: 'High', URGENT: 'Urgent' };
+const ticketStatusBadge = s => badge(s === 'CLOSED' ? 'b-good' : s === 'IN_PROGRESS' ? 'b-watch' : 'b-bad', title(s));
+const urgBadge = u => badge(u === 'URGENT' ? 'b-urgent' : u === 'HIGH' ? 'b-bad' : 'b-normal', TICKET_URG[u] || title(u));
+const AUD_LABEL = { SCHOOL_IT: 'School IT', LEADERSHIP: 'Leadership' };
+const AUD_HINT = { SCHOOL_IT: 'Your school\'s IT team', LEADERSHIP: 'Head office team' };
+const URG_HINT = { LOW: 'Can wait', NORMAL: 'This week', HIGH: 'Soon', URGENT: 'Blocking work' };
+const tkCard = (t, network, role) => html`<article class="tk-card tk-u-${t.urgency} ${t.status === 'CLOSED' ? 'tk-closed' : ''}" tabindex="0" role="link" data-go="#/ticket/${t.id}">
+  <div><h3>${t.title}</h3><div class="tk-meta"><span class="pk-chip">${TICKET_CAT[t.category] || t.category}</span>${urgBadge(t.urgency)}${role === 'PRINCIPAL' ? html`<span class="pk-chip">${AUD_LABEL[t.audience] || t.audience}</span>` : ''}${network ? html`<span class="pk-chip">${t.school}</span>` : ''}</div></div>
+  <div class="tk-side">${ticketStatusBadge(t.status)}<span>${fmt(t.updatedAt)}</span></div>
+  <div class="tk-who">${t.createdBy} · ${t.assignedToName ? html`<span>Handled by</span> ${t.assignedToName}` : html`<span>Not assigned yet</span>`}</div></article>`;
+SCREENS.support = async (arg, q) => {
+  const list = await get('/api/support/tickets');
+  const role = S.me.role, network = isNetworkRole();
+  const canOpen = ['TEACHER', 'COORDINATOR', 'ATTENDANCE_OFFICER', 'PRINCIPAL'].includes(role);
+  const status = q.get('status') || 'ALL';
+  const shown = status === 'ALL' ? list : list.filter(t => t.status === status);
+  const count = s => list.filter(t => t.status === s).length;
+  const bySchool = {};
+  list.forEach(t => {
+    const r = bySchool[t.school] = bySchool[t.school] || { open: 0, progress: 0, closed: 0, urgent: 0 };
+    if (t.status === 'OPEN') r.open++; else if (t.status === 'IN_PROGRESS') r.progress++; else r.closed++;
+    if (t.status !== 'CLOSED' && t.urgency === 'URGENT') r.urgent++;
+  });
+  const targets = role === 'PRINCIPAL' ? ['SCHOOL_IT', 'LEADERSHIP'] : ['SCHOOL_IT'];
+  const newForm = canOpen ? card('New ticket', role === 'PRINCIPAL' ? 'Write to your School IT, or to Leadership at head office. Replies and status changes appear here and in your notifications.' : 'Ask your School IT for help. Replies and status changes appear here and in your notifications.', html`<form data-form="ticket" class="tk-form tk">
+      ${targets.length > 1
+        ? html`<span class="lbl">Send to</span><div class="tk-pick">${targets.map((a, i) => html`<label><input type="radio" name="audience" value="${a}" ${i === 0 ? raw('checked') : ''}><b>${AUD_LABEL[a]}</b><small>${AUD_HINT[a]}</small></label>`)}</div>`
+        : html`<input type="hidden" name="audience" value="SCHOOL_IT">`}
+      <span class="lbl">How urgent is it?</span>
+      <div class="tk-pick tk-urg">${Object.keys(TICKET_URG).map(u => html`<label><input type="radio" name="urgency" value="${u}" ${u === 'NORMAL' ? raw('checked') : ''}><b>${TICKET_URG[u]}</b><small>${URG_HINT[u]}</small></label>`)}</div>
+      <span class="lbl">What is it about?</span>
+      <select name="category" aria-label="Category">${options(Object.keys(TICKET_CAT), 'TECHNICAL', c => TICKET_CAT[c])}</select>
+      <span class="lbl">Title</span>
+      <input class="input" name="title" required maxlength="200" placeholder="A short summary of the problem">
+      <span class="lbl">Description</span>
+      <textarea name="description" required maxlength="4000" placeholder="What happened, and what did you expect?"></textarea>
+      <span class="lbl">Attachment (optional)</span>
+      <label class="tk-drop"><input type="file" name="attachment" accept=".pdf,.png,.jpg,.jpeg,.docx,.xlsx,.txt,.csv"><span class="muted">PDF, image, Word, Excel or text, up to 2 MB</span></label>
+      <div class="tk-send"><button class="pk-btn pk-btn-go">Send ticket</button></div></form>`) : '';
+  const schools = !network ? '' : card('By school', 'Open work across the network.', Object.keys(bySchool).length
+    ? table(['School', 'Open', 'In progress', 'Closed', 'Urgent and unresolved'], Object.keys(bySchool).sort().map(n => ({ cells: [n, bySchool[n].open, bySchool[n].progress, bySchool[n].closed, bySchool[n].urgent ? badge('b-urgent', bySchool[n].urgent) : 0] })))
+    : empty('No tickets yet.'));
+  const sub = network ? 'Tickets that principals wrote to Leadership. Open one to assign, reply or close it.'
+    : role === 'SCHOOL_IT' ? 'Tickets from staff at your school. Open one to assign, reply or close it.'
+    : role === 'PRINCIPAL' ? 'Every ticket at your school, and the ones you wrote to Leadership.'
+    : 'Your requests to School IT.';
+  return page('Support tickets', sub,
+    html`${newForm}${schools}${card('Tickets', null, html`${seg('status', [['ALL', 'All'], ['OPEN', 'Open'], ['IN_PROGRESS', 'In progress'], ['CLOSED', 'Closed']], status)}<div style="margin-top:14px">${shown.length ? html`<div class="tk-list tk">${shown.map(t => tkCard(t, network, role))}</div>` : html`<div class="pk-empty">No tickets here yet.</div>`}</div>`)}`,
+    null, [['Open', count('OPEN'), '', count('OPEN') ? 'brand' : 'good', 'warn', 'Waiting'], ['In progress', count('IN_PROGRESS'), '', 'amber', 'clock', 'Being handled'], ['Closed', count('CLOSED'), '', 'good', 'check', 'Resolved']]);
+};
+SCREENS.ticket = async id => {
+  const d = await get('/api/support/tickets/' + id);
+  const t = d.ticket;
+  const admins = d.canManage ? await get('/api/support/assignees') : [];
+  const at = ['OPEN', 'IN_PROGRESS', 'CLOSED'].indexOf(t.status);
+  const flow = ['Sent', 'Being handled', 'Resolved'];
+  return page(t.title, t.school + ' · ' + (TICKET_CAT[t.category] || t.category) + ' · ' + (AUD_LABEL[t.audience] || t.audience), html`
+    ${card('Details', null, html`<div class="tk"><ol class="tk-flow">${flow.map((label, i) => html`<li class="${t.status === 'CLOSED' ? 'shut ' : ''}${i < at ? 'done' : i === at ? 'on' : ''}"><i>${i <= at ? '✓' : i + 1}</i>${label}</li>`)}</ol>
+      <div class="tk-facts" style="margin-bottom:12px">${ticketStatusBadge(t.status)} ${urgBadge(t.urgency)}</div>
+      <p class="tk-body">${d.description}</p>
+      <p class="muted"><span>Opened</span> ${fmt(t.createdAt)} · ${t.createdBy}${t.assignedToName ? html` · <span>Handled by</span> ${t.assignedToName}` : html` · <span>Not assigned yet</span>`}${t.closedAt ? html` · <span>Closed</span> ${fmt(t.closedAt)}` : ''}</p>
+      ${t.hasAttachment ? html`<p><a class="pk-btn pk-btn-sm" href="/api/support/tickets/${t.id}/attachment">Download ${t.attachmentName}</a></p>` : ''}</div>`)}
+    ${d.canManage ? card('Handle this ticket', null, html`<div class="tk"><form data-form="ticketAssign" data-id="${t.id}" class="tk-manage">
+        <div class="grow">${field('Assign to', html`<select name="assigneeId">${admins.map(a => html`<option value="${a.id}" ${a.id === t.assignedTo ? raw('selected') : ''}>${a.name}</option>`)}</select>`)}</div>
+        <button class="pk-btn pk-btn-go" style="margin-bottom:12px">Assign</button></form>
+      <div class="tk-states">${['OPEN', 'IN_PROGRESS', 'CLOSED'].filter(s => s !== t.status).map(s => html`<button class="pk-btn pk-btn-sm ${s === 'CLOSED' ? 'pk-btn-ok' : ''}" data-act="ticketStatus" data-id="${t.id}" data-status="${s}">${s === 'CLOSED' ? 'Close ticket' : s === 'OPEN' ? 'Reopen' : 'Mark in progress'}</button>`)}</div></div>`) : ''}
+    ${card('Conversation', null, d.replies.length ? html`<div class="tk tk-chat">${d.replies.map(r => html`<div class="tk-msg ${r.author === S.me.displayName ? 'mine' : ''}"><div class="by"><b>${r.author}</b> · ${ROLE_LABEL[r.role] || title(r.role)} · ${fmt(r.createdAt)}</div><div class="txt">${r.body}</div></div>`)}</div>` : html`<div class="pk-empty">No replies yet.</div>`)}
+    ${d.canReply ? card('Reply', null, html`<form data-form="ticketReply" data-id="${t.id}" class="tk-form tk"><textarea name="body" required maxlength="4000" aria-label="Your reply" placeholder="Write your reply"></textarea><div class="tk-send"><button class="pk-btn pk-btn-go">Send reply</button></div></form>`)
+      : card('Reply', null, html`<div class="pk-empty">${t.status === 'CLOSED' ? 'This ticket is closed. Open a new ticket for a new question.' : 'You can read this ticket. Only the sender and the team handling it can reply.'}</div>`)}`,
+    html`<a class="btn" href="#/support">Back to tickets</a>`);
+};
+
+// ---- student pick-up and collection
+const REL_LABEL = { PARENT: 'Parent', DRIVER: 'Driver', RELATIVE: 'Relative', GUARDIAN: 'Guardian', OTHER: 'Other' };
+const PK_STATUS = { ARRIVED: ['b-watch', 'Waiting for the school'], VERIFYING: ['b-watch', 'Being checked'], RELEASED: ['b-good', 'Released'], DECLINED: ['b-bad', 'Not released'], CANCELLED: ['b-neutral', 'Cancelled'] };
+const pkBadge = s => badge(PK_STATUS[s][0], PK_STATUS[s][1]);
+const pkTime = d => d ? new Date(d).toLocaleTimeString(uiLocale(), { hour: '2-digit', minute: '2-digit' }) : '—';
+const pkInit = n => (String(n || '?').trim()[0] || '?').toUpperCase();
+const pkAgo = d => { const m = Math.max(0, Math.round((Date.now() - new Date(d)) / 60000)); return m < 1 ? 'just now' : m + ' min'; };
+/** Re-draws one part of the page every few seconds while the person stays on the pick-up screen. */
+function pickupPoll(targetId, fetcher, draw) {
+  clearInterval(S.pkTick);
+  S.pkTick = setInterval(async () => {
+    const el = document.getElementById(targetId);
+    if (!el || S.route !== 'pickup') { clearInterval(S.pkTick); return; }
+    if (document.hidden) return;
+    try { el.innerHTML = draw(await fetcher()).s; } catch (e) { if (e.status === 401) clearInterval(S.pkTick); }
+  }, 5000);
+}
+/** Three steps a parent can follow: arrived, ID checked, released (or not released). */
+const pkSteps = st => {
+  const rank = { ARRIVED: 1, VERIFYING: 2, RELEASED: 3, DECLINED: 3 }[st] || 0;
+  const bad = st === 'DECLINED';
+  return html`<ol class="pk-steps">${[['Arrived', 1], ['ID checked', 2], [bad ? 'Not released' : 'Released', 3]].map(([label, n]) => {
+    const cls = bad && n === 3 ? 'bad' : n < rank || (n === rank && st === 'RELEASED') ? 'done' : n === rank ? 'on' : '';
+    return html`<li class="${cls}"><i>${cls === 'done' ? '✓' : cls === 'bad' ? '✕' : n}</i>${label}</li>`;
+  })}</ol>`;
+};
+const pkCurrent = c => {
+  const r = c.current;
+  return html`<div class="pk-now"><div class="pk-now-top"><span class="pk-av pk-av-sm">${pkInit(c.student)}</span><b>${c.student}</b>${r ? pkBadge(r.status) : ''}</div>
+    ${r ? html`${pkSteps(r.status)}<small>${r.collector} (${REL_LABEL[r.relationship] || r.relationship}) · ${pkTime(r.arrivedAt)}</small>
+      ${r.status === 'DECLINED' && r.declineReason ? html`<div class="pk-note">${r.declineReason}</div>` : ''}
+      ${r.status === 'RELEASED' ? html`<div class="pk-note" style="background:#E7F7EF;color:#0B7A4F"><span>Released</span> · ${pkTime(r.decidedAt)}</div>` : ''}
+      ${r.status === 'ARRIVED' || r.status === 'VERIFYING' ? html`<div><button class="pk-btn pk-btn-sm" data-act="pickupCancel" data-id="${r.id}">Withdraw</button></div>` : ''}`
+    : html`<p class="pk-idle">You have not told the school you are here.</p>`}</div>`;
+};
+SCREENS.pickup = async () => S.me.role === 'PARENT' ? parentPickup() : staffPickup();
+
+const pkPerson = k => html`<div class="pk-person"><span class="pk-av pk-av-sm">${pkInit(k.name)}</span><div><b>${k.name}</b><small>${REL_LABEL[k.relationship] || k.relationship} · ID ends ••${k.idLast4}${k.phone ? ' · ' + k.phone : ''}</small></div>
+  <button class="pk-btn pk-btn-sm pk-btn-no" data-act="removeCollector" data-id="${k.id}" data-confirm="Remove this collector? They will no longer be released the child.">Remove</button></div>`;
+const PK_SUB = 'Approve who may collect your child and tell the school when you arrive.';
+async function parentPickup() {
+  const kids = await get('/api/pickup/mine');
+  const live = list => html`<div class="pk-live">${list.map(pkCurrent)}</div>`;
+  pickupPoll('pickupMine', () => get('/api/pickup/mine'), live);
+  if (!kids.length) return page('Pick-up', PK_SUB, card('Pick-up', null, empty('No children are linked to your account yet.')));
+  return page('Pick-up', PK_SUB, html`
+    ${card('Right now', 'The school sees this at once. It updates by itself.', html`<div id="pickupMine" class="pk">${live(kids)}</div>`)}
+    ${kids.map(c => {
+      const open = c.current && (c.current.status === 'ARRIVED' || c.current.status === 'VERIFYING');
+      return card(c.student + (c.section ? ' · ' + c.section : ''), 'Choose who is collecting, then press the button when you arrive.', html`<div class="pk">
+      <form data-form="arrive" data-student="${c.studentId}">
+        <p class="pk-sub">Who is collecting?</p>
+        <div class="pk-who"><label><input type="radio" name="collectorId" value="" checked><span class="pk-av pk-av-sm">${pkInit(S.me.displayName)}</span><span><b>Me</b><small>${S.me.displayName}</small></span></label>
+          ${c.collectors.map(k => html`<label><input type="radio" name="collectorId" value="${k.id}"><span class="pk-av pk-av-sm">${pkInit(k.name)}</span><span><b>${k.name}</b><small>${REL_LABEL[k.relationship] || k.relationship}</small></span></label>`)}</div>
+        ${open ? html`<p class="pk-note" style="margin-bottom:10px">You have already told the school you have arrived for this child.</p>` : ''}
+        <button class="pk-btn pk-btn-go pk-btn-block" ${open ? raw('disabled') : ''}>I've arrived</button></form>
+      <p class="pk-sub">Approved collectors</p>
+      ${c.collectors.length ? html`<div class="pk-grid">${c.collectors.map(pkPerson)}</div>` : html`<div class="pk-empty">No approved collectors yet. You can always collect your child yourself.</div>`}
+      <details class="pk-add"><summary>Add a collector</summary>
+        <form data-form="collector" data-student="${c.studentId}">
+          ${field('Full name', html`<input class="input" name="name" required minlength="2" maxlength="100">`)}
+          ${field('Relationship', html`<select class="input" name="relationship">${['DRIVER', 'RELATIVE', 'GUARDIAN', 'OTHER'].map(r => html`<option value="${r}">${REL_LABEL[r]}</option>`)}</select>`)}
+          ${field('ID number (only the last four are kept)', html`<input class="input" name="idNumber" required minlength="4" maxlength="30" autocomplete="off">`)}
+          ${field('Phone (optional)', html`<input class="input" name="phone" maxlength="30" inputmode="tel">`)}
+          <button class="pk-btn pk-btn-go">Add collector</button></form></details>
+      ${c.recent.length ? html`<p class="pk-sub">Recent releases</p><ul class="pk-hist">${c.recent.map(r => html`<li><span class="pk-chip pk-chip-ok">Released</span><span>${r.collector} (${REL_LABEL[r.relationship] || r.relationship})</span><span>${r.releasedBy}<br>${fmt(r.releasedAt)}</span></li>`)}</ul>` : ''}</div>`);
+    })}`);
+}
+
+const pkAct = (r, canAct, step) => !canAct ? '' : html`<div class="pk-q-act">${step === 'verify'
+  ? html`<button class="pk-btn pk-btn-go" data-act="pickupVerify" data-id="${r.id}">Verify ID</button>`
+  : html`<button class="pk-btn pk-btn-ok" data-act="pickupRelease" data-id="${r.id}">Release</button>`}<button class="pk-btn pk-btn-no" data-act="pickupDecline" data-id="${r.id}">Decline</button></div>`;
+const pkQueueCard = (r, canAct, step) => html`<article class="pk-q ${step === 'release' ? 'pk-q-ready' : ''}">
+  <div class="pk-q-top"><span class="pk-av">${pkInit(r.student)}</span><div><b>${r.student}</b><small>${r.section}</small></div><div class="pk-q-time"><b>${pkTime(r.arrivedAt)}</b>${pkAgo(r.arrivedAt)}</div></div>
+  <div class="pk-q-who"><span class="muted">Collector</span><b>${r.collector}</b><span>${REL_LABEL[r.relationship] || r.relationship}${r.phone ? html` · <a href="tel:${r.phone}">${r.phone}</a>` : ''}</span>
+    ${r.idLast4 ? html`<span>ID ends <span class="id">••${r.idLast4}</span></span>` : html`<span class="muted">Parent: check the ID at the gate.</span>`}</div>
+  ${step === 'release' && r.verifiedBy ? html`<small class="muted">ID checked by ${r.verifiedBy}</small>` : ''}
+  ${pkAct(r, canAct, step)}</article>`;
+const pickupBoardHtml = b => html`
+  <div class="pk-stats"><div class="pk-stat pk-stat-wn"><b>${b.arrivals.length}</b><small>Waiting</small></div><div class="pk-stat pk-stat-bd"><b>${b.pending.length}</b><small>Ready to release</small></div><div class="pk-stat pk-stat-ok"><b>${b.completed.length}</b><small>Completed today</small></div></div>
+  ${card('Arrivals', 'Parents who have arrived and are waiting.', b.arrivals.length ? html`<div class="pk pk-grid">${b.arrivals.map(r => pkQueueCard(r, b.canAct, 'verify'))}</div>` : html`<div class="pk-empty">Nobody has arrived.</div>`)}
+  ${card('Pending pickups', 'ID checked against the approved list. Release when the child is handed over.', b.pending.length ? html`<div class="pk pk-grid">${b.pending.map(r => pkQueueCard(r, b.canAct, 'release'))}</div>` : html`<div class="pk-empty">Nothing is being checked.</div>`)}
+  ${card('Completed today', null, b.completed.length ? html`<div class="pk pk-done">${b.completed.map(r => html`<div><span class="pk-av pk-av-sm">${pkInit(r.student)}</span><b>${r.student}</b><span class="muted">${r.collector} (${REL_LABEL[r.relationship] || r.relationship})</span>${pkBadge(r.status)}<span class="when">${r.decidedBy || '—'} · ${pkTime(r.decidedAt)}</span></div>`)}</div>` : html`<div class="pk-empty">Nothing released yet today.</div>`)}`;
+async function staffPickup() {
+  const [board, log] = await Promise.all([get('/api/pickup/board'), get('/api/pickup/log')]);
+  pickupPoll('pickupBoard', () => get('/api/pickup/board'), pickupBoardHtml);
+  return page('Pick-up board', S.me.role === 'PRINCIPAL' || S.me.role === 'SCHOOL_IT' ? 'Live view, read only. It refreshes every few seconds.' : 'Live: it refreshes every few seconds. Check the collector\'s ID, then release the child.',
+    html`<div id="pickupBoard" class="stack-gap">${pickupBoardHtml(board)}</div>
+    ${card('Release log', 'Chain of custody: every release is kept permanently and cannot be changed. The last 30 days are shown.', log.length
+      ? table(['Student', 'Class', 'Collected by', 'Released by', 'Date and time'], log.map(r => ({ cells: [r.student, r.section, r.collector + ' (' + (REL_LABEL[r.relationship] || r.relationship) + ')', r.releasedBy, fmt(r.releasedAt)] })))
+      : empty('No releases in the last 30 days.'))}`);
+}
 
 // ---- school portal: shared pieces
 const noticeBlock = n => html`<li><b>${say(n.titleEn, n.titleAr)}</b> <span class="muted">${fmtDate(n.startsAt)} to ${fmtDate(n.endsAt)}${n.audience !== 'ALL' ? ' · ' + title(n.audience) : ''}</span><div>${say(n.bodyEn, n.bodyAr)}</div></li>`;
@@ -884,8 +1085,9 @@ const sectionPicker = (sections, current, route) => html`<label>Section <select 
 SCREENS.today = async () => {
   const [t, notes] = await Promise.all([get('/api/portal/teacher'), get('/api/notices').catch(() => [])]);
   const taken = new Set(t.attendanceTaken);
+  const next = t.schoolDay ? [] : (await get('/api/academic/timetable').catch(() => [])).filter(l => l.day === 0);   // a day off: show Sunday's lessons
   return page('Today', (t.schoolDay ? DAYS[new Date(t.date + 'T00:00:00').getDay()] || '' : 'Not a school day') + ' · ' + t.date,
-    html`${card("Today's lessons", 'From the timetable.', t.lessons.length ? table(['Period', 'Section', 'Subject', 'Room', 'Attendance'], t.lessons.map(l => ({ cells: [l.period, l.section, l.subject, l.room || '', taken.has(l.sectionId) ? badge('b-good', 'Taken') : html`<a class="btn btn-sm" href="#/attendance?s=${l.sectionId}">Take attendance</a>`] }))) : empty(t.schoolDay ? 'No lessons today.' : 'Attendance and lessons run Sunday to Thursday.'))}
+    html`${!t.schoolDay && next.length ? card('Next school day: Sunday', 'Today is a day off. Here is what your week starts with.', table(['Period', 'Section', 'Subject', 'Room'], next.sort((a, b) => a.period - b.period).map(l => ({ cells: [l.period, l.section, l.subject, l.room || ''] })))) : card("Today's lessons", 'From the timetable.', t.lessons.length ? table(['Period', 'Section', 'Subject', 'Room', 'Attendance'], t.lessons.map(l => ({ cells: [l.period, l.section, l.subject, l.room || '', taken.has(l.sectionId) ? badge('b-good', 'Taken') : badge('b-watch', 'Not taken yet')] }))) : empty(t.schoolDay ? 'No lessons today.' : 'Attendance and lessons run Sunday to Thursday.'))}
     ${notes.length ? card('Notices', 'From school administration.', html`<ul class="timeline">${notes.map(noticeBlock)}</ul>`, html`<a href="#/notices">View all →</a>`) : ''}
     ${card('My sections', null, t.sections.length ? table(['Section', 'Students', 'Attendance today', ''], t.sections.map(x => ({ cells: [sectionLabel(x), x.students, taken.has(x.id) ? badge('b-good', 'Taken') : badge('b-watch', 'Not taken'), html`<a href="#/attendance?s=${x.id}">Open</a>`] }))) : empty('You are not assigned to a section yet. The coordinator assigns teachers in Academic setup.'))}`);
 };
@@ -903,11 +1105,24 @@ SCREENS.attendance = async (arg, q) => {
       html`<div class="row">${sectionPicker(sections, sid, 'attendance')} <b>${t.date}</b></div>
       ${card('Class list', roster.length + ' student' + (roster.length === 1 ? '' : 's'), roster.length ? table(['Student', 'Status'], roster.map(r => ({ cells: [r.name, badge(r.status === 'PRESENT' ? 'b-good' : r.status === 'ABSENT' ? 'b-bad' : 'b-watch', title(r.status))] }))) : empty('No students are enrolled in this section yet.'))}`);
   }
+  const rosters = await Promise.all(sections.map(x => x.id === sid ? roster : get('/api/attendance/sections/' + x.id)));
+  const tally = rows => ({ n: rows.length, p: rows.filter(r => r.status === 'PRESENT').length, a: rows.filter(r => r.status === 'ABSENT').length, l: rows.filter(r => r.status === 'LEAVE').length });
+  const all = tally(rosters.flat());
+  const dayOk = true;   // attendance can be recorded on any day
+  const cur = sections.find(x => x.id === sid);
+  const attSeg = r => html`<div class="at-seg" role="radiogroup" aria-label="${r.name}">${[['PRESENT', 'Present', 'p'], ['ABSENT', 'Absent', 'a'], ['LEAVE', 'Leave', 'l']].map(([v, label, c]) => html`<label class="at-${c}"><input type="radio" name="st_${r.studentId}" value="${v}" ${r.status === v ? raw('checked') : ''}><span>${label}</span></label>`)}</div>`;
+  const tl = tally(roster);
   return page('Attendance', 'Record today. Everyone starts as present; change only the absences and leave. Each present day earns the student a point.',
-    html`<div class="row">${sectionPicker(sections, sid, 'attendance')} <b>${t.date}</b></div>
-    ${card('Class list', roster.length + ' student' + (roster.length === 1 ? '' : 's'), roster.length ? html`<form data-form="attendance" data-section="${sid}" data-date="${t.date}">
-      <table class="t"><thead><tr><th>Student</th><th>Status</th></tr></thead><tbody>${roster.map(r => html`<tr><td>${r.name}</td><td>${opt(r, 'PRESENT', 'Present')}${opt(r, 'ABSENT', 'Absent')}${opt(r, 'LEAVE', 'Leave')}</td></tr>`)}</tbody></table>
-      <div class="row" style="margin-top:16px"><button class="btn btn-primary">Save attendance</button></div></form>` : empty('No students are enrolled in this section yet.'))}`);
+    html`<div class="at">
+    ${dayOk ? '' : html`<div class="pk-note" style="background:#FEF3DC;color:#8A5A00">Today is a day off. Attendance is recorded Sunday to Thursday, so you can read the lists but not save.</div>`}
+    <div class="pk-stats at-stats4"><div class="pk-stat"><b>${all.n}</b><small>Students</small></div><div class="pk-stat pk-stat-ok"><b>${all.p}</b><small>Present</small></div><div class="pk-stat pk-stat-bd"><b>${all.a}</b><small>Absent</small></div><div class="pk-stat pk-stat-wn"><b>${all.l}</b><small>On leave</small></div></div>
+    <div class="at-classes">${sections.map((x, i) => { const c = tally(rosters[i]); return html`<a class="at-class ${x.id === sid ? 'on' : ''}" href="#/attendance?s=${x.id}"><b>${sectionLabel(x)}</b><span>${c.n} students</span>${c.a ? html`<em class="bad">${c.a} absent</em>` : html`<em>All present</em>`}</a>`; })}</div>
+    </div>
+    ${card('Class ' + (cur ? sectionLabel(cur) : '') + ' · ' + t.date, roster.length + ' student' + (roster.length === 1 ? '' : 's'), roster.length ? html`<form data-form="attendance" data-section="${sid}" data-date="${t.date}" class="at">
+      <div class="at-bar"><span id="atTally" class="pk-chip pk-chip-ok">${tl.p} ${trText('present')} · ${tl.a} ${trText('absent')} · ${tl.l} ${trText('leave')}</span><button type="button" class="pk-btn pk-btn-sm" data-act="attAllPresent">Mark all present</button></div>
+      <div class="at-list">${roster.map(r => html`<div class="at-row"><span class="pk-av pk-av-sm">${pkInit(r.name)}</span><b>${r.name}</b>${attSeg(r)}</div>`)}</div>
+      <div class="tk-send"><button class="pk-btn pk-btn-go" ${dayOk ? '' : raw('disabled')}>Save attendance</button></div></form>` : empty('No students are enrolled in this section yet.'))}
+    ${card('Pick-up today', 'Parents arriving to collect their children. You can follow it live.', html`<a class="pk-btn pk-btn-go" href="#/pickup">Open the pick-up board</a>`)}`);
 };
 
 SCREENS.marks = async (arg) => {
@@ -926,7 +1141,7 @@ SCREENS.marks = async (arg) => {
       html`${card('New assessment', null, form)}
       ${card('Assessments', null, list.length ? table(['Section', 'Subject', 'Term', 'Assessment', 'Out of', 'Status'], list.map(a => ({ go: '#/marks/' + a.id,
         cells: [a.section, a.subject, a.term, a.name, a.maxMark, a.published ? badge('b-good', 'Published') : a.submitted ? badge('b-internal', 'Submitted') : badge('b-watch', 'Open')] }))) : empty('No assessments yet. Add the first one above.'))}
-      ${card('Publish results', 'Students see a term only after a second person approves it. Every assessment of that term must be submitted first.', terms2.length ? table(['Section', 'Term', 'Marks', ''], terms2.map(t => ({ cells: [t.label, t.term, t.published ? badge('b-good', 'Published') : t.ready ? badge('b-internal', 'All submitted') : badge('b-watch', 'Waiting for submissions'),
+      ${card('Publish results', 'Publishing shows a term to the students at once. Every assessment of that term must be submitted first.', terms2.length ? table(['Section', 'Term', 'Marks', ''], terms2.map(t => ({ cells: [t.label, t.term, t.published ? badge('b-good', 'Published') : t.ready ? badge('b-internal', 'All submitted') : badge('b-watch', 'Waiting for submissions'),
         t.published ? html`<button class="btn btn-sm btn-danger" data-act="unpublishResults" data-section="${t.sec}" data-term="${t.term}">Unpublish</button>` : html`<button class="btn btn-sm btn-primary" data-act="publishResults" data-section="${t.sec}" data-term="${t.term}" ${t.ready ? '' : raw('disabled')}>Ask to publish</button>`] }))) : empty('Nothing to publish yet.'))}`);
   }
   const a = list.find(x => x.id === arg);
@@ -1097,7 +1312,7 @@ function portalHome(d, o) {
       ${spCard('circle', 'Attendance', html`${attendanceDonut(a)}${last ? html`<div class="sp-last"><span>${fmtDate(last.date)}</span>${badge(last.status === 'PRESENT' ? 'b-good' : last.status === 'ABSENT' ? 'b-bad' : 'b-watch', title(last.status))}</div>` : ''}`, '', null, 'sp-f1 sp-att', 'Last days')}
     </div>
     <div class="sp-row">
-      ${spCard('moon', "Today's lessons", d.today.length ? gTable('70px 1.2fr 1.2fr 80px', ['Period', 'Subject', 'Teacher', 'Room'], d.today.map(l => [l.period, l.subject, l.teacher, l.room || ''])) : html`<div class="sp-empty"><span class="sp-ic sp-ic-soft">${sIc('moon')}</span>${d.schoolDay ? 'No lessons today.' : 'Not a school day. Lessons run Sunday to Thursday.'}</div>`, '', null, 'sp-f3')}
+      ${spCard('moon', d.today.length || d.schoolDay ? "Today's lessons" : 'Next school day: Sunday', (d.today.length ? d.today : d.schoolDay ? [] : d.week.filter(l => l.day === 0).sort((a, b) => a.period - b.period)).length ? gTable('70px 1.2fr 1.2fr 80px', ['Period', 'Subject', 'Teacher', 'Room'], (d.today.length ? d.today : d.week.filter(l => l.day === 0).sort((a, b) => a.period - b.period)).map(l => [l.period, l.subject, l.teacher, l.room || ''])) : html`<div class="sp-empty"><span class="sp-ic sp-ic-soft">${sIc('moon')}</span>${d.schoolDay ? 'No lessons today.' : 'Not a school day. Lessons run Sunday to Thursday.'}</div>`, '', null, 'sp-f3')}
       ${spCard('megaphone', 'Notices', d.notices.length ? html`<div class="sp-notices">${d.notices.map(n => html`<div><span class="sp-ic sp-ic-note">${sIc('megaphone')}</span><div><b>${say(n.titleEn, n.titleAr)}</b><small>${fmtDate(n.startsAt)} to ${fmtDate(n.endsAt)} · ${n.audience === 'ALL' ? 'Everyone' : title(n.audience)}</small><p>${say(n.bodyEn, n.bodyAr)}</p></div></div>`)}</div>` : empty('No notices right now.'), html`<a class="sp-link" href="#/notices">View all →</a>`, null, 'sp-f3')}
     </div>
     <div class="sp-row">${spCard('book', 'Study materials', d.materials.length ? gTable('1.2fr 1fr 1.3fr 60px', ['Title', 'Subject', 'Teacher', ''], d.materials.map(m => [html`<b>${m.title}</b>`, m.subject, m.teacher, html`<a href="${m.link}" target="_blank" rel="noopener noreferrer">Open</a>`])) : empty('No materials yet.'), '', null, 'sp-f3')}</div>
@@ -1240,7 +1455,7 @@ const ACT = {
   removeMaterial: async d => { await del('/api/materials/' + d.id); await refreshAfter('Removed.'); },
   removeNotice: async d => { await del('/api/notices/' + d.id); await refreshAfter('Notice removed.'); },
   unlockMarks: async d => { const reason = prompt(trText('Why are you unlocking these marks?')); if (!reason) return; await post(`/api/marks/assessments/${d.id}/unlock`, { reason }); await refreshAfter('Marks unlocked. You can correct them and submit again.'); },
-  publishResults: async d => { await post(`/api/marks/sections/${d.section}/publish`, { term: Number(d.term) }); await refreshAfter('Sent for approval. A principal, coordinator or School IT must approve before students see the results.'); },
+  publishResults: async d => { await post(`/api/marks/sections/${d.section}/publish`, { term: Number(d.term) }); await refreshAfter('Results published. Students can see them now.'); },
   unpublishResults: async d => { const reason = prompt(trText('Why are you unpublishing these results?')); if (!reason) return; await post(`/api/marks/sections/${d.section}/unpublish`, { term: Number(d.term), reason }); await refreshAfter('Results are hidden again.'); },
   addPerson: async f => { await post('/api/people', { email: f.email, name: f.name, role: f.role, studentId: f.role === 'PARENT' && f.studentId ? f.studentId : undefined }); invalidate('people'); await refreshAfter(f.email + ' can now sign in.'); },
   landing: async d => { L.view = d.view; L.mode = d.mode || 'login'; if (L.view === 'testname') L.testPeople = await get('/api/auth/test/people').catch(() => null); showLanding(); },
@@ -1267,14 +1482,29 @@ const ACT = {
   trustType: async d => { await post(`/api/doc-types/${d.id}/trust`); invalidate('docTypes'); await refreshAfter('Type trusted.'); },
   connTest: async d => { const r = await post(`/api/connection/${d.id}/test`); toast((r && r.message) || 'Connection tested.'); },
   connCheck: async d => { const r = await post(`/api/connection/${d.id}/check`); await refreshAfter('Check started. Refresh in a few seconds to see the result.'); },
-  connDisconnect: async d => { await post(`/api/connection/${d.id}/disconnect`); await refreshAfter('Sent for approval. A second EAA administrator must approve before Google Drive is disconnected.'); },
+  connDisconnect: async d => { await post(`/api/connection/${d.id}/disconnect`); await refreshAfter('Google Drive disconnected.'); },
   revokeInvite: async d => { await post(`/api/invitations/${d.id}/revoke`); await refreshAfter('Code revoked.'); },
   setStage: async (d, el) => { await put('/api/marks/students/' + d.id + '/stage', { stage: el.value }); toast('Stage saved.'); },
-  removeSchool: async d => { if (!confirm(trText('Ask to remove') + ' ' + d.name + '?')) return; await del('/api/sites/' + d.id); await refreshAfter('Sent for approval. A second EAA administrator must approve the removal.'); },
+  removeSchool: async d => { if (!confirm(trText('Remove the school') + ' ' + d.name + '?')) return; await del('/api/sites/' + d.id); await refreshAfter('School removed.'); },
   approval: async d => { const note = d.do === 'reject' ? prompt(trText('Reason (optional):'), '') : null; await post(`/api/approvals/${d.id}/${d.do}`, note ? { note } : {}); await refreshAfter('Done.'); },
   connReconnect: async d => { const r = await post(`/api/connection/${d.id}/reconnect`); await refreshAfter('Reconnected.'); },
   verifyLog: async () => { const r = await get('/api/activity-log/verify'); document.getElementById('verify').innerHTML = loc(r.valid ? `<span class="ok">Log verified: ${r.entriesChecked} entries, none altered.</span>` : `<span class="err">Log broken at entry ${esc(r.firstBrokenSeq)}.</span>`).s; },
   restore: async d => { await post(`/api/backup/restores/${d.id}/${d.do}`); await refreshAfter('Updated.'); },
+  photoSave: async () => {
+    const file = document.getElementById('photoFile') && document.getElementById('photoFile').files[0];
+    if (!file) { toast('Choose a photo first.', true); return; }
+    if (file.size > 500 * 1024) { toast('Choose a photo of at most 500 KB.', true); return; }
+    S.me = await put('/api/me/photo', { data: await fileToBase64(file) }); S.photoV = Date.now(); await refreshAfter('Photo saved.');
+  },
+  photoRemove: async () => { S.me = await del('/api/me/photo'); await refreshAfter('Photo removed.'); },
+  ticketStatus: async d => { await post(`/api/support/tickets/${d.id}/status`, { status: d.status }); await refreshAfter('Status updated.'); },
+  pickupVerify: async d => { await post(`/api/pickup/requests/${d.id}/verify`); await refreshAfter('ID checked. You can release the child now.'); },
+  pickupRelease: async d => { await post(`/api/pickup/requests/${d.id}/release`); await refreshAfter('Child released.'); },
+  pickupDecline: async d => { const reason = prompt(trText('Why are you declining?')); if (!reason) return; await post(`/api/pickup/requests/${d.id}/decline`, { reason }); await refreshAfter('Request declined.'); },
+  attAllPresent: async (d, el) => { const f = el.closest('form'); f.querySelectorAll('.at-seg input[value=PRESENT]').forEach(i => { i.checked = true; }); attTally(f); },
+  pickupCancel: async d => { await post(`/api/pickup/requests/${d.id}/cancel`); await refreshAfter('Withdrawn.'); },
+  removeCollector: async d => { await del(`/api/pickup/collectors/${d.id}`); await refreshAfter('Collector removed.'); },
+  deleteFileRequest: async d => { await post(`/api/files/${d.id}/delete-request`); await refreshAfter('Sent for approval. A principal, coordinator or School IT must approve before the file is deleted.'); },
   signout: async () => { await fetch('/logout', { method: 'POST', credentials: 'same-origin', headers: { 'X-XSRF-TOKEN': decodeURIComponent(cookie('XSRF-TOKEN') || '') } }).catch(() => { }); location.href = '/'; }
 };
 
@@ -1337,7 +1567,22 @@ const FORM = {
   lesson: async (f, d) => { await post('/api/academic/timetable', { sectionId: d.section, subjectId: f.subjectId, day: Number(f.day), period: Number(f.period), room: f.room || null }); await refreshAfter('Lesson added.'); },
   assessment: async f => { const [sectionId, subjectId] = f.pair.split('|'); await post('/api/marks/assessments', { sectionId, subjectId, term: Number(f.term), name: f.name, maxMark: Number(f.maxMark) }); await refreshAfter('Assessment added.'); },
   notice: async f => { await post('/api/notices', { ...f, startsAt: new Date(f.startsAt).toISOString(), endsAt: new Date(f.endsAt).toISOString() }); await refreshAfter('Notice published.'); },
-  prefs: async f => { S.me = await put('/api/me/preferences', { language: f.language, digestMode: f.digestMode }); setLang(f.language === 'AR' ? 'ar' : 'en'); await refreshAfter('Saved.'); }
+  prefs: async f => {
+    const muted = (S.me.alertKinds || []).filter(k => k !== 'SECURITY' && !(('alert_' + k) in f));
+    S.me = await put('/api/me/preferences', { language: f.language, digestMode: f.digestMode, muted });
+    setLang(f.language === 'AR' ? 'ar' : 'en'); await refreshAfter('Saved.');
+  },
+  arrive: async (f, d) => { await post('/api/pickup/arrive', { studentId: d.student, collectorId: f.collectorId || null }); await refreshAfter('The school has been told you have arrived.'); },
+  collector: async (f, d) => { await post(`/api/pickup/children/${d.student}/collectors`, { name: f.name, relationship: f.relationship, idNumber: f.idNumber, phone: f.phone }); await refreshAfter('Collector added.'); },
+  profile: async f => { S.me = await put('/api/me/profile', { displayName: f.displayName, phone: f.phone }); await refreshAfter('Details saved.'); },
+  ticket: async (f, d, form) => {
+    const file = form.querySelector('[name=attachment]').files[0];
+    if (file && file.size > 2 * 1024 * 1024) throw new Error('The attachment is too large (at most 2 MB).');
+    const t = await post('/api/support/tickets', { audience: f.audience, title: f.title, description: f.description, category: f.category, urgency: f.urgency, attachmentName: file ? file.name : null, attachmentData: file ? await fileToBase64(file) : null });
+    toast(f.audience === 'LEADERSHIP' ? 'Ticket sent to Leadership at head office.' : 'Ticket sent to your School IT.'); location.hash = '#/ticket/' + t.id;
+  },
+  ticketReply: async (f, d) => { await post(`/api/support/tickets/${d.id}/replies`, { body: f.body }); await refreshAfter('Reply sent.'); },
+  ticketAssign: async (f, d) => { await post(`/api/support/tickets/${d.id}/assign`, { assigneeId: f.assigneeId }); await refreshAfter('Assigned.'); }
 };
 
 document.addEventListener('click', async e => {
@@ -1370,13 +1615,21 @@ document.addEventListener('input', e => {
   const q = e.target.value.trim().toLowerCase();
   document.querySelectorAll('#main table.t tbody tr, #main .sp-gt-r, #main .sp-notices > div, #main .sp-act > div, #main .timeline li').forEach(el => { el.hidden = !!q && !el.textContent.toLowerCase().includes(q); });
 });
+function attTally(form) {
+  const n = v => form.querySelectorAll('.at-seg input[value=' + v + ']:checked').length;
+  const el = document.getElementById('atTally');
+  if (el) { el.textContent = n('PRESENT') + ' ' + trText('present') + ' · ' + n('ABSENT') + ' ' + trText('absent') + ' · ' + n('LEAVE') + ' ' + trText('leave'); el.className = 'pk-chip ' + (n('ABSENT') ? 'pk-chip-bad' : 'pk-chip-ok'); }
+}
 document.addEventListener('change', e => {
+  if (e.target.matches && e.target.matches('.at-seg input')) attTally(e.target.closest('form'));
   const a = e.target.dataset && e.target.dataset.act;
   if (a === 'pickSite') ACT.pickSite({}, e.target);
   if (a === 'prefLang') ACT.prefLang({}, e.target).catch(fail);
   if (a === 'setStage') ACT.setStage({ id: e.target.dataset.id }, e.target).catch(fail);
   if (a === 'pickSection') location.hash = '#/' + e.target.dataset.route + '?s=' + e.target.value;
 });
+document.addEventListener('keydown', e => { if (e.key === 'Enter' && e.target.matches && e.target.matches('.tk-card[data-go]')) location.hash = e.target.dataset.go; });
+
 document.addEventListener('submit', async e => {
   const form = e.target.closest('form[data-form]'); if (!form) return;
   e.preventDefault();
@@ -1408,7 +1661,7 @@ function portalTopbar(initials) {
   return html`<header class="sp-top"><span class="sp-tag">Building a brighter future together</span>
     <label class="sp-search">${sIc('search')}<input id="spSearch" type="search" placeholder="Search lessons, notices, materials" autocomplete="off"></label>
     <a class="sp-bell" href="#/notifications" aria-label="Notifications">${sIc('bell')}${S.unread ? html`<span>${S.unread}</span>` : ''}</a>
-    <button type="button" class="sp-lang" data-act="setLang">${langLabel()}</button><a class="sp-user" href="#/prefs"><span class="who-av">${initials}</span><span><b>${S.me.displayName}</b><small>${ROLE_LABEL[S.me.role]}</small></span></a></header>`;
+    <button type="button" class="sp-lang" data-act="setLang">${langLabel()}</button><a class="sp-user" href="#/prefs">${avatar(initials)}<span><b>${S.me.displayName}</b><small>${ROLE_LABEL[S.me.role]}</small></span></a></header>`;
 }
 const langLabel = () => raw(I18N.lang === 'ar' ? 'English' : 'العربية'); // shown in the other language, never translated
 function shell(route, body) {
@@ -1417,7 +1670,7 @@ function shell(route, body) {
   const portal = S.me.role === 'STUDENT' || S.me.role === 'PARENT';
   return html`<div class="frame">
     <aside class="sidebar"><div class="brand"><div class="brand-row"><span class="brand-mark"></span><span class="brand-name">Hafez</span></div><div class="brand-sub"><span class="brand-ar" lang="ar" dir="rtl">حافظ</span></div><div class="brand-tag">School file register</div></div>
-      <div class="who"><span class="who-av">${initials}</span><div><b>${S.me.displayName}</b>${ROLE_LABEL[S.me.role]}${siteName(S.me.siteId) ? ' · ' + siteName(S.me.siteId) : ''}</div></div>
+      <div class="who">${avatar(initials)}<div><b>${S.me.displayName}</b>${ROLE_LABEL[S.me.role]}${siteName(S.me.siteId) ? ' · ' + siteName(S.me.siteId) : ''}</div></div>
       <nav class="nav">${nav.map(([r, label]) => html`<a class="nav-item ${route === r ? 'nav-on' : ''}" href="#/${r}" style="text-decoration:none">${raw(ICON)}<span>${label}</span>${r === 'notifications' && S.unread ? html`<span class="count">${S.unread}</span>` : ''}</a>`)}
         <div class="nav-sep"></div><a class="nav-item ${route === 'prefs' ? 'nav-on' : ''}" href="#/prefs" style="text-decoration:none">${raw(ICON)}<span>My preferences</span></a>
         <button class="nav-item nav-lang" data-act="setLang">${raw(ICON)}<span>${langLabel()}</span></button>
@@ -1541,7 +1794,7 @@ async function render() {
   S.route = route;
   const studentRoutes = new Set([...(NAV.STUDENT || []).map(x => x[0]), 'prefs']);
   const screen = SCREENS[route];
-  if (S.me.role === 'PARENT' && !['children', 'notices', 'notifications', 'prefs'].includes(route)) { location.hash = '#/' + home(); return; }
+  if (S.me.role === 'PARENT' && !['children', 'pickup', 'notices', 'notifications', 'prefs'].includes(route)) { location.hash = '#/' + home(); return; }
   if (S.me.role === 'STUDENT' && !studentRoutes.has(route)) { location.hash = '#/' + home(); return; }
   if (!screen) { location.hash = '#/' + home(); return; }
   await loadSites(); if (S.unread === 0) refreshBell();

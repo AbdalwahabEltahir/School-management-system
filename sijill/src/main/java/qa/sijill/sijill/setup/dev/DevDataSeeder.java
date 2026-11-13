@@ -55,8 +55,8 @@ import qa.sijill.sijill.workspace.ShareTargetType;
  * starts on an empty database, so every role has something to sign in as and something to look at.
  *
  * <ul>
- *   <li>Head office with Leadership: {@code lina.sabbagh@eaa.test};</li>
- *   <li>School B with an IT admin, a principal, a coordinator (Mathematics) and a teacher;</li>
+ *   <li>Head office with Leadership: {@code lina.sabbagh@alnoor-academy.edu.qa};</li>
+ *   <li>School A (Al Noor Academy) with an IT admin, a principal, a coordinator (Mathematics) and a teacher;</li>
  *   <li>four files owned by the teacher, three of which break rules, checked by the real rule engine.</li>
  * </ul>
  * Does nothing if an organisation already exists, so it never touches real data. All names and files are
@@ -68,7 +68,10 @@ import qa.sijill.sijill.workspace.ShareTargetType;
 public class DevDataSeeder implements ApplicationRunner {
 
     private static final Logger log = LoggerFactory.getLogger(DevDataSeeder.class);
-    private static final String SCHOOL_DOMAIN = "school-b.eaa.test";
+    private static final DemoSchools.Profile PROFILE = DemoSchools.ALL.get(0);   // school A
+    private static final String SCHOOL_DOMAIN = PROFILE.domain();
+    /** The network team signs in through the first workspace's domain, which is school A's. */
+    private static final String HQ = "@" + SCHOOL_DOMAIN;
 
     private final OrgRepository orgs;
     private final SiteRepository sites;
@@ -86,6 +89,9 @@ public class DevDataSeeder implements ApplicationRunner {
     private final MaterialService materials;
     private final Clock clock;
     private final qa.sijill.sijill.people.service.ParentLinks parentLinks;
+    private final qa.sijill.sijill.dashboard.service.ScoreService scores;
+    private final DemoHistory history;
+    private final DemoPickup pickup;
 
     @Override
     @Transactional
@@ -94,26 +100,23 @@ public class DevDataSeeder implements ApplicationRunner {
             log.info("Dev seed skipped: an organisation already exists.");
             return;
         }
-        Org org = setup.createOrganisation("Education Above All (demo)", "EAA Central", "eaa.test",
-                "lina.sabbagh@eaa.test", "Lina Sabbagh");
+        // The first workspace of a network is itself a school (there is no separate head office): school A.
+        Org org = setup.createOrganisation("Education Above All", PROFILE.name(), PROFILE.domain(),
+                "lina.sabbagh" + HQ, "Lina Sabbagh");
 
         // Head-office team: a second EAA administrator (four-eyes needs two) and a read-only Leadership member.
-        Site head = sites.findByDomainIgnoreCase("eaa.test").orElseThrow();
+        Site school = sites.findByDomainIgnoreCase(PROFILE.domain()).orElseThrow();
         for (String[] n : new String[][] {{"eaa.admin2", "Maha Al-Thani", "EAA_ADMIN"}, {"noora.leader", "Noora Al-Kuwari", "LEADERSHIP"}}) {
             Person p = new Person();
             p.setOrgId(org.getId());
-            p.setSiteId(head.getId());
-            p.setEmail(n[0] + "@eaa.test");
+            p.setSiteId(school.getId());
+            p.setEmail(n[0] + HQ);
             p.setDisplayName(n[1]);
             p.setRole(Role.valueOf(n[2]));
             p.setStatus(PersonStatus.ACTIVE);
             people.saveAndFlush(p);
         }
 
-        Site school = new Site();
-        school.setOrgId(org.getId());
-        school.setName("School B");
-        school.setDomain(SCHOOL_DOMAIN);
         school.setFirstCheckAt(Instant.now(clock));
         sites.save(school);
 
@@ -151,6 +154,12 @@ public class DevDataSeeder implements ApplicationRunner {
         for (SchoolFile f : new SchoolFile[] {marks, contacts, exam, handbook}) {
             engine.evaluateFile(f.getId());
         }
+        // Everyday files with nothing wrong, so the school's score reflects a mostly healthy school (see DemoSchools).
+        for (int i = 1; i <= PROFILE.clean(); i++) {
+            SchoolFile ok = file(school, maths, teacher, "Maths worksheet " + i + ".docx", "Academic/Maths", DriveType.SHARED,
+                    "Policy", Sensitivity.INTERNAL, false);
+            engine.evaluateFile(ok.getId());
+        }
         seedSchoolPortal(org, school, maths, it, coordinator, teacher);
         log.info("Dev seed created. Sign in at /dev/login (leadership, it, principal, coordinator, teacher, student, parent).");
     }
@@ -163,11 +172,11 @@ public class DevDataSeeder implements ApplicationRunner {
         english.setName("English");
         subjects.save(english);
         Person englishTeacher = person(org, school, "layla.haddad", "Layla Haddad", Role.TEACHER, english);
-        Person amal = person(org, school, "amal.student", "Amal Student", Role.STUDENT, null);
-        Person bader = person(org, school, "bader.student", "Bader Student", Role.STUDENT, null);
-        Person cara = person(org, school, "cara.student", "Cara Student", Role.STUDENT, null);
-        Person parent = person(org, school, "maha.parent", "Maha Parent", Role.PARENT, null); // follows Amal and Bader
-        log.info("Seeded student IDs (a parent registers with one): Amal {}, Bader {}, Cara {}", amal.getStudentCode(), bader.getStudentCode(), cara.getStudentCode());
+        Person amal = person(org, school, "amal.alsulaiti", "Amal Al-Sulaiti", Role.STUDENT, null);
+        Person bader = person(org, school, "bader.almohannadi", "Bader Al-Mohannadi", Role.STUDENT, null);
+        Person cara = person(org, school, "dana.alkuwari", "Dana Al-Kuwari", Role.STUDENT, null);
+        Person parent = person(org, school, "maha.alsulaiti", "Maha Al-Sulaiti", Role.PARENT, null); // follows Amal and Bader
+        log.info("Seeded student IDs (a parent registers with one): Amal {}, Bader {}, Dana {}", amal.getStudentCode(), bader.getStudentCode(), cara.getStudentCode());
         parentLinks.link(parent.getId(), amal.getId());
         parentLinks.link(parent.getId(), bader.getId());
 
@@ -195,7 +204,7 @@ public class DevDataSeeder implements ApplicationRunner {
                 new AcademicDtos.MarkInput(bader.getId(), new BigDecimal("28.5"), false),
                 new AcademicDtos.MarkInput(cara.getId(), new BigDecimal("33"), false)));
         marks.submit(sara, quiz.id());
-        marks.executePublish(sara, section.id(), 1);
+        marks.publish(sara, section.id(), 1);
         marks.create(sara, section.id(), maths.getId(), 2, "Mid-term exam", new BigDecimal("100")); // still open: the teacher has work to do
 
         Instant now = Instant.now(clock);
@@ -208,6 +217,23 @@ public class DevDataSeeder implements ApplicationRunner {
             attendance.record(admin, section.id(), LocalDate.now(clock.withZone(SchoolCalendar.ZONE)),
                     Map.of(bader.getId(), AttendanceStatus.ABSENT), null);
         }
+
+        pickup.seed(school, List.of(amal, bader, cara), java.util.Arrays.asList(parent, parent, null),
+                List.of("7B", "7B", "7B"), List.of(section.id(), section.id(), section.id()), coordinator);
+
+        // Four months of history, so this school has the same kind of trends as the others (see DemoSchools).
+        Person officer = person(org, school, "yasmin.alattiyah", "Yasmin Al-Attiyah", Role.ATTENDANCE_OFFICER, null);
+        history.academics(school, PROFILE, officer, it);
+        history.notices(school, it);
+        scores.snapshotToday(school);
+        history.scores(school, PROFILE);
+        history.tickets(school, PROFILE, principalOf(school),
+                people.findByOrgIdAndRole(org.getId(), Role.EAA_ADMIN));
+        history.schoolItTickets(school, teacher, it);
+    }
+
+    private Person principalOf(Site school) {
+        return people.findById(school.getPrincipalId()).orElseThrow();
     }
 
     private Person person(Org org, Site site, String localPart, String name, Role role, Subject subject) {

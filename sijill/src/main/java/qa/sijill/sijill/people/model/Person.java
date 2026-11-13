@@ -14,6 +14,7 @@ import lombok.Setter;
 import qa.sijill.sijill.shared.model.BaseEntity;
 import qa.sijill.sijill.shared.model.DigestMode;
 import qa.sijill.sijill.shared.model.Language;
+import qa.sijill.sijill.shared.model.NotificationKind;
 import qa.sijill.sijill.shared.model.Role;
 
 /**
@@ -75,6 +76,45 @@ public class Person extends BaseEntity {
     @Enumerated(EnumType.STRING)
     @Column(name = "digest_mode", nullable = false, length = 20)
     private DigestMode digestMode = DigestMode.PER_ISSUE;
+
+    /** Contact number the person keeps on their own profile (optional). */
+    @Column(length = 30)
+    private String phone;
+
+    /** Profile photo (small image) and its type; null when none was uploaded. */
+    @Column(name = "photo")
+    private byte[] photo;
+
+    @Column(name = "photo_type", length = 30)
+    private String photoType;
+
+    /** Kinds of alert this person has switched off, comma separated (see {@link NotificationKind#mutable()}). */
+    @Column(name = "muted_kinds", nullable = false, length = 200)
+    private String mutedKinds = "";
+
+    /** The alert kinds this person has switched off. */
+    public java.util.Set<NotificationKind> mutedSet() {
+        java.util.Set<NotificationKind> out = java.util.EnumSet.noneOf(NotificationKind.class);
+        for (String k : mutedKinds == null ? new String[0] : mutedKinds.split(",")) {
+            try {
+                if (!k.isBlank()) {
+                    out.add(NotificationKind.valueOf(k.trim()));
+                }
+            } catch (IllegalArgumentException ignored) {
+                // an unknown kind from an older version is simply not muted
+            }
+        }
+        return out;
+    }
+
+    public void setMuted(java.util.Set<NotificationKind> kinds) {
+        this.mutedKinds = kinds.stream().filter(NotificationKind::mutable).map(Enum::name).sorted()
+                .collect(java.util.stream.Collectors.joining(","));
+    }
+
+    public boolean hasMuted(NotificationKind kind) {
+        return kind.mutable() && mutedSet().contains(kind);
+    }
 
     /** A student's ID, given to them when their account is created. A parent uses it to register and follow the student. */
     @Column(name = "student_code", length = 20)

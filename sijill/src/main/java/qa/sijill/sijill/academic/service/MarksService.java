@@ -71,7 +71,6 @@ public class MarksService {
     private final AuditPublisher audit;
     private final ApplicationEventPublisher publisher;
     private final Clock clock;
-    private final qa.sijill.sijill.approvals.service.ApprovalService approvals;
     private final qa.sijill.sijill.academic.repository.EnrolmentRepository enrolments;
     private final qa.sijill.sijill.academic.repository.SectionRepository sectionRepo;
     private final qa.sijill.sijill.organisation.repository.SiteRepository siteRepo;
@@ -268,29 +267,13 @@ public class MarksService {
     // ================================================================== publishing
 
     /**
-     * A teacher of the section asks to make its term visible to the students. Every assessment of that term must be
-     * submitted first. Four-eyes: nothing is published until a second person (principal, coordinator or School IT)
-     * approves it.
+     * A teacher of the section makes its term visible to the students. Every assessment of that term must be
+     * submitted first. No approval is needed; the publication is written to the activity log.
      */
     @Transactional
     public void publish(CurrentUser user, UUID sectionId, int term) {
         Section section = access.requireTeacherOf(user, sectionId);
         checkPublishable(sectionId, term, section);
-        approvals.request(user, user.siteId(), qa.sijill.sijill.approvals.ApprovalActions.MARKS_PUBLISH, sectionId,
-                String.valueOf(term), "Publish term " + term + " results of section " + AcademicAccess.label(section));
-    }
-
-    /** Whether a second person from this school may approve the publication (never the requester; checked elsewhere). */
-    public boolean sameSchool(CurrentUser user, UUID sectionId) {
-        return sectionRepo.findById(sectionId).map(s -> s.getSiteId().equals(user.siteId())).orElse(false);
-    }
-
-    /** Publishes after approval (called by the approval handler). */
-    @Transactional
-    public void executePublish(CurrentUser approver, UUID sectionId, int term) {
-        Section section = sectionRepo.findById(sectionId).orElseThrow(() -> new NotFoundException("The section"));
-        checkPublishable(sectionId, term, section);
-        CurrentUser user = approver;
         publishNow(user, section, term);
     }
 
@@ -378,7 +361,7 @@ public class MarksService {
     /** Who has submitted this week's grades, per teacher, section and subject. */
     @Transactional(readOnly = true)
     public List<qa.sijill.sijill.academic.dto.AcademicDtos.WeeklyRow> weekly(CurrentUser user, java.time.LocalDate week) {
-        if (!user.isAny(Role.SCHOOL_IT, Role.PRINCIPAL, Role.COORDINATOR, Role.LEADERSHIP, Role.EAA_ADMIN)) {
+        if (!user.isAny(Role.SCHOOL_IT, Role.PRINCIPAL, Role.COORDINATOR, Role.LEADERSHIP)) {
             throw new ForbiddenException("The weekly grade overview is for school leadership.");
         }
         java.time.LocalDate start = SchoolCalendar.weekStart(week == null ? access.today() : week);
@@ -405,6 +388,35 @@ public class MarksService {
             }
         }
         return out;
+    }
+
+    /**
+     * The weekly deadline reminder (run on Thursday morning, the last school day): tells each teacher who has not
+     * submitted this week's grades for a section and subject. Returns how many teachers were reminded.
+     */
+    @Transactional
+    public int remindWeekly() {
+        java.time.LocalDate start = SchoolCalendar.weekStart(access.today());
+        Map<UUID, Integer> outstanding = new java.util.LinkedHashMap<>();
+        for (var site : siteRepo.findAll()) {
+            if (!site.isActive() || site.isHeadOffice()) {
+                continue;
+            }
+            List<Assessment> thisWeek = assessments.findBySiteIdOrderByTermAscNameAsc(site.getId()).stream()
+                    .filter(a -> start.equals(a.getWeekStart())).toList();
+            for (var ta : assignments.findBySiteId(site.getId())) {
+                List<Assessment> mine = thisWeek.stream().filter(a -> a.getSectionId().equals(ta.getSectionId())
+                        && a.getSubjectId().equals(ta.getSubjectId())).toList();
+                boolean done = !mine.isEmpty() && mine.stream().allMatch(a -> a.getSubmittedAt() != null);
+                if (!done) {
+                    outstanding.merge(ta.getTeacherId(), 1, Integer::sum);
+                }
+            }
+        }
+        outstanding.forEach((teacherId, n) -> publisher.publishEvent(new PersonNotice(teacherId, NotificationKind.GRADES,
+                "موعد تسليم الدرجات الأسبوعية", "Weekly grades are due",
+                "This week's grades are not submitted yet for " + n + (n == 1 ? " class." : " classes.") + " The week ends on Thursday.")));
+        return outstanding.size();
     }
 
     // ================================================================== performance matrix and stage
