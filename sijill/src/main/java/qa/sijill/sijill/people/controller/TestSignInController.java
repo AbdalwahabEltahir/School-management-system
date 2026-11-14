@@ -51,7 +51,7 @@ public class TestSignInController {
      * off the list, so a deployed copy shows exactly these ten accounts and no others.
      */
     private static final Map<String, Role> ALLOWED = Map.ofEntries(
-            Map.entry("abdalwahab", Role.SCHOOL_IT), Map.entry("huda", Role.PRINCIPAL), Map.entry("noora", Role.LEADERSHIP),
+            Map.entry("abdalwahab", Role.SCHOOL_IT), Map.entry("huda", Role.PRINCIPAL),
             Map.entry("nora", Role.LEADERSHIP), Map.entry("rajaa", Role.COORDINATOR), Map.entry("teacher1", Role.TEACHER),
             Map.entry("teacher2", Role.TEACHER), Map.entry("student", Role.STUDENT), Map.entry("parent", Role.PARENT),
             Map.entry("eaa", Role.EAA_ADMIN), Map.entry("clerk", Role.ATTENDANCE_OFFICER));
