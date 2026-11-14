@@ -78,16 +78,21 @@ const ROLES = ['TEACHER', 'COORDINATOR', 'PRINCIPAL', 'SCHOOL_IT', 'LEADERSHIP',
 const DAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday'];
 
 const isNetworkRole = () => !!S.me && (S.me.role === 'LEADERSHIP' || S.me.role === 'EAA_ADMIN');
+const HIDDEN_ROUTES = {
+  LEADERSHIP: ['weekly', 'recognition', 'support', 'sites'],
+  SCHOOL_IT: ['pickup', 'weekly', 'matrix', 'recognition', 'sites'],
+  EAA_ADMIN: ['overview', 'support']
+};
 const NAV = {
-  EAA_ADMIN: [['overview', 'Overview'], ['incidents', 'Incidents'], ['support', 'Support tickets'], ['rules', 'Rules'], ['sites', 'Schools & settings'], ['connection', 'Connection'], ['approvals', 'Approvals'], ['restores', 'Restores'], ['activity', 'Activity log'], ['notifications', 'Notifications']],
+  EAA_ADMIN: [['incidents', 'Incidents'], ['rules', 'Rules'], ['sites', 'Schools & settings'], ['connection', 'Connection'], ['approvals', 'Approvals'], ['restores', 'Restores'], ['activity', 'Activity log'], ['notifications', 'Notifications']],
   ATTENDANCE_OFFICER: [['attendance', 'Attendance'], ['pickup', 'Pick-up board'], ['support', 'Support tickets'], ['notices', 'Notices'], ['notifications', 'Notifications']],
   TEACHER: [['today', 'Today'], ['pickup', 'Pick-up board'], ['attendance', 'Attendance'], ['marks', 'Marks'], ['points', 'Points'], ['matrix', 'Matrix'], ['approvals', 'Approvals'], ['support', 'Support tickets'], ['materials', 'Study materials'], ['mine', 'My issues'], ['files', 'My files'], ['planning', 'Lesson plans'], ['notices', 'Notices'], ['notifications', 'Notifications']],
   PARENT: [['children', 'My children'], ['pickup', 'Pick-up'], ['notices', 'Notices'], ['notifications', 'Notifications']],
   STUDENT: [['mydash', 'My day'], ['results', 'My results'], ['mymaterials', 'Study materials'], ['notices', 'Notices'], ['notifications', 'Notifications']],
   COORDINATOR: [['dashboard', 'Overview'], ['pickup', 'Pick-up board'], ['invitations', 'Invitations'], ['approvals', 'Approvals'], ['support', 'Support tickets'], ['weekly', 'Weekly grades'], ['matrix', 'Matrix'], ['points', 'Points'], ['followup', 'Follow-up'], ['academic', 'Academic setup'], ['planning', 'Plan review'], ['people', 'People'], ['restores', 'Restores'], ['notifications', 'Notifications']],
   PRINCIPAL: [['school', 'My school'], ['pickup', 'Pick-up board'], ['approvals', 'Approvals'], ['weekly', 'Weekly grades'], ['matrix', 'Matrix'], ['points', 'Points'], ['recognition', 'Recognition'], ['issues', 'Issues'], ['files', 'Files'], ['planning', 'Lesson plans'], ['support', 'Support tickets'], ['restores', 'Restores'], ['notifications', 'Notifications']],
-  SCHOOL_IT: [['noticesAdmin', 'Notices'], ['pickup', 'Pick-up board'], ['support', 'Support tickets'], ['invitations', 'Invitations'], ['approvals', 'Approvals'], ['weekly', 'Weekly grades'], ['matrix', 'Matrix'], ['recognition', 'Recognition'], ['rules', 'Rules'], ['people', 'People'], ['sites', 'Schools & settings'], ['connection', 'Connection'], ['restores', 'Restores'], ['incidents', 'Incidents'], ['activity', 'Activity log'], ['notifications', 'Notifications']],
-  LEADERSHIP: [['overview', 'Overview'], ['weekly', 'Weekly grades'], ['recognition', 'Recognition'], ['incidents', 'Incidents'], ['support', 'Support tickets'], ['rules', 'Rules'], ['sites', 'Schools & settings'], ['connection', 'Connection'], ['activity', 'Activity log'], ['notifications', 'Notifications']]
+  SCHOOL_IT: [['noticesAdmin', 'Notices'], ['support', 'Support tickets'], ['invitations', 'Invitations'], ['approvals', 'Approvals'], ['rules', 'Rules'], ['people', 'People'], ['connection', 'Connection'], ['restores', 'Restores'], ['incidents', 'Incidents'], ['activity', 'Activity log'], ['notifications', 'Notifications']],
+  LEADERSHIP: [['overview', 'Overview'], ['incidents', 'Incidents'], ['rules', 'Rules'], ['connection', 'Connection'], ['activity', 'Activity log'], ['notifications', 'Notifications']]
 };
 
 const lazy = (key, path, map) => async () => {
@@ -113,6 +118,8 @@ async function nameMissing(items, idOf) {
 }
 const fileName = id => (S.files && S.files[id] && S.files[id].name) || 'File';
 const personName = id => id === S.me.id ? 'You' : (S.people && S.people[id] && S.people[id].displayName) || '';
+const NETWORK_ROLES = ['LEADERSHIP', 'EAA_ADMIN'];
+const personSite = p => (p && !NETWORK_ROLES.includes(p.role) && p.siteId) ? siteName(p.siteId) : '';
 const siteName = id => (S.sites && S.sites[id] && S.sites[id].name) || '';
 /** Issue text in the person's language setting: English, Arabic, or both. */
 const say = (en, ar) => {
@@ -559,7 +566,7 @@ SCREENS.overview = async () => {
       </section>
       ${decide}
       <section class="lo-row">
-        <div class="lo-card lo-c5"><div class="lo-card-head"><div><h2>School performance</h2><small>Each school's score out of 100, worst first. Higher is better: 85+ is good, 70–84 needs watching, below 70 needs attention.</small></div><a class="card-link" href="#/sites">All schools →</a></div>${schoolCards}</div>
+        <div class="lo-card lo-c5"><div class="lo-card-head"><div><h2>School performance</h2><small>Each school's score out of 100, worst first. Higher is better: 85+ is good, 70–84 needs watching, below 70 needs attention.</small></div></div>${schoolCards}</div>
         ${trendCard}
         <div class="lo-card lo-c3"><div class="lo-card-head"><h2>Open incidents</h2><span class="lo-pill lo-pill-red">${urgentNow.length}</span><a class="card-link" href="#/incidents">View all →</a></div><small class="lo-sub">Serious events, such as an exam leak or deleted files, that someone must resolve. The chart shows how many were open each day.</small>${incChart}${urgentNow.slice(0, 2).map(i => html`<div class="lo-inc"><div class="lo-inc-top"><b>${siteOf(i.siteId) || title(i.type)}</b><span>${ageOf(i.detectedAt)}</span></div><div class="lo-inc-foot"><em class="lo-sev">${title(i.type)}</em><button class="btn btn-sm" data-act="resolveIncident" data-id="${i.id}">Resolve</button></div></div>`)}</div>
       </section>
@@ -612,7 +619,7 @@ const pdKpi = (label, tag, value, note, pct, cls, icon) => html`<div class="pd-k
   <div class="pd-kpi-top"><span>${label}</span><span class="pd-kpi-tag">${tag}</span></div><b>${value}</b>
   <div class="pd-kpi-foot"><div>${note}</div><div class="pd-bar"><div style="width:${Math.max(0, Math.min(100, pct))}%"></div></div></div></div>`;
 
-const pdPerson = (p, open, colour) => html`<div class="pd-person"><span class="pd-av">${pdInitials(p.displayName)}</span><div class="pd-person-t"><b>${p.displayName}</b><span>${ROLE_LABEL[p.role] || title(p.role)}${p.siteId ? ' · ' + (siteName(p.siteId) || '') : ''}</span></div><span class="pd-open"><b style="color:${colour}">${open}</b><div>open</div></span></div>`;
+const pdPerson = (p, open, colour) => html`<div class="pd-person"><span class="pd-av">${pdInitials(p.displayName)}</span><div class="pd-person-t"><b>${p.displayName}</b><span>${ROLE_LABEL[p.role] || title(p.role)}${personSite(p) ? ' · ' + personSite(p) : ''}</span></div><span class="pd-open"><b style="color:${colour}">${open}</b><div>open</div></span></div>`;
 
 SCREENS.school = async () => {
   const [counts, openIssues, urgent, rules] = await Promise.all([get('/api/follow-up/counts'), get('/api/issues?filter=ALL_OPEN'), get('/api/issues?filter=URGENT'),
@@ -715,7 +722,7 @@ SCREENS.people = async () => {
   const [people, sites] = await Promise.all([loadPeople(), loadSites()]);
   const list = Object.values(people), it = S.me.role === 'SCHOOL_IT', coord = S.me.role === 'COORDINATOR';
   const groups = it ? await get('/api/people/role-groups').catch(() => []) : [];
-  const rows = list.map(p => ({ cells: [html`<b>${p.displayName}</b><div class="muted">${p.email}</div>${p.studentCode ? html`<div class="muted mono">${p.studentCode}</div>` : ''}`, siteName(p.siteId),
+  const rows = list.map(p => ({ cells: [html`<b>${p.displayName}</b><div class="muted">${p.email}</div>${p.studentCode ? html`<div class="muted mono">${p.studentCode}</div>` : ''}`, personSite(p),
     it && !['LEADERSHIP', 'EAA_ADMIN'].includes(p.role) ? html`<form data-form="person" data-id="${p.id}" class="row"><select name="role">${options(ROLES.filter(x => x !== 'LEADERSHIP' && x !== 'EAA_ADMIN'), p.role, x => ROLE_LABEL[x])}</select><select name="status">${options(['NEW', 'ACTIVE', 'LEAVING', 'LEFT'], p.status)}</select><button class="btn btn-sm">Save</button></form>` : html`${ROLE_LABEL[p.role]} · ${title(p.status)}`,
     p.overridden ? badge('b-watch', 'Overridden') : '',
     html`<div class="row">${it ? html`<button class="btn btn-sm" data-act="welcome" data-id="${p.id}">Send welcome</button><button class="btn btn-sm" data-act="editPerson" data-id="${p.id}">Edit</button>` : ''}${it && p.id !== S.me.id && !['LEADERSHIP', 'EAA_ADMIN', 'SCHOOL_IT'].includes(p.role) ? html`<button class="btn btn-sm btn-danger" data-act="deletePerson" data-id="${p.id}" data-confirm="Delete this person permanently?">Delete</button>` : ''}${coord ? html`<button class="btn btn-sm" data-act="personFollowUp" data-id="${p.id}">Follow up</button>` : ''}</div>`] }));
@@ -1670,7 +1677,7 @@ function shell(route, body) {
   const portal = S.me.role === 'STUDENT' || S.me.role === 'PARENT';
   return html`<div class="frame">
     <aside class="sidebar"><div class="brand"><div class="brand-row"><span class="brand-mark"></span><span class="brand-name">Hafez</span></div><div class="brand-sub"><span class="brand-ar" lang="ar" dir="rtl">حافظ</span></div><div class="brand-tag">School file register</div></div>
-      <div class="who">${avatar(initials)}<div><b>${S.me.displayName}</b>${ROLE_LABEL[S.me.role]}${siteName(S.me.siteId) ? ' · ' + siteName(S.me.siteId) : ''}</div></div>
+      <div class="who">${avatar(initials)}<div><b>${S.me.displayName}</b>${ROLE_LABEL[S.me.role]}${personSite(S.me) ? ' · ' + personSite(S.me) : ''}</div></div>
       <nav class="nav">${nav.map(([r, label]) => html`<a class="nav-item ${route === r ? 'nav-on' : ''}" href="#/${r}" style="text-decoration:none">${raw(ICON)}<span>${label}</span>${r === 'notifications' && S.unread ? html`<span class="count">${S.unread}</span>` : ''}</a>`)}
         <div class="nav-sep"></div><a class="nav-item ${route === 'prefs' ? 'nav-on' : ''}" href="#/prefs" style="text-decoration:none">${raw(ICON)}<span>My preferences</span></a>
         <button class="nav-item nav-lang" data-act="setLang">${raw(ICON)}<span>${langLabel()}</span></button>
@@ -1773,7 +1780,7 @@ function problem(e) {
 
 async function refreshBell() { try { const r = await get('/api/notifications/unread-count'); if (r.unread !== S.unread) { S.unread = r.unread; const c = document.querySelector('.nav-item[href="#/notifications"]'); if (c) { const old = c.querySelector('.count'); if (old) old.remove(); if (S.unread) c.insertAdjacentHTML('beforeend', `<span class="count">${S.unread}</span>`); } } } catch { } }
 
-const home = () => ({ TEACHER: 'today', STUDENT: 'mydash', PARENT: 'children', COORDINATOR: 'dashboard', PRINCIPAL: 'school', SCHOOL_IT: 'noticesAdmin', LEADERSHIP: 'overview', EAA_ADMIN: 'overview', ATTENDANCE_OFFICER: 'attendance' }[S.me.role]);
+const home = () => ({ TEACHER: 'today', STUDENT: 'mydash', PARENT: 'children', COORDINATOR: 'dashboard', PRINCIPAL: 'school', SCHOOL_IT: 'noticesAdmin', LEADERSHIP: 'overview', EAA_ADMIN: 'incidents', ATTENDANCE_OFFICER: 'attendance' }[S.me.role]);
 
 async function render() {
   const app = document.getElementById('app');
@@ -1797,6 +1804,7 @@ async function render() {
   if (S.me.role === 'PARENT' && !['children', 'pickup', 'notices', 'notifications', 'prefs'].includes(route)) { location.hash = '#/' + home(); return; }
   if (S.me.role === 'STUDENT' && !studentRoutes.has(route)) { location.hash = '#/' + home(); return; }
   if (!screen) { location.hash = '#/' + home(); return; }
+  if ((HIDDEN_ROUTES[S.me.role] || []).includes(route)) { location.hash = '#/' + home(); return; }   // screens taken off this role's sidebar stay closed when typed in by hand
   await loadSites(); if (S.unread === 0) refreshBell();
   document.getElementById('app').innerHTML = shell(route, html`<p class="muted">Loading…</p>`).s;
   let body;
