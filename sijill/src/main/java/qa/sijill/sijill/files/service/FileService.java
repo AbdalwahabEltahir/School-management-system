@@ -24,6 +24,7 @@ import qa.sijill.sijill.files.repository.FileSnapshotRepository;
 import qa.sijill.sijill.files.repository.SchoolFileRepository;
 import qa.sijill.sijill.organisation.model.Site;
 import qa.sijill.sijill.organisation.repository.SiteRepository;
+import qa.sijill.sijill.shared.exception.BadRequestException;
 import qa.sijill.sijill.shared.exception.ForbiddenException;
 import qa.sijill.sijill.shared.exception.NotFoundException;
 import qa.sijill.sijill.shared.security.AccessPolicy;
@@ -198,6 +199,23 @@ public class FileService {
      */
     @Transactional
     public void requestDelete(CurrentUser user, UUID fileId) {
+        submitDeleteRequest(user, fileId, null);
+    }
+
+    /**
+     * As {@link #requestDelete(CurrentUser, UUID)}, with the reason the teacher or coordinator writes. The approvers
+     * (principal, coordinators and School IT of the school) read it in their Approvals list.
+     */
+    @Transactional
+    public void requestDelete(CurrentUser user, UUID fileId, String reason) {
+        String why = reason == null ? "" : reason.strip();
+        if (why.isEmpty() || why.length() > 200) {
+            throw new BadRequestException("Please give a short reason (up to 200 characters).");
+        }
+        submitDeleteRequest(user, fileId, why);
+    }
+
+    private void submitDeleteRequest(CurrentUser user, UUID fileId, String reason) {
         if (!user.isAny(qa.sijill.sijill.shared.model.Role.TEACHER, qa.sijill.sijill.shared.model.Role.COORDINATOR)) {
             throw new ForbiddenException("Only the file's owner or the subject coordinator can ask to delete a file.");
         }
@@ -206,7 +224,7 @@ public class FileService {
             throw new qa.sijill.sijill.shared.exception.ConflictException("This file is already deleted.");
         }
         approvals.request(user, file.getSiteId(), qa.sijill.sijill.approvals.ApprovalActions.FILE_DELETE, file.getId(), null,
-                "Delete the file \"" + file.getName() + "\" from the register");
+                "Delete the file \"" + file.getName() + "\" from the register" + (reason == null ? "" : " — reason: " + reason));
     }
 
     /** Carries out an approved deletion (called by the approval handler, which has checked who may approve). */

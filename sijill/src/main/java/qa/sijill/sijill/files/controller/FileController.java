@@ -61,9 +61,13 @@ public class FileController {
     /** The coordinator answers an unclear file; it is re-checked straight away. */
     /** Asks to delete a file from the register. Waits for a second person's approval. */
     @org.springframework.web.bind.annotation.PostMapping("/{fileId}/delete-request")
-    public void requestDelete(CurrentUser user, @PathVariable UUID fileId) {
-        files.requestDelete(user, fileId);
+    public void requestDelete(CurrentUser user, @PathVariable UUID fileId,
+                              @org.springframework.web.bind.annotation.RequestBody(required = false) DeleteRequestBody body) {
+        files.requestDelete(user, fileId, body == null ? null : body.reason());
     }
+
+    /** Why the file should be deleted, written by the teacher or coordinator. */
+    public record DeleteRequestBody(String reason) {}
 
     @PutMapping("/{fileId}/classification")
     public FileDtos.ProfileView classify(CurrentUser user, @PathVariable UUID fileId,

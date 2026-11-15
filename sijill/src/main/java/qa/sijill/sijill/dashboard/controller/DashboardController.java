@@ -54,14 +54,15 @@ public class DashboardController {
                 scores.trend(user, siteId, days).stream().map(DashboardDtos.TrendPoint::from).toList());
     }
 
-    /** "Download weekly report (PDF)": the network report for Leadership, the school report for a principal. */
+    /** "Download weekly report (PDF)": the network report for Leadership, the school report for a principal.
+     *  {@code lang=ar} draws it in Arabic (the Arabic view asks for that). */
     @GetMapping("/weekly-report.pdf")
-    public ResponseEntity<byte[]> weeklyReport(CurrentUser user) {
+    public ResponseEntity<byte[]> weeklyReport(CurrentUser user, @RequestParam(defaultValue = "en") String lang) {
         return ResponseEntity.ok()
                 .contentType(MediaType.APPLICATION_PDF)
                 .header(HttpHeaders.CONTENT_DISPOSITION,
                         ContentDisposition.attachment().filename("sijill-weekly-report.pdf").build().toString())
-                .body(reports.weeklyReportPdf(user));
+                .body(reports.weeklyReportPdf(user, "ar".equals(lang)));
     }
 
     /** Major incidents: leadership sees every school's, others their own school's. */

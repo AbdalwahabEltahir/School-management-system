@@ -124,6 +124,8 @@ const siteName = id => (S.sites && S.sites[id] && S.sites[id].name) || '';
 /** Text the server keeps in both languages, shown in the language on screen (the switch decides, not the e-mail setting). */
 /** "Open" on a link is the verb; elsewhere the dictionary reads it as the status (open issues, open tickets). */
 const openWord = () => raw(I18N.lang === 'ar' ? 'فتح' : 'Open');
+/** Download links: in the Arabic view the file (PDF or CSV) is written in Arabic too. */
+const dl = path => path + (I18N.lang === 'ar' ? (path.includes('?') ? '&' : '?') + 'lang=ar' : '');
 const inLang = (en, ar) => (I18N.lang === 'ar' ? ar || en : en || ar) || '';
 const say = (en, ar) => I18N.lang === 'ar' && ar ? html`<span lang="ar" dir="rtl">${ar}</span>` : html`${en || ar || ''}`;
 
@@ -203,7 +205,7 @@ SCREENS.issues = async (arg, q) => {
   await nameMissing(issues, i => i.fileId);
   return page('Issues', S.me.role === 'PRINCIPAL' ? 'Everything in your school (read-only).' : 'Issues for your subject.',
     card('Issues', null, html`${seg('f', [['ALL_OPEN', 'Open'], ['NEEDS_ME', 'Needs me'], ['URGENT', 'Urgent'], ['CLOSED', 'Closed'], ['ALL', 'All']], filter)}<div style="margin-top:12px">${issueTable(issues)}</div>`),
-    html`<a class="btn" href="/api/exports/issues.csv">Download CSV</a>`);
+    html`<a class="btn" href="${dl('/api/exports/issues.csv')}">Download CSV</a>`);
 };
 
 // ---- coordinator overview: every open issue in the subject, as flat cards and charts
@@ -248,7 +250,7 @@ SCREENS.dashboard = async (arg, q) => {
 
   return html`<div class="co">
     <header class="co-top"><div class="co-title"><span></span><div><h1>Coordinator overview</h1><p>Every file with an issue across your school, in one place.</p></div></div>
-      <div class="co-btns"><a class="co-btn" href="/api/exports/issues.csv">Download CSV</a><a class="co-btn co-btn-fill" href="#/review">Review queue →${review.length ? ' (' + review.length + ')' : ''}</a></div></header>
+      <div class="co-btns"><a class="co-btn" href="${dl('/api/exports/issues.csv')}">Download CSV</a><a class="co-btn co-btn-fill" href="#/review">Review queue →${review.length ? ' (' + review.length + ')' : ''}</a></div></header>
 
     <section class="co-row">
       <div class="co-k co-k-open"><div class="co-k-top"><span>OPEN ISSUES</span><i>${nOpen ? 'Needs review' : 'All clear'}</i></div><div class="co-k-main"><b>${nOpen}</b><span>files waiting for a decision across ${siteLabel}</span></div></div>
@@ -344,7 +346,7 @@ SCREENS.file = async id => {
     ${card('What Hafez understood', null, p ? html`<div class="row"><b>${p.docType}</b> ${sensBadge(p.sensitivity)} <span class="muted">${Math.round(p.confidence * 100)}% sure</span> ${p.needsReview ? badge('b-watch', 'Needs review') : ''}</div>
       <ul>${p.evidence.map(e => html`<li>${e}</li>`)}</ul>` : empty('Not classified yet.'))}
     ${classify}
-    ${['TEACHER', 'COORDINATOR'].includes(S.me.role) && !f.trashed ? card('Delete this file', 'Removes it from the register. A principal, coordinator or School IT must approve first. Your Google Drive is never touched.', html`<button class="btn btn-danger" data-act="deleteFileRequest" data-id="${id}" data-confirm="Ask to delete this file?">Ask to delete</button>`) : ''}
+    ${['TEACHER', 'COORDINATOR'].includes(S.me.role) && !f.trashed ? card('Delete this file', 'Removes it from the register. A principal, coordinator or School IT must approve first. Your Google Drive is never touched.', deleteRequestForm(html`<input type="hidden" name="fileId" value="${id}">`)) : ''}
     ${card('Who can open it', null, table(['Who', 'Type', 'Access', 'Outside'], d.permissions.map(x => ({ cells: [x.grantee, title(x.targetType), title(x.accessLevel), x.external ? badge('b-bad', 'Outside') : 'No'] }))))}
     ${card('Issues on this file', null, d.issues.length ? issueTable(d.issues) : empty('No issues.'))}
     ${card('History', null, d.history.length ? table(['When', 'Drive', 'Folder', 'Permissions'], d.history.map(h => ({ cells: [fmt(h.at), title(h.driveType), h.folderPath || '', h.permissionCount] }))) : empty('No snapshots yet.'))}`,
@@ -494,7 +496,7 @@ SCREENS.overview = async () => {
       <div class="lo-sfoot"><span class="${s.openUrgent ? 'lo-red' : ''}">▲ ${s.openUrgent} urgent</span><span>${s.filesChecked} files</span></div></a>`; })}</div>` : empty('No scored school yet.');
 
   const actions = [['#/rules', 'Review rules' + (pendingRules.length ? ' (' + pendingRules.length + ')' : ''), IC.list], ['#/incidents', 'Incidents' + (urgentNow.length ? ' (' + urgentNow.length + ')' : ''), IC.warn], ['#/activity', 'Activity log', IC.clock]];
-  if (S.me.canDownloadWeeklyReport) actions.splice(1, 0, ['/api/dashboard/weekly-report.pdf', 'Weekly report (PDF)', IC.dl]);
+  if (S.me.canDownloadWeeklyReport) actions.splice(1, 0, [dl('/api/dashboard/weekly-report.pdf'), 'Weekly report (PDF)', IC.dl]);
 
   // ---- network trend from each school's snapshots (sums the schools by date)
   const trends = await Promise.all(schools.map(s => get(`/api/dashboard/sites/${s.siteId}/score?days=30`).then(r => r.trend || []).catch(() => [])));
@@ -562,7 +564,7 @@ SCREENS.overview = async () => {
     <header class="lo-hero">${raw(LO_ART)}<div class="lo-hero-top"><div class="lo-hero-text"><h1>${hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening'}${first ? ', ' + first : ''}</h1>
       ${o.checkedYet ? '' : html`<p>No check has finished yet. Numbers appear after the first check.</p>`}</div>
       <div class="lo-hero-tools"><a class="lo-bell" href="#/notifications" aria-label="Notifications">${ico('M18 8a6 6 0 10-12 0c0 7-3 9-3 9h18s-3-2-3-9M13.7 21a2 2 0 01-3.4 0')}${S.unread ? html`<span>${S.unread}</span>` : ''}</a>
-      ${S.me.canDownloadWeeklyReport ? html`<a class="lo-hero-btn" href="/api/dashboard/weekly-report.pdf">${ico(IC.dl)} Weekly report (PDF)</a>` : ''}</div></div></header>
+      ${S.me.canDownloadWeeklyReport ? html`<a class="lo-hero-btn" href="${dl('/api/dashboard/weekly-report.pdf')}">${ico(IC.dl)} Weekly report (PDF)</a>` : ''}</div></div></header>
     <div class="lo-body">
       ${firstCheck}${noSchools}
       <section class="lo-kpis">
@@ -657,7 +659,7 @@ SCREENS.school = async () => {
 
   return html`<div class="pd">
   <section class="pd-hero">${raw(PD_SKYLINE)}<div class="pd-hero-t"><div class="pd-eyebrow"><span></span>MY SCHOOL</div><h1>${school}</h1><p>Where your school stands today.</p>
-    ${S.me.canDownloadWeeklyReport ? html`<a class="pd-dl" href="/api/dashboard/weekly-report.pdf"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 4v11m0 0l-4-4m4 4l4-4M5 20h14"/></svg>Weekly report (PDF)</a>` : ''}</div>${pdGauge(health)}</section>
+    ${S.me.canDownloadWeeklyReport ? html`<a class="pd-dl" href="${dl('/api/dashboard/weekly-report.pdf')}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 4v11m0 0l-4-4m4 4l4-4M5 20h14"/></svg>Weekly report (PDF)</a>` : ''}</div>${pdGauge(health)}</section>
   <section class="pd-kpis">${pdKpi('Open', 'Needs review', counts.open, 'Files waiting for a decision', pct(counts.open), 'pd-k-open', LIC.shield)}
     ${pdKpi('Urgent', 'Act first', counts.urgent, counts.urgent ? counts.urgent + ' files need action first' : 'Nothing urgent', counts.open ? counts.urgent * 100 / counts.open : 0, 'pd-k-urgent', LIC.warn)}
     ${pdKpi('Follow-up', counts.needFollowUp ? 'Waiting' : 'All clear', counts.needFollowUp, counts.needFollowUp ? 'Owners waiting on you' : 'No owners waiting on you', counts.open ? counts.needFollowUp * 100 / counts.open : 0, 'pd-k-follow', LIC.clock)}
@@ -823,13 +825,25 @@ SCREENS.invitations = async () => {
 
 // ---- approvals (four-eyes): what waits for a second person
 const APPROVAL_LABEL = { FILE_DELETE: 'Delete file' };
+/** Own words for a request's status ("Pending" alone reads as an unused invitation code in Arabic). */
+const APPROVAL_STATUS = { PENDING: 'Waiting for approval', APPROVED: 'Approved', REJECTED: 'Rejected', CANCELLED: 'Withdrawn' };
+/** "Request to delete a file": the reason is required; the request waits in Approvals for the principal or a coordinator. */
+const deleteRequestForm = fileField => html`<form data-form="deleteFileRequest">${fileField}
+  ${field('Why should it be deleted?', html`<textarea name="reason" maxlength="200" required placeholder="For example: an old copy, replaced by the new version"></textarea>`)}
+  <button class="btn btn-danger">Send the request</button></form>`;
+
 SCREENS.approvals = async () => {
-  const list = await get('/api/approvals');
+  const canAsk = ['TEACHER', 'COORDINATOR'].includes(S.me.role);
+  const [list, files] = await Promise.all([get('/api/approvals'), canAsk ? loadFiles() : Promise.resolve({})]);
+  const deletable = Object.values(files || {}).filter(f => !f.trashed).sort((a, b) => a.name.localeCompare(b.name));
+  const askCard = !canAsk ? '' : card('Request to delete a file', 'Write why the file should go. The principal or a coordinator of your school approves it before it is deleted from the register. Your Google Drive is never touched.',
+    deletable.length ? deleteRequestForm(field('File', html`<select class="input" name="fileId" required>${deletable.map(f => html`<option value="${f.id}">${f.name}</option>`)}</select>`))
+      : empty('You have no files that can be deleted.'));
   const rows = list.map(a => ({ cells: [APPROVAL_LABEL[a.action] || a.action, a.summary, a.requestedBy, fmt(a.requestedAt),
-    badge(a.status === 'APPROVED' ? 'b-good' : a.status === 'PENDING' ? 'b-watch' : 'b-neutral', title(a.status)),
+    badge(a.status === 'APPROVED' ? 'b-good' : a.status === 'PENDING' ? 'b-watch' : 'b-neutral', APPROVAL_STATUS[a.status] || title(a.status)),
     a.status === 'PENDING' ? html`<div class="row">${a.canDecide ? html`<button class="btn btn-sm btn-primary" data-act="approval" data-do="approve" data-id="${a.id}">Approve</button><button class="btn btn-sm btn-danger" data-act="approval" data-do="reject" data-id="${a.id}">Reject</button>` : ''}${a.mine ? html`<button class="btn btn-sm" data-act="approval" data-do="cancel" data-id="${a.id}">Withdraw</button>` : ''}</div>` : (a.decidedBy ? 'by ' + a.decidedBy : '')] }));
   return page('Approvals', 'Deleting a file needs a second person. You cannot approve your own request.',
-    card('Requests', null, list.length ? table(['Action', 'What', 'Requested by', 'When', 'Status', ''], rows) : empty('Nothing is waiting for approval.')));
+    html`${askCard}${card('Requests', null, list.length ? table(['Action', 'What', 'Requested by', 'When', 'Status', ''], rows) : empty('Nothing is waiting for approval.'))}`);
 };
 
 // ---- connection
@@ -853,7 +867,7 @@ SCREENS.activity = async () => {
   const list = await get('/api/activity-log');
   return page('Activity log', 'Every change is recorded in a chain that shows if anyone altered it.',
     card('Entries', null, table(['#', 'When', 'Action', 'About', 'Change'], list.map(e => ({ cells: [e.seq, fmt(e.at), e.action, e.entityType || '', [e.before, e.after].filter(Boolean).join(' → ')] }))), html`<span id="verify"></span>`),
-    html`<button class="btn" data-act="verifyLog">Verify the log</button><a class="btn" href="/api/activity-log/download">Download</a>`,
+    html`<button class="btn" data-act="verifyLog">Verify the log</button><a class="btn" href="${dl('/api/activity-log/download')}">Download</a>`,
     [['Entries', list.length, '', 'brand', 'list', 'In the chain'], ['Latest', list[0] ? fmtDate(list[0].at) : '—', '', 'slate', 'clock', list[0] ? list[0].action : 'Nothing recorded'], ['Distinct actions', new Set(list.map(e => e.action)).size, '', 'slate', 'clip', 'Kinds of change']]);
 };
 
@@ -1148,12 +1162,12 @@ SCREENS.marks = async (arg) => {
       <select class="input" name="pair">${mine.map(m => html`<option value="${m.value}">${m.label}</option>`)}</select>
       <select class="input" name="term">${terms.map(t => html`<option value="${t.number}">${t.name}</option>`)}</select>
       <input class="input" name="name" placeholder="Name, e.g. Quiz 1" required><input class="input" type="number" name="maxMark" min="1" max="1000" step="0.01" placeholder="Out of" required><button class="btn btn-primary">Add assessment</button></form>`;
-    const terms2 = [...new Set(list.map(a => a.sectionId + '|' + a.term))].map(k => { const [sec, term] = k.split('|'); const rows = list.filter(a => a.sectionId === sec && String(a.term) === term); return { sec, term: Number(term), label: rows[0].section, published: rows.every(r => r.published), ready: rows.every(r => r.submitted) }; });
+    const terms2 = [...new Set(list.map(a => a.sectionId + '|' + a.term))].map(k => { const [sec, term] = k.split('|'); const rows = list.filter(a => a.sectionId === sec && String(a.term) === term); return { sec, term: Number(term), label: rows[0].section, published: rows.some(r => r.termPublished), waiting: rows.filter(r => !r.submitted).length, ready: rows.every(r => r.submitted) }; });
     return page('Marks', 'You set the assessments for the sections and subjects you teach, enter the grades, then submit to lock them.',
       html`${card('New assessment', null, form)}
       ${card('Assessments', null, list.length ? table(['Section', 'Subject', 'Term', 'Assessment', 'Out of', 'Status'], list.map(a => ({ go: '#/marks/' + a.id,
         cells: [a.section, a.subject, a.term, a.name, a.maxMark, a.published ? badge('b-good', 'Published') : a.submitted ? badge('b-internal', 'Submitted') : badge('b-watch', 'Open')] }))) : empty('No assessments yet. Add the first one above.'))}
-      ${card('Publish results', 'Publishing shows a term to the students at once. Every assessment of that term must be submitted first.', terms2.length ? table(['Section', 'Term', 'Marks', ''], terms2.map(t => ({ cells: [t.label, t.term, t.published ? badge('b-good', 'Published') : t.ready ? badge('b-internal', 'All submitted') : badge('b-watch', 'Waiting for submissions'),
+      ${card('Publish results', 'Publishing shows a term to the students and parents at once. Every assessment of that term must be submitted first. You can keep adding assessments to a published term: each one appears as soon as you submit its marks.', terms2.length ? table(['Section', 'Term', 'Marks', ''], terms2.map(t => ({ cells: [t.label, t.term, t.published ? html`${badge('b-good', 'Published')}${t.waiting ? html` <span class="muted">${t.waiting + ' waiting for marks'}</span>` : ''}` : t.ready ? badge('b-internal', 'All submitted') : badge('b-watch', 'Waiting for submissions'),
         t.published ? html`<button class="btn btn-sm btn-danger" data-act="unpublishResults" data-section="${t.sec}" data-term="${t.term}">Unpublish</button>` : html`<button class="btn btn-sm btn-primary" data-act="publishResults" data-section="${t.sec}" data-term="${t.term}" ${t.ready ? '' : raw('disabled')}>Ask to publish</button>`] }))) : empty('Nothing to publish yet.'))}`);
   }
   const a = list.find(x => x.id === arg);
@@ -1161,7 +1175,7 @@ SCREENS.marks = async (arg) => {
   const sheet = await get(`/api/marks/assessments/${arg}/sheet`);
   const locked = a.submitted;
   return page(a.name, `${a.section} · ${a.subject} · term ${a.term} · out of ${a.maxMark}`,
-    html`${locked ? html`<div class="callout callout-info">These marks are submitted and locked. ${a.published ? 'The results are published: unpublish the term first to change them.' : html`<button class="btn btn-sm" data-act="unlockMarks" data-id="${arg}">Unlock to correct</button>`}</div>` : ''}
+    html`${locked ? html`<div class="callout callout-info">These marks are submitted and locked. ${a.termPublished ? 'The results are published: unpublish the term first to change them.' : html`<button class="btn btn-sm" data-act="unlockMarks" data-id="${arg}">Unlock to correct</button>`}</div>` : ''}
     ${card('Marks', null, sheet.length ? html`<form data-form="marks" data-id="${arg}"><table class="t"><thead><tr><th>Student</th><th>Mark (0 to ${a.maxMark})</th><th>Absent</th></tr></thead><tbody>${sheet.map(r => html`<tr data-student="${r.studentId}"><td>${r.name}</td><td><input class="input" type="number" min="0" max="${a.maxMark}" step="0.01" value="${r.value ?? ''}" ${locked ? raw('disabled') : ''}></td><td><input type="checkbox" ${r.absent ? raw('checked') : ''} ${locked ? raw('disabled') : ''}></td></tr>`)}</tbody></table>
       ${locked ? '' : html`<div class="row" style="margin-top:16px"><button class="btn" name="mode" value="save">Save</button><button class="btn btn-primary" name="mode" value="submit">Save and submit</button></div>`}</form>` : empty('No students are enrolled in this section yet.'))}`,
     html`<a class="btn" href="#/marks">Back</a>`);
@@ -1516,13 +1530,18 @@ const ACT = {
   attAllPresent: async (d, el) => { const f = el.closest('form'); f.querySelectorAll('.at-seg input[value=PRESENT]').forEach(i => { i.checked = true; }); attTally(f); },
   pickupCancel: async d => { await post(`/api/pickup/requests/${d.id}/cancel`); await refreshAfter('Withdrawn.'); },
   removeCollector: async d => { await del(`/api/pickup/collectors/${d.id}`); await refreshAfter('Collector removed.'); },
-  deleteFileRequest: async d => { await post(`/api/files/${d.id}/delete-request`); await refreshAfter('Sent for approval. A principal, coordinator or School IT must approve before the file is deleted.'); },
   signout: async () => { await fetch('/logout', { method: 'POST', credentials: 'same-origin', headers: { 'X-XSRF-TOKEN': decodeURIComponent(cookie('XSRF-TOKEN') || '') } }).catch(() => { }); location.href = '/'; }
 };
 
 // =============================================================== forms
 const csv = s => String(s || '').split(',').map(x => x.trim()).filter(Boolean);
 const FORM = {
+  deleteFileRequest: async f => {
+    await post(`/api/files/${f.fileId}/delete-request`, { reason: f.reason });
+    invalidate('files');
+    location.hash = '#/approvals';
+    await refreshAfter('Sent for approval. The principal or a coordinator must approve before the file is deleted.');
+  },
   disagree: async (f, d) => { await post(`/api/issues/${d.id}/disagree`, { note: f.note }); await refreshAfter('Your coordinator will look at it.'); },
   exception: async (f, d) => { await post(`/api/exceptions/issues/${d.id}`, { reason: f.reason, endsOn: f.endsOn }); await refreshAfter('Exception allowed.'); },
   followUpIssue: async (f, d) => { await post(`/api/follow-up/${d.id}/follow-up`, { note: f.note || null }); await refreshAfter('Follow-up recorded.'); },

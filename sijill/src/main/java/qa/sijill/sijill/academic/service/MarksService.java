@@ -99,10 +99,7 @@ public class MarksService {
         }
         assignments.findBySectionIdAndSubjectId(sectionId, subjectId)
                 .orElseThrow(() -> new BadRequestException("Assign a teacher to this subject for the section first."));
-        if (publications.findBySectionIdAndTerm(sectionId, term).isPresent()) {
-            throw new ConflictException("Term " + term + " of section " + AcademicAccess.label(section)
-                    + " is already published. Unpublish it to add an assessment.");
-        }
+        // A published term can still take more assessments: each one reaches the students once its marks are submitted.
         Assessment a = new Assessment();
         a.setOrgId(user.orgId());
         a.setSiteId(user.siteId());
@@ -115,7 +112,8 @@ public class MarksService {
         assessments.save(a);
         audit.log(user.orgId(), user.siteId(), ActivityActions.ASSESSMENT_CREATED).by(user).on("Section", sectionId)
                 .subject(subjectId).change(null, a.getName() + " (term " + term + ", max " + maxMark.stripTrailingZeros().toPlainString() + ")").save();
-        return view(a, access.sectionsById(user.siteId()), access.subjectNames(user.siteId()), false);
+        return view(a, access.sectionsById(user.siteId()), access.subjectNames(user.siteId()),
+                publications.findBySectionIdAndTerm(sectionId, term).isPresent());
     }
 
     /** Assessments the user may see: school staff for the school, a teacher only for the sections and subjects they teach. */
@@ -243,6 +241,13 @@ public class MarksService {
         a.setSubmittedAt(Instant.now(clock));
         audit.log(user.orgId(), user.siteId(), ActivityActions.MARKS_SUBMITTED).by(user).on("Section", a.getSectionId())
                 .subject(a.getSubjectId()).change("open", "submitted: " + a.getName()).save();
+        // The term is already published: this assessment is visible now, so its students (and their parents) are told.
+        if (publications.findBySectionIdAndTerm(a.getSectionId(), a.getTerm()).isPresent()) {
+            for (Person student : access.students(a.getSectionId())) {
+                publisher.publishEvent(new PersonNotice(student.getId(), NotificationKind.SYSTEM, "نتائجك منشورة الآن",
+                        "Your results are published", a.getName() + " · Term " + a.getTerm(), a.getName() + " · الفصل " + a.getTerm()));
+            }
+        }
     }
 
     /** The teacher of the subject reopens their own submitted marks for correction. The reason is logged (BR-006). */
@@ -323,7 +328,10 @@ public class MarksService {
                 .change("term " + term + " published", "unpublished: " + reason.trim()).save();
     }
 
-    /** A student's own published results. Terms that are not published do not appear at all. */
+    /**
+     * A student's own published results: every submitted assessment of a published term. Terms that are not published
+     * do not appear at all, and an assessment added to a published term appears once its marks are submitted.
+     */
     @Transactional(readOnly = true)
     public List<ResultRow> myResults(CurrentUser user) {
         Section section = access.studentSection(user);
@@ -335,7 +343,7 @@ public class MarksService {
         List<ResultRow> rows = new ArrayList<>();
         for (Assessment a : assessments.findBySectionIdOrderByTermAscNameAsc(section.getId())) {
             Mark m = mine.get(a.getId());
-            if (published.contains(a.getTerm()) && m != null) {
+            if (published.contains(a.getTerm()) && a.getSubmittedAt() != null && m != null) {
                 rows.add(new ResultRow(a.getTerm(), subjectNames.getOrDefault(a.getSubjectId(), ""), a.getName(),
                         m.getValue(), a.getMaxMark(), m.isAbsent()));
             }
@@ -483,10 +491,12 @@ public class MarksService {
         audit.log(user.orgId(), user.siteId(), "STUDENT_STAGE_CHANGED").by(user).on("Person", studentId).change(before, wanted.name()).save();
     }
 
-    private AssessmentView view(Assessment a, Map<UUID, Section> sectionById, Map<UUID, String> subjectNames, boolean published) {
+    /** {@code published}: the students see this assessment (its term is published and its marks are submitted). */
+    private AssessmentView view(Assessment a, Map<UUID, Section> sectionById, Map<UUID, String> subjectNames, boolean termPublished) {
+        boolean submitted = a.getSubmittedAt() != null;
         return new AssessmentView(a.getId(), a.getSectionId(), AcademicAccess.label(sectionById.get(a.getSectionId())),
                 a.getSubjectId(), subjectNames.getOrDefault(a.getSubjectId(), ""), a.getTerm(), a.getName(), a.getMaxMark(),
-                a.getSubmittedAt() != null, published, a.getWeekStart());
+                submitted, submitted && termPublished, a.getWeekStart(), termPublished);
     }
 
     private static String describe(Mark m) {
