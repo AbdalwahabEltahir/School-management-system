@@ -6,7 +6,7 @@
 # sijill.bootstrap in application.yml, so nobody is locked out.
 services:
   - type: web
-    name: sijill
+    name: hafez
     runtime: docker
     dockerfilePath: ./sijill/Dockerfile
     dockerContext: ./sijill
