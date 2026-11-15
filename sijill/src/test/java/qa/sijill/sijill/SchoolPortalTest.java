@@ -363,6 +363,37 @@ class SchoolPortalTest extends WorldTestSupport {
     }
 
     @Test
+    void aTeacherPublishesOneAssessmentAtATimeAndAsManyAsTheyLike() {
+        School s = school();
+        var teacher = user(s.w().teacher());
+        UUID quiz = assessment(s, "Quiz 1", 1, "40");
+        UUID exam = assessment(s, "Exam", 1, "100");
+        UUID later = assessment(s, "Project", 1, "50");
+        marks.enter(teacher, quiz, allMarks(s, "35", "28.5", "30"));
+        marks.enter(teacher, exam, allMarks(s, "80", "70", "60"));
+        assertThatThrownBy(() -> marks.publishAssessment(teacher, quiz)).isInstanceOf(ConflictException.class).hasMessageContaining("not submitted");
+        marks.submit(teacher, quiz);
+        marks.submit(teacher, exam);
+
+        // the term is NOT published and "Project" is still open: each submitted assessment can still go out alone
+        long told = count(s.s1(), NotificationKind.SYSTEM);
+        marks.publishAssessment(teacher, exam);
+        assertThat(marks.myResults(user(s.s1()))).extracting(r -> r.assessment()).containsExactly("Exam");
+        marks.publishAssessment(teacher, quiz);
+        assertThat(marks.myResults(user(s.s1()))).extracting(r -> r.assessment()).containsExactlyInAnyOrder("Exam", "Quiz 1");
+        assertThat(count(s.s1(), NotificationKind.SYSTEM)).isEqualTo(told + 2);
+        assertThat(marks.myResults(user(s.s2())).get(0).value()).isNotNull();       // each student sees their own marks
+        assertThat(marks.myResults(user(s.other()))).isEmpty();                      // another section sees nothing
+        assertThatThrownBy(() -> marks.publishAssessment(teacher, exam)).isInstanceOf(ConflictException.class).hasMessageContaining("already published");
+        assertThatThrownBy(() -> marks.unlock(teacher, exam, "x")).isInstanceOf(ConflictException.class);
+        assertThat(marks.list(teacher, null)).filteredOn(a -> a.id().equals(later)).singleElement().satisfies(a -> assertThat(a.published()).isFalse());
+
+        assertThatThrownBy(() -> marks.unpublishAssessment(teacher, exam, " ")).isInstanceOf(BadRequestException.class);
+        marks.unpublishAssessment(teacher, exam, "A mark was wrong");
+        assertThat(marks.myResults(user(s.s1()))).extracting(r -> r.assessment()).containsExactly("Quiz 1");
+    }
+
+    @Test
     void thisWeeksSubmissionsAreVisibleToLeadershipAndTheMatrixShowsEveryAssessment() {
         School s = school();
         UUID quiz = assessment(s, "Quiz 1", 1, "40");

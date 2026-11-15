@@ -72,6 +72,8 @@ public final class ActivityActions {
     public static final String MARKS_UNLOCKED = "MARKS_UNLOCKED";
     public static final String RESULTS_PUBLISHED = "RESULTS_PUBLISHED";
     public static final String RESULTS_UNPUBLISHED = "RESULTS_UNPUBLISHED";
+    public static final String ASSESSMENT_PUBLISHED = "ASSESSMENT_PUBLISHED";
+    public static final String ASSESSMENT_UNPUBLISHED = "ASSESSMENT_UNPUBLISHED";
     public static final String NOTICE_PUBLISHED = "NOTICE_PUBLISHED";
     public static final String NOTICE_REMOVED = "NOTICE_REMOVED";
     public static final String MATERIAL_ADDED = "MATERIAL_ADDED";

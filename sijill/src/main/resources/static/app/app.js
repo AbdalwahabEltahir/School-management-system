@@ -1151,6 +1151,10 @@ SCREENS.attendance = async (arg, q) => {
     ${card('Pick-up today', 'Parents arriving to collect their children. You can follow it live.', html`<a class="pk-btn pk-btn-go" href="#/pickup">Open the pick-up board</a>`)}`);
 };
 
+/** Publish or hide ONE assessment (for example the exam), on its own: the teacher can publish as many as they like. */
+const pubButton = a => a.ownPublished ? html`<button class="btn btn-sm btn-danger" data-act="unpublishAssessment" data-id="${a.id}">Unpublish</button>`
+  : a.published ? '' : a.submitted ? html`<button class="btn btn-sm btn-primary" data-act="publishAssessment" data-id="${a.id}">Publish these marks</button>` : '';
+
 SCREENS.marks = async (arg) => {
   const list = await get('/api/marks/assessments');
   if (!arg) {
@@ -1165,9 +1169,9 @@ SCREENS.marks = async (arg) => {
     const terms2 = [...new Set(list.map(a => a.sectionId + '|' + a.term))].map(k => { const [sec, term] = k.split('|'); const rows = list.filter(a => a.sectionId === sec && String(a.term) === term); return { sec, term: Number(term), label: rows[0].section, published: rows.some(r => r.termPublished), waiting: rows.filter(r => !r.submitted).length, ready: rows.every(r => r.submitted) }; });
     return page('Marks', 'You set the assessments for the sections and subjects you teach, enter the grades, then submit to lock them.',
       html`${card('New assessment', null, form)}
-      ${card('Assessments', null, list.length ? table(['Section', 'Subject', 'Term', 'Assessment', 'Out of', 'Status'], list.map(a => ({ go: '#/marks/' + a.id,
-        cells: [a.section, a.subject, a.term, a.name, a.maxMark, a.published ? badge('b-good', 'Published') : a.submitted ? badge('b-internal', 'Submitted') : badge('b-watch', 'Open')] }))) : empty('No assessments yet. Add the first one above.'))}
-      ${card('Publish results', 'Publishing shows a term to the students and parents at once. Every assessment of that term must be submitted first. You can keep adding assessments to a published term: each one appears as soon as you submit its marks.', terms2.length ? table(['Section', 'Term', 'Marks', ''], terms2.map(t => ({ cells: [t.label, t.term, t.published ? html`${badge('b-good', 'Published')}${t.waiting ? html` <span class="muted">${t.waiting + ' waiting for marks'}</span>` : ''}` : t.ready ? badge('b-internal', 'All submitted') : badge('b-watch', 'Waiting for submissions'),
+      ${card('Assessments', null, list.length ? table(['Section', 'Subject', 'Term', 'Assessment', 'Out of', 'Status', ''], list.map(a => ({ go: '#/marks/' + a.id,
+        cells: [a.section, a.subject, a.term, a.name, a.maxMark, a.published ? badge('b-good', 'Published') : a.submitted ? badge('b-internal', 'Submitted') : badge('b-watch', 'Open'), pubButton(a)] }))) : empty('No assessments yet. Add the first one above.'))}
+      ${card('Publish results', 'You can publish each assessment on its own from the list above (for example the exam), as many as you like. Or publish a whole term at once: it shows a term to the students and parents at once. Every assessment of that term must be submitted first. You can keep adding assessments to a published term: each one appears as soon as you submit its marks.', terms2.length ? table(['Section', 'Term', 'Marks', ''], terms2.map(t => ({ cells: [t.label, t.term, t.published ? html`${badge('b-good', 'Published')}${t.waiting ? html` <span class="muted">${t.waiting + ' waiting for marks'}</span>` : ''}` : t.ready ? badge('b-internal', 'All submitted') : badge('b-watch', 'Waiting for submissions'),
         t.published ? html`<button class="btn btn-sm btn-danger" data-act="unpublishResults" data-section="${t.sec}" data-term="${t.term}">Unpublish</button>` : html`<button class="btn btn-sm btn-primary" data-act="publishResults" data-section="${t.sec}" data-term="${t.term}" ${t.ready ? '' : raw('disabled')}>Ask to publish</button>`] }))) : empty('Nothing to publish yet.'))}`);
   }
   const a = list.find(x => x.id === arg);
@@ -1175,10 +1179,10 @@ SCREENS.marks = async (arg) => {
   const sheet = await get(`/api/marks/assessments/${arg}/sheet`);
   const locked = a.submitted;
   return page(a.name, `${a.section} · ${a.subject} · term ${a.term} · out of ${a.maxMark}`,
-    html`${locked ? html`<div class="callout callout-info">These marks are submitted and locked. ${a.termPublished ? 'The results are published: unpublish the term first to change them.' : html`<button class="btn btn-sm" data-act="unlockMarks" data-id="${arg}">Unlock to correct</button>`}</div>` : ''}
+    html`${locked ? html`<div class="callout callout-info">These marks are submitted and locked. ${a.published ? 'The results are published: unpublish them first to change them.' : html`<button class="btn btn-sm" data-act="unlockMarks" data-id="${arg}">Unlock to correct</button>`}</div>` : ''}
     ${card('Marks', null, sheet.length ? html`<form data-form="marks" data-id="${arg}"><table class="t"><thead><tr><th>Student</th><th>Mark (0 to ${a.maxMark})</th><th>Absent</th></tr></thead><tbody>${sheet.map(r => html`<tr data-student="${r.studentId}"><td>${r.name}</td><td><input class="input" type="number" min="0" max="${a.maxMark}" step="0.01" value="${r.value ?? ''}" ${locked ? raw('disabled') : ''}></td><td><input type="checkbox" ${r.absent ? raw('checked') : ''} ${locked ? raw('disabled') : ''}></td></tr>`)}</tbody></table>
       ${locked ? '' : html`<div class="row" style="margin-top:16px"><button class="btn" name="mode" value="save">Save</button><button class="btn btn-primary" name="mode" value="submit">Save and submit</button></div>`}</form>` : empty('No students are enrolled in this section yet.'))}`,
-    html`<a class="btn" href="#/marks">Back</a>`);
+    html`${pubButton(a)} <a class="btn" href="#/marks">Back</a>`);
 };
 
 SCREENS.materials = async () => {
@@ -1481,6 +1485,8 @@ const ACT = {
   removeMaterial: async d => { await del('/api/materials/' + d.id); await refreshAfter('Removed.'); },
   removeNotice: async d => { await del('/api/notices/' + d.id); await refreshAfter('Notice removed.'); },
   unlockMarks: async d => { const reason = prompt(trText('Why are you unlocking these marks?')); if (!reason) return; await post(`/api/marks/assessments/${d.id}/unlock`, { reason }); await refreshAfter('Marks unlocked. You can correct them and submit again.'); },
+  publishAssessment: async d => { await post(`/api/marks/assessments/${d.id}/publish`); await refreshAfter('Published. Students and parents can see these marks now.'); },
+  unpublishAssessment: async d => { const reason = prompt(trText('Why are you unpublishing these results?')); if (!reason) return; await post(`/api/marks/assessments/${d.id}/unpublish`, { reason }); await refreshAfter('Results are hidden again.'); },
   publishResults: async d => { await post(`/api/marks/sections/${d.section}/publish`, { term: Number(d.term) }); await refreshAfter('Results published. Students can see them now.'); },
   unpublishResults: async d => { const reason = prompt(trText('Why are you unpublishing these results?')); if (!reason) return; await post(`/api/marks/sections/${d.section}/unpublish`, { term: Number(d.term), reason }); await refreshAfter('Results are hidden again.'); },
   addPerson: async f => { await post('/api/people', { email: f.email, name: f.name, role: f.role, studentId: f.role === 'PARENT' && f.studentId ? f.studentId : undefined }); invalidate('people'); await refreshAfter(f.email + ' can now sign in.'); },
