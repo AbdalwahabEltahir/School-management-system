@@ -442,6 +442,11 @@ Object.assign(AR, { 'normal': 'عادية', 'urgent': 'عاجلة', 'Needs follo
     // other screens
     'Publishing shows a term to the students and parents at once. Every assessment of that term must be submitted first. You can keep adding assessments to a published term: each one appears as soon as you submit its marks.': 'النشر يُظهر الفصل للطلاب وأولياء الأمور فوراً. يجب تسليم كل تقييمات الفصل أولاً. يمكنك مواصلة إضافة تقييمات إلى فصل منشور: يظهر كل تقييم بمجرد تسليم درجاته.',
     'waiting for marks': 'بانتظار الدرجات',
+    'Publish these marks': 'نشر هذه الدرجات', 'Unpublish': 'إلغاء النشر',
+    'Published. Students and parents can see these marks now.': 'تم النشر. يستطيع الطلاب وأولياء الأمور رؤية هذه الدرجات الآن.',
+    'Results are hidden again.': 'أُخفيت النتائج مجدداً.', 'The results are published: unpublish them first to change them.': 'النتائج منشورة: ألغِ نشرها أولاً لتعديلها.',
+    'You can publish each assessment on its own from the list above (for example the exam), as many as you like. Or publish a whole term at once: it shows a term to the students and parents at once. Every assessment of that term must be submitted first. You can keep adding assessments to a published term: each one appears as soon as you submit its marks.': 'يمكنك نشر كل تقييم على حدة من القائمة أعلاه (مثل الاختبار)، وبقدر ما تشاء. أو انشر فصلاً كاملاً دفعة واحدة: فيظهر الفصل للطلاب وأولياء الأمور فوراً. يجب تسليم كل تقييمات الفصل أولاً. يمكنك مواصلة إضافة تقييمات إلى فصل منشور: يظهر كل تقييم بمجرد تسليم درجاته.',
+    'ASSESSMENT_PUBLISHED': 'نشر تقييم', 'ASSESSMENT_UNPUBLISHED': 'إلغاء نشر تقييم',
     'Request to delete a file': 'طلب حذف ملف', 'Why should it be deleted?': 'لماذا يجب حذفه؟', 'Send the request': 'إرسال الطلب',
     'For example: an old copy, replaced by the new version': 'مثال: نسخة قديمة حلّت محلها نسخة جديدة',
     'Write why the file should go. The principal or a coordinator of your school approves it before it is deleted from the register. Your Google Drive is never touched.': 'اكتب سبب حذف الملف. يوافق مدير المدرسة أو أحد المنسقين قبل حذفه من السجل. لا يُمَسّ Google Drive الخاص بك أبداً.',

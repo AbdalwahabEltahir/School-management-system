@@ -17,6 +17,8 @@ public final class ArabicLabels {
             Map.entry("ATTENDANCE_RECORDED", "تسجيل حضور"),
             Map.entry("ApprovalRequest", "طلب موافقة"),
             Map.entry("APPROVAL_REQUESTED", "طلب موافقة"),
+            Map.entry("ASSESSMENT_PUBLISHED", "نشر تقييم"),
+            Map.entry("ASSESSMENT_UNPUBLISHED", "إلغاء نشر تقييم"),
             Map.entry("Assessment", "التقييم"),
             Map.entry("BULK_DELETION", "حذف ملفات كثيرة"),
             Map.entry("CHECK_RUN", "تشغيل فحص"),

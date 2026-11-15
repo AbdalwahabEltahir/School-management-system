@@ -43,7 +43,7 @@ public final class AcademicDtos {
 
     public record AssessmentView(UUID id, UUID sectionId, String section, UUID subjectId, String subject, int term,
                                  String name, BigDecimal maxMark, boolean submitted, boolean published, java.time.LocalDate week,
-                                 boolean termPublished) {}
+                                 boolean termPublished, boolean ownPublished) {}
 
     /** One teacher's weekly grade submission: done, still open, overdue, or no assessment this week. */
     public record WeeklyRow(String school, String section, String subject, String teacher, int assessments, int submitted, String status) {}

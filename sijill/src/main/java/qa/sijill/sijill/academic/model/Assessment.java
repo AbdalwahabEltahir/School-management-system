@@ -37,4 +37,8 @@ public class Assessment extends BaseEntity {
 
     @Column(name = "submitted_at", nullable = true)
     private Instant submittedAt;
+
+    /** Set when the teacher published this assessment on its own; null when it is shown (if at all) through its term. */
+    @Column(name = "published_at", nullable = true)
+    private Instant publishedAt;
 }

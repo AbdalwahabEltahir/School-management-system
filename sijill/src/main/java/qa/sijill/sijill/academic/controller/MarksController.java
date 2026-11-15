@@ -83,6 +83,18 @@ public class MarksController {
         marks.unpublish(user, sectionId, request.term(), request.reason());
     }
 
+    /** Publishes one assessment's marks (its marks must be submitted). Students and parents see it at once. */
+    @PostMapping("/assessments/{assessmentId}/publish")
+    public void publishAssessment(CurrentUser user, @PathVariable UUID assessmentId) {
+        marks.publishAssessment(user, assessmentId);
+    }
+
+    /** Hides one published assessment again. A reason is required. */
+    @PostMapping("/assessments/{assessmentId}/unpublish")
+    public void unpublishAssessment(CurrentUser user, @PathVariable UUID assessmentId, @RequestBody AcademicDtos.PublishRequest request) {
+        marks.unpublishAssessment(user, assessmentId, request.reason());
+    }
+
     @GetMapping("/mine")
     public List<AcademicDtos.ResultRow> mine(CurrentUser user) {
         return marks.myResults(user);
