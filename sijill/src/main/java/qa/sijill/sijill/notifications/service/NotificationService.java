@@ -41,6 +41,20 @@ public class NotificationService {
     /** Stores one bell entry for a person. */
     @Transactional
     public void send(Person recipient, NotificationKind kind, String title, String body, UUID issueId) {
+        save(recipient, kind, title, null, null, body, null, issueId);
+    }
+
+    /**
+     * Stores one bell entry with its title in both languages, so the screen can follow the language switch.
+     * {@code title} itself stays in the person's chosen language, as before.
+     */
+    @Transactional
+    public void send(Person recipient, NotificationKind kind, String titleAr, String titleEn, String body, String bodyAr, UUID issueId) {
+        save(recipient, kind, MessageTemplates.title(recipient.getLanguage(), titleAr, titleEn), titleEn, titleAr, body, bodyAr, issueId);
+    }
+
+    private void save(Person recipient, NotificationKind kind, String title, String titleEn, String titleAr, String body,
+                      String bodyAr, UUID issueId) {
         if (recipient.hasMuted(kind)) {
             return; // the person switched this kind of alert off in their settings
         }
@@ -49,18 +63,25 @@ public class NotificationService {
         n.setSiteId(recipient.getSiteId());
         n.setRecipientId(recipient.getId());
         n.setKind(kind);
-        n.setTitle(title);
+        n.setTitle(fit(title, 300));
+        n.setTitleEn(fit(titleEn, 300));
+        n.setTitleAr(fit(titleAr, 300));
         n.setBody(body);
+        n.setBodyAr(fit(bodyAr, 1000));
         n.setIssueId(issueId);
         notifications.save(n);
+    }
+
+    private static String fit(String s, int max) {
+        return s == null || s.length() <= max ? s : s.substring(0, max - 1) + "…";
     }
 
     /** A plain in-app notice published by another module. */
     @EventListener
     @Transactional
     public void on(PersonNotice notice) {
-        people.findById(notice.personId()).ifPresent(p -> send(p, notice.kind(),
-                MessageTemplates.title(p.getLanguage(), notice.titleAr(), notice.titleEn()), notice.body(), null));
+        people.findById(notice.personId()).ifPresent(p -> send(p, notice.kind(), notice.titleAr(), notice.titleEn(),
+                notice.body(), notice.bodyAr(), null));
     }
 
     /** A sensitive action is waiting: tell the people who could approve it (never the one who asked). */
@@ -72,8 +93,7 @@ public class NotificationService {
                     : people.findBySiteIdAndRole(alert.siteId(), role);
             for (Person p : candidates) {
                 if (!p.getId().equals(alert.exceptPersonId()) && p.canSignIn()) {
-                    send(p, NotificationKind.SECURITY, MessageTemplates.title(p.getLanguage(), "طلب بانتظار موافقتك", "A request needs your approval"),
-                            alert.summary(), null);
+                    send(p, NotificationKind.SECURITY, "طلب بانتظار موافقتك", "A request needs your approval", alert.summary(), null, null);
                 }
             }
         }

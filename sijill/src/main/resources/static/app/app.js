@@ -121,13 +121,11 @@ const personName = id => id === S.me.id ? 'You' : (S.people && S.people[id] && S
 const NETWORK_ROLES = ['LEADERSHIP', 'EAA_ADMIN'];
 const personSite = p => (p && !NETWORK_ROLES.includes(p.role) && p.siteId) ? siteName(p.siteId) : '';
 const siteName = id => (S.sites && S.sites[id] && S.sites[id].name) || '';
-/** Issue text in the person's language setting: English, Arabic, or both. */
-const say = (en, ar) => {
-  const l = I18N.lang === 'ar' ? 'AR' : S.me && S.me.language;
-  if (l === 'AR' && ar) return html`<span lang="ar" dir="rtl">${ar}</span>`;
-  if (l === 'BOTH' && ar) return html`${en}<br><span lang="ar" dir="rtl" class="muted">${ar}</span>`;
-  return html`${en}`;
-};
+/** Text the server keeps in both languages, shown in the language on screen (the switch decides, not the e-mail setting). */
+/** "Open" on a link is the verb; elsewhere the dictionary reads it as the status (open issues, open tickets). */
+const openWord = () => raw(I18N.lang === 'ar' ? 'فتح' : 'Open');
+const inLang = (en, ar) => (I18N.lang === 'ar' ? ar || en : en || ar) || '';
+const say = (en, ar) => I18N.lang === 'ar' && ar ? html`<span lang="ar" dir="rtl">${ar}</span>` : html`${en || ar || ''}`;
 
 // =============================================================== small components
 const badge = (cls, text) => html`<span class="badge ${cls}">${text}</span>`;
@@ -299,7 +297,7 @@ SCREENS.issue = async id => {
     get(`/api/issues/${id}/history`).catch(() => []),
     get('/api/files/' + issue.fileId).catch(() => null), loadRules(), loadPeople()]);
   const rule = S.rules[issue.ruleId];
-  const steps = rule && rule.effective ? (S.me.language === 'AR' ? rule.effective.fixStepsAr : rule.effective.fixStepsEn) || rule.effective.fixStepsEn : '';
+  const steps = rule && rule.effective ? inLang(rule.effective.fixStepsEn, rule.effective.fixStepsAr) : '';
   const isOpen = OPEN.includes(issue.status);
   const owner = issue.ownerId === S.me.id;
   const coord = S.me.role === 'COORDINATOR';
@@ -314,7 +312,7 @@ SCREENS.issue = async id => {
   }
   return page(issue.severity === 'URGENT' ? 'Urgent issue' : 'Issue', details ? details.file.name : '',
     html`<div class="row">${statusBadge(issue.status)} ${sevBadge(issue.severity)} <span class="muted">Opened ${fmt(issue.openedAt)}${issue.closedAt ? ' · Closed ' + fmt(issue.closedAt) : ''}</span></div>
-    ${card('What is wrong', rule && rule.effective ? 'Rule ' + rule.code + ': ' + rule.effective.name : null, html`<p>${say(issue.detailEn, issue.detailAr)}</p>${rule && rule.effective ? html`<p class="muted">${rule.effective.whyItMatters}</p>` : ''}${issue.ownerNote ? html`<div class="callout callout-warn">Owner's note: ${issue.ownerNote}</div>` : ''}`)}
+    ${card('What is wrong', rule && rule.effective ? 'Rule ' + rule.code + ': ' + rule.effective.name : null, html`<p>${say(issue.detailEn, issue.detailAr)}</p>${rule && rule.effective ? html`<p class="muted">${inLang(rule.effective.whyItMatters, rule.effective.whyItMattersAr)}</p>` : ''}${issue.ownerNote ? html`<div class="callout callout-warn">Owner's note: ${issue.ownerNote}</div>` : ''}`)}
     ${steps ? card('How to fix it', 'Only a re-check closes the issue. Press "I\'ve fixed it" when done.', html`<ol class="steps-list">${steps.split('\n').filter(Boolean).map(s => html`<li>${s}</li>`)}</ol>${actions.length ? html`<div class="row" style="margin-top:16px">${actions}</div>` : ''}`)
       : (actions.length ? card('Actions', null, html`<div class="row">${actions}</div>`) : '')}
     ${forms}
@@ -362,13 +360,21 @@ SCREENS.review = async () => {
 };
 
 // ---- notifications
+/** Bell entries keep both languages; older ones have one title ("Arabic | English" when the person chose both). */
+const noteTitle = n => {
+  if (n.titleEn || n.titleAr) return inLang(n.titleEn, n.titleAr);
+  const both = String(n.title || '').split(' | ');
+  if (both.length === 2) return inLang(both[1], both[0]);
+  return I18N.lang !== 'ar' && /[؀-ۿ]/.test(n.title || '') ? noteToEnglish(n.title) || n.title : n.title;
+};
+const noteBody = n => inLang(n.body, n.bodyAr);
 SCREENS.notifications = async () => {
   const list = await get('/api/notifications');
   if (isPortal()) return page('Notifications', list.some(n => !n.read) ? list.filter(n => !n.read).length + ' new' : 'You are all caught up.', list.length
-    ? html`<div class="sp-notes">${list.map(n => html`<div class="${n.read ? '' : 'new'}" ${n.issueId ? raw(`data-act="openNote" data-id="${n.id}" data-issue="${n.issueId}" style="cursor:pointer"`) : ''}><i></i><div><b>${n.title}</b>${n.read ? '' : badge('b-bad', 'New')}<p>${n.body}</p><small>${fmt(n.createdAt)}</small></div></div>`)}</div>`
+    ? html`<div class="sp-notes">${list.map(n => html`<div class="${n.read ? '' : 'new'}" ${n.issueId ? raw(`data-act="openNote" data-id="${n.id}" data-issue="${n.issueId}" style="cursor:pointer"`) : ''}><i></i><div><b>${noteTitle(n)}</b>${n.read ? '' : badge('b-bad', 'New')}<p>${noteBody(n)}</p><small>${fmt(n.createdAt)}</small></div></div>`)}</div>`
     : card('Messages', null, empty('No notifications.')), html`<button class="sp-btn" data-act="readAll">Mark all as read</button>`);
   return page('Notifications', null,
-    card('Messages', null, list.length ? html`<ul class="timeline">${list.map(n => html`<li ${n.issueId ? raw(`data-act="openNote" data-id="${n.id}" data-issue="${n.issueId}" style="cursor:pointer"`) : ''}><b>${n.title}</b> ${n.read ? '' : badge('b-bad', 'New')} <span class="muted">${fmt(n.createdAt)}</span><div>${n.body}</div></li>`)}</ul>` : empty('No notifications.')),
+    card('Messages', null, list.length ? html`<ul class="timeline">${list.map(n => html`<li ${n.issueId ? raw(`data-act="openNote" data-id="${n.id}" data-issue="${n.issueId}" style="cursor:pointer"`) : ''}><b>${noteTitle(n)}</b> ${n.read ? '' : badge('b-bad', 'New')} <span class="muted">${fmt(n.createdAt)}</span><div>${noteBody(n)}</div></li>`)}</ul>` : empty('No notifications.')),
     html`<button class="btn" data-act="readAll">Mark all as read</button>`,
     [['Unread', list.filter(n => !n.read).length, '', list.some(n => !n.read) ? 'brand' : 'good', 'bell', 'Need a look'], ['Total', list.length, '', 'slate', 'list', 'Messages']]);
 };
@@ -380,7 +386,7 @@ SCREENS.planning = async () => {
   const subjName = id => (subjects.find(s => s.id === id) || {}).name || '';
   const stBadge = s => badge(s === 'APPROVED' ? 'b-good' : s === 'RETURNED' ? 'b-bad' : 'b-watch', title(s));
   const rows = subs.map(s => ({
-    cells: [personName(s.teacherId) || 'Teacher', subjName(s.subjectId), s.grade, fmtDate(s.weekStart), title(s.planType), html`<a href="${s.driveLink}" target="_blank" rel="noopener noreferrer">Open</a>`, stBadge(s.status),
+    cells: [personName(s.teacherId) || 'Teacher', subjName(s.subjectId), s.grade, fmtDate(s.weekStart), title(s.planType), html`<a href="${s.driveLink}" target="_blank" rel="noopener noreferrer">${openWord()}</a>`, stBadge(s.status),
       role === 'COORDINATOR' && s.status === 'SUBMITTED' ? html`<form data-form="review" data-id="${s.id}" class="row"><input class="input" name="reason" placeholder="Reason if returning"><button class="btn btn-sm" name="decision" value="APPROVED">Approve</button><button class="btn btn-sm btn-danger" name="decision" value="RETURNED">Return</button></form>` : '']
   }));
   const submit = role === 'TEACHER' ? card('Submit this week\'s plan', 'Submitting again for the same week sends a returned plan back for review.', html`<form data-form="submitPlan">
@@ -472,7 +478,7 @@ SCREENS.overview = async () => {
 
   const pendingRules = Object.values(S.rules || {}).filter(r => r.pending);
   const decide = pendingRules.length ? html`<section class="lo-card" aria-label="Needs your decision"><div class="lo-card-head"><h2>Needs your decision</h2><span class="lo-pill">${pendingRules.length}</span><small>Rule changes waiting for approval</small></div>
-    <div class="lo-decisions">${pendingRules.map(r => html`<div class="lo-decision"><div class="lo-dtype">Rule change</div><div class="lo-drule">${r.code} · ${(r.pending || {}).name || ''}</div><div class="lo-dwhat">${(r.pending || {}).whyItMatters || 'A new version of this rule is waiting to be approved.'}</div>
+    <div class="lo-decisions">${pendingRules.map(r => html`<div class="lo-decision"><div class="lo-dtype">Rule change</div><div class="lo-drule">${r.code} · ${(r.pending || {}).name || ''}</div><div class="lo-dwhat">${inLang((r.pending || {}).whyItMatters, (r.pending || {}).whyItMattersAr) || 'A new version of this rule is waiting to be approved.'}</div>
       <div class="row" style="margin-top:12px"><a class="btn btn-sm" href="#/rules">Review</a><button class="btn btn-sm btn-primary" data-act="approveRule" data-id="${r.id}" data-version="${r.pending.id}">Approve</button></div></div>`)}</div></section>` : '';
 
   const donut = (() => {
@@ -645,8 +651,7 @@ SCREENS.school = async () => {
   const types = Object.entries(byRule).map(([id, n]) => { const r = rules[id] || {}; const v = r.effective || r.pending || {}; return { l: v.name || r.code || 'Other', n }; })
     .sort((a, b) => b.n - a.n).map((t, i) => ({ ...t, c: PD_TYPE_COLOURS[Math.min(i, PD_TYPE_COLOURS.length - 1)] }));
 
-  const wantAr = I18N.lang === 'ar' || (S.me.language && S.me.language !== 'EN');
-  const urgentRow = i => html`<div class="pd-urgent"><span class="pd-file">${lico('M14 3H7a2 2 0 00-2 2v14a2 2 0 002 2h10a2 2 0 002-2V8zM14 3v5h5')}</span><div class="pd-urgent-t"><b>${fileName(i.fileId)}</b><span dir="auto">${wantAr && i.detailAr ? i.detailAr : i.detailEn}</span></div>
+  const urgentRow = i => html`<div class="pd-urgent"><span class="pd-file">${lico('M14 3H7a2 2 0 00-2 2v14a2 2 0 002 2h10a2 2 0 002-2V8zM14 3v5h5')}</span><div class="pd-urgent-t"><b>${fileName(i.fileId)}</b><span dir="auto">${inLang(i.detailEn, i.detailAr)}</span></div>
     <div class="pd-urgent-r">${statusBadge(i.status)}<span class="pd-date">${fmtDate(i.openedAt)}</span><a class="pd-review" href="#/issue/${i.id}">Review</a></div></div>`;
   const trend = score ? score.trend : [];
 
@@ -684,10 +689,10 @@ SCREENS.rules = async () => {
   const acts = r => html`<div class="row">${it ? html`<a class="btn btn-sm" href="#/rule/${r.id}">Edit</a>` : ''}${it ? html`<button class="btn btn-sm" data-act="${r.status === 'ACTIVE' ? 'pauseRule' : 'resumeRule'}" data-id="${r.id}">${r.status === 'ACTIVE' ? 'Pause' : 'Resume'}</button><button class="btn btn-sm btn-danger" data-act="deleteRule" data-id="${r.id}" data-confirm="Delete rule ${r.code}? Its open issues will be closed. Pausing is usually better.">Delete</button>` : ''}${canApprove && r.pending ? html`<button class="btn btn-sm btn-primary" data-act="approveRule" data-id="${r.id}" data-version="${r.pending.id}">Approve new version</button>` : ''}</div>`;
   const rows = rules.map(r => {
     const v = r.effective || r.pending || {};
-    return { cells: [r.code, html`<b>${v.name}</b><div class="muted">${v.whyItMatters || ''}</div>`, title(v.checkType), sevBadge(v.severity), r.status === 'ACTIVE' ? badge('b-good', 'Active') : badge('b-neutral', title(r.status)), r.openIssues, acts(r)] };
+    return { cells: [r.code, html`<b>${v.name}</b><div class="muted">${inLang(v.whyItMatters, v.whyItMattersAr)}</div>`, title(v.checkType), sevBadge(v.severity), r.status === 'ACTIVE' ? badge('b-good', 'Active') : badge('b-neutral', title(r.status)), r.openIssues, acts(r)] };
   });
   const cards = html`<div class="lp-grid">${rules.map(r => { const v = r.effective || r.pending || {}; return html`<article class="lp-rule ${r.status === 'ACTIVE' ? '' : 'is-off'}"><div class="lp-rule-top"><span class="lp-code">${r.code}</span>${sevBadge(v.severity)}${r.status === 'ACTIVE' ? badge('b-good', 'Active') : badge('b-neutral', title(r.status))}${r.pending ? badge('b-watch', 'New version waiting') : ''}</div>
-      <h3>${v.name}</h3><p>${v.whyItMatters || ''}</p><div class="lp-meta"><span>${title(v.checkType)}</span><span class="${r.openIssues ? 'lo-red' : ''}">${r.openIssues} open issue${r.openIssues === 1 ? '' : 's'}</span></div>${acts(r)}</article>`; })}</div>`;
+      <h3>${v.name}</h3><p>${inLang(v.whyItMatters, v.whyItMattersAr)}</p><div class="lp-meta"><span>${title(v.checkType)}</span><span class="${r.openIssues ? 'lo-red' : ''}">${r.openIssues} open issue${r.openIssues === 1 ? '' : 's'}</span></div>${acts(r)}</article>`; })}</div>`;
   const kp = [['Active rules', rules.filter(r => r.status === 'ACTIVE').length, '', 'good', 'shield', 'Checked on every scan'], ['Paused or off', rules.filter(r => r.status !== 'ACTIVE').length, '', 'slate', 'pause', 'Not checking now'], ['Waiting for approval', rules.filter(r => r.pending).length, '', 'brand', 'list', 'New versions'], ['Open issues', rules.reduce((a, r) => a + (r.openIssues || 0), 0), '', 'bad', 'warn', 'Caused by these rules']];
   return page('Rules', 'What Hafez checks. Changing a rule creates a new version that is approved before it applies.',
     lead ? (rules.length ? cards : card('Rules', null, empty('No rules yet.'))) : card('Rules', rules.length + ' rules', table(['Code', 'Rule', 'Check', 'Severity', 'Status', 'Open issues', ''], rows)),
@@ -1096,7 +1101,7 @@ SCREENS.today = async () => {
   return page('Today', (t.schoolDay ? DAYS[new Date(t.date + 'T00:00:00').getDay()] || '' : 'Not a school day') + ' · ' + t.date,
     html`${!t.schoolDay && next.length ? card('Next school day: Sunday', 'Today is a day off. Here is what your week starts with.', table(['Period', 'Section', 'Subject', 'Room'], next.sort((a, b) => a.period - b.period).map(l => ({ cells: [l.period, l.section, l.subject, l.room || ''] })))) : card("Today's lessons", 'From the timetable.', t.lessons.length ? table(['Period', 'Section', 'Subject', 'Room', 'Attendance'], t.lessons.map(l => ({ cells: [l.period, l.section, l.subject, l.room || '', taken.has(l.sectionId) ? badge('b-good', 'Taken') : badge('b-watch', 'Not taken yet')] }))) : empty(t.schoolDay ? 'No lessons today.' : 'Attendance and lessons run Sunday to Thursday.'))}
     ${notes.length ? card('Notices', 'From school administration.', html`<ul class="timeline">${notes.map(noticeBlock)}</ul>`, html`<a href="#/notices">View all →</a>`) : ''}
-    ${card('My sections', null, t.sections.length ? table(['Section', 'Students', 'Attendance today', ''], t.sections.map(x => ({ cells: [sectionLabel(x), x.students, taken.has(x.id) ? badge('b-good', 'Taken') : badge('b-watch', 'Not taken'), html`<a href="#/attendance?s=${x.id}">Open</a>`] }))) : empty('You are not assigned to a section yet. The coordinator assigns teachers in Academic setup.'))}`);
+    ${card('My sections', null, t.sections.length ? table(['Section', 'Students', 'Attendance today', ''], t.sections.map(x => ({ cells: [sectionLabel(x), x.students, taken.has(x.id) ? badge('b-good', 'Taken') : badge('b-watch', 'Not taken'), html`<a href="#/attendance?s=${x.id}">${openWord()}</a>`] }))) : empty('You are not assigned to a section yet. The coordinator assigns teachers in Academic setup.'))}`);
 };
 
 SCREENS.attendance = async (arg, q) => {
@@ -1172,7 +1177,7 @@ SCREENS.materials = async () => {
       ${field('Section and subject', html`<select name="pair">${mine.map(m => html`<option value="${m.value}">${m.label}</option>`)}</select>`)}
       ${field('Title', html`<input name="title" required>`)}${field('Link (https://…)', html`<input type="url" name="link" required placeholder="https://drive.google.com/…">`)}
       <button class="btn btn-primary">Share</button></form>` : empty('You are not assigned to a section and subject yet.'))}
-    ${card('Shared by you', null, table(['Title', 'Section', 'Subject', 'Link', ''], list.map(m => ({ cells: [m.title, m.section, m.subject, html`<a href="${m.link}" target="_blank" rel="noopener noreferrer">Open</a>`, html`<button class="btn btn-sm btn-danger" data-act="removeMaterial" data-id="${m.id}" data-confirm="Remove this material?">Remove</button>`] }))))}`);
+    ${card('Shared by you', null, table(['Title', 'Section', 'Subject', 'Link', ''], list.map(m => ({ cells: [m.title, m.section, m.subject, html`<a href="${m.link}" target="_blank" rel="noopener noreferrer">${openWord()}</a>`, html`<button class="btn btn-sm btn-danger" data-act="removeMaterial" data-id="${m.id}" data-confirm="Remove this material?">Remove</button>`] }))))}`);
 };
 
 SCREENS.notices = async () => {
@@ -1284,7 +1289,7 @@ function spWeek(lessons) {
 function recentActivity(d) {
   const items = [];
   if (d.results.length) items.push(['#6b1730', d.results.length === 1 ? 'Result published' : d.results.length + ' results published', d.results.length + ' published result' + (d.results.length === 1 ? '' : 's')]);
-  d.notices.slice(0, 2).forEach(n => items.push(['#2563eb', 'New notice: ' + (n.titleEn || ''), fmtDate(n.startsAt)]));
+  d.notices.slice(0, 2).forEach(n => items.push(['#2563eb', 'New notice: ' + inLang(n.titleEn, n.titleAr), fmtDate(n.startsAt)]));
   if (d.attendance.recent.length) { const r = d.attendance.recent[0]; items.push([r.status === 'PRESENT' ? '#14633b' : r.status === 'ABSENT' ? '#a11d12' : '#b7791f', 'Marked ' + title(r.status), fmtDate(r.date)]); }
   if (d.materials.length) { const m = d.materials[0]; items.push(['#b7791f', 'Study material: ' + m.title, m.subject + ' · ' + m.teacher]); }
   return items.length ? html`<div class="sp-act">${items.slice(0, 5).map(([c, t, s]) => html`<div><i style="background:${c}"></i><div><b>${t}</b><small>${s}</small></div></div>`)}</div>` : empty('Nothing yet.');
@@ -1322,7 +1327,7 @@ function portalHome(d, o) {
       ${spCard('moon', d.today.length || d.schoolDay ? "Today's lessons" : 'Next school day: Sunday', (d.today.length ? d.today : d.schoolDay ? [] : d.week.filter(l => l.day === 0).sort((a, b) => a.period - b.period)).length ? gTable('70px 1.2fr 1.2fr 80px', ['Period', 'Subject', 'Teacher', 'Room'], (d.today.length ? d.today : d.week.filter(l => l.day === 0).sort((a, b) => a.period - b.period)).map(l => [l.period, l.subject, l.teacher, l.room || ''])) : html`<div class="sp-empty"><span class="sp-ic sp-ic-soft">${sIc('moon')}</span>${d.schoolDay ? 'No lessons today.' : 'Not a school day. Lessons run Sunday to Thursday.'}</div>`, '', null, 'sp-f3')}
       ${spCard('megaphone', 'Notices', d.notices.length ? html`<div class="sp-notices">${d.notices.map(n => html`<div><span class="sp-ic sp-ic-note">${sIc('megaphone')}</span><div><b>${say(n.titleEn, n.titleAr)}</b><small>${fmtDate(n.startsAt)} to ${fmtDate(n.endsAt)} · ${n.audience === 'ALL' ? 'Everyone' : title(n.audience)}</small><p>${say(n.bodyEn, n.bodyAr)}</p></div></div>`)}</div>` : empty('No notices right now.'), html`<a class="sp-link" href="#/notices">View all →</a>`, null, 'sp-f3')}
     </div>
-    <div class="sp-row">${spCard('book', 'Study materials', d.materials.length ? gTable('1.2fr 1fr 1.3fr 60px', ['Title', 'Subject', 'Teacher', ''], d.materials.map(m => [html`<b>${m.title}</b>`, m.subject, m.teacher, html`<a href="${m.link}" target="_blank" rel="noopener noreferrer">Open</a>`])) : empty('No materials yet.'), '', null, 'sp-f3')}</div>
+    <div class="sp-row">${spCard('book', 'Study materials', d.materials.length ? gTable('1.2fr 1fr 1.3fr 60px', ['Title', 'Subject', 'Teacher', ''], d.materials.map(m => [html`<b>${m.title}</b>`, m.subject, m.teacher, html`<a href="${m.link}" target="_blank" rel="noopener noreferrer">${openWord()}</a>`])) : empty('No materials yet.'), '', null, 'sp-f3')}</div>
     ${spCard('calendar', mine ? 'My timetable' : 'Timetable', html`<div class="sp-scroll">${spWeek(d.week)}</div>`, '', 'sp-timetable')}
     ${o.below && o.below.bottom || ''}
   </div>
@@ -1424,7 +1429,7 @@ SCREENS.noticesAdmin = async () => {
       ${field('Text (English)', html`<textarea name="bodyEn" required></textarea>`)}${field('Text (Arabic)', html`<textarea name="bodyAr" dir="rtl" required></textarea>`)}
       <div class="row">${field('Starts', html`<input type="datetime-local" name="startsAt" required>`)}${field('Ends', html`<input type="datetime-local" name="endsAt" required>`)}${field('Shown to', html`<select name="audience"><option value="ALL">Everyone</option><option value="STAFF">Staff</option><option value="STUDENTS">Students</option></select>`)}</div>
       <button class="btn btn-primary">Publish notice</button></form>`)}
-    ${card('All notices', null, table(['Title', 'Shown to', 'From', 'To', 'State', ''], list.map(n => ({ cells: [n.titleEn, title(n.audience), fmt(n.startsAt), fmt(n.endsAt), state(n), html`<button class="btn btn-sm btn-danger" data-act="removeNotice" data-id="${n.id}" data-confirm="Remove this notice?">Remove</button>`] }))))}`);
+    ${card('All notices', null, table(['Title', 'Shown to', 'From', 'To', 'State', ''], list.map(n => ({ cells: [inLang(n.titleEn, n.titleAr), title(n.audience), fmt(n.startsAt), fmt(n.endsAt), state(n), html`<button class="btn btn-sm btn-danger" data-act="removeNotice" data-id="${n.id}" data-confirm="Remove this notice?">Remove</button>`] }))))}`);
 };
 
 // =============================================================== actions (buttons)
@@ -1450,7 +1455,7 @@ const ACT = {
   },
   filter: (d) => { const q = new URLSearchParams(location.hash.split('?')[1] || ''); q.set(d.name, d.value); location.hash = location.hash.split('?')[0] + '?' + q; },
   pickSite: (d, el) => { location.hash = '#/connection?site=' + el.value; },
-  fixed: async d => { const r = await post(`/api/issues/${d.id}/fixed`); S.flash = r.fixed ? { ok: 'Checked again: it is fixed. Thank you.' } : { err: 'Not fixed yet: ' + (S.me.language === 'AR' && r.stillWrongAr ? r.stillWrongAr : r.stillWrongEn || 'the file still breaks the rule.') }; await render(); },
+  fixed: async d => { const r = await post(`/api/issues/${d.id}/fixed`); S.flash = r.fixed ? { ok: 'Checked again: it is fixed. Thank you.' } : { err: 'Not fixed yet: ' + (inLang(r.stillWrongEn, r.stillWrongAr) || 'the file still breaks the rule.') }; await render(); },
   help: async d => { await post(`/api/issues/${d.id}/help`); await refreshAfter('Your coordinator has been asked to help.'); },
   keepRule: async d => { await post(`/api/follow-up/${d.id}/keep-rule`); await refreshAfter('Rule kept. The owner was reminded.'); },
   remind: async d => { await post(`/api/follow-up/${d.id}/remind`); await refreshAfter('Reminder sent.'); },

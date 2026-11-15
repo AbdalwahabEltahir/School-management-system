@@ -328,7 +328,8 @@ public class PeopleService {
         audit.log(person.getOrgId(), person.getSiteId(), ActivityActions.PERSON_UPDATED).by(approver)
                 .on("Person", person.getId()).subject(person.getSubjectId()).change(before, role.name()).save();
         publisher.publishEvent(new PersonNotice(person.getId(), NotificationKind.SECURITY, "تم تغيير دورك",
-                "Your role was changed", "Your role is now " + role.name().replace('_', ' ').toLowerCase(java.util.Locale.ROOT) + "."));
+                "Your role was changed", "Your role is now " + role.name().replace('_', ' ').toLowerCase(java.util.Locale.ROOT) + ".",
+                "دورك الآن: " + roleAr(role) + "."));
     }
 
     /**
@@ -371,7 +372,8 @@ public class PeopleService {
             person.setStatus(PersonStatus.ACTIVE);
         }
         publisher.publishEvent(new PersonNotice(person.getId(), NotificationKind.SYSTEM, "مرحبًا بك في " + qa.sijill.sijill.shared.config.Brand.ar(),
-                "Welcome to Hafez", "Open the welcome page to see how Hafez works."));
+                "Welcome to Hafez", "Open the welcome page to see how Hafez works.",
+                "افتح صفحة الترحيب لتتعرّف على طريقة عمل " + qa.sijill.sijill.shared.config.Brand.ar() + "."));
         audit.log(person.getOrgId(), person.getSiteId(), ActivityActions.WELCOME_SENT)
                 .by(user).on("Person", person.getId()).save();
         return person;
@@ -515,5 +517,21 @@ public class PeopleService {
             throw new NotFoundException("The person"); // do not reveal people of other schools
         }
         return person;
+    }
+
+    /** The role's name as the Arabic screens show it. */
+    private static String roleAr(Role role) {
+        return switch (role.name()) {
+            case "TEACHER" -> "معلم";
+            case "COORDINATOR" -> "منسق";
+            case "PRINCIPAL" -> "مدير المدرسة";
+            case "SCHOOL_IT" -> "تقنية المعلومات بالمدرسة";
+            case "LEADERSHIP" -> "القيادة";
+            case "EAA_ADMIN" -> "تقنية المعلومات في الهيئة";
+            case "ATTENDANCE_OFFICER" -> "كاتب الحضور";
+            case "STUDENT" -> "طالب";
+            case "PARENT" -> "وليّ أمر";
+            default -> role.name();
+        };
     }
 }

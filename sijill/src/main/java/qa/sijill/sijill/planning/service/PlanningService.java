@@ -201,7 +201,7 @@ public class PlanningService {
                 if (teacher.getStatus() != PersonStatus.LEFT && !submitted.contains(teacher.getId())) {
                     publisher.publishEvent(new PersonNotice(teacher.getId(), NotificationKind.PLANNING,
                             "تذكير: لم تُرسل خطة الأسبوع القادم", "Reminder: next week's plan is not submitted yet",
-                            "Week of " + nextWeek));
+                            "Week of " + nextWeek, "أسبوع " + nextWeek));
                     reminded++;
                 }
             }

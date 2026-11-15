@@ -32,6 +32,17 @@ public class Notification extends BaseEntity {
     @Column(length = 1000)
     private String body;
 
+    /** The title in each language, so the screen follows the language switch. Null on older entries. */
+    @Column(name = "title_en", length = 300)
+    private String titleEn;
+
+    @Column(name = "title_ar", length = 300)
+    private String titleAr;
+
+    /** The text in Arabic, when the sender wrote one. */
+    @Column(name = "body_ar", length = 1000)
+    private String bodyAr;
+
     /** Related issue, if any, so the UI can link to it. */
     @Column(name = "issue_id")
     private UUID issueId;

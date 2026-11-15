@@ -187,9 +187,11 @@ public class PickupService {
                 .change(null, r.getStudentName() + " / " + r.getCollectorName()).save();
 
         String detail = "Collector: " + r.getCollectorName() + " (" + label(r.getCollectorRelationship()) + "). Open the Pick-up board to verify and release.";
+        String detailAr = "المستلم: " + r.getCollectorName() + " (" + labelAr(r.getCollectorRelationship()) + "). افتح لوحة الاستلام للتحقق والتسليم.";
         for (Person staff : staffToAlert(r)) {
             publisher.publishEvent(new PersonNotice(staff.getId(), NotificationKind.COLLECTION,
-                    "وصل ولي أمر الطالب " + r.getStudentName(), "A parent has arrived for " + r.getStudentName() + " (" + r.getSectionLabel() + ")", detail));
+                    "وصل ولي أمر الطالب " + r.getStudentName() + " (" + r.getSectionLabel() + ")",
+                    "A parent has arrived for " + r.getStudentName() + " (" + r.getSectionLabel() + ")", detail, detailAr));
         }
         return PickupDtos.RequestView.from(r);
     }
@@ -298,7 +300,8 @@ public class PickupService {
                 .change(null, r.getStudentName() + " to " + r.getCollectorName()).save();
         String at = ZonedDateTime.ofInstant(now, SchoolCalendar.ZONE).format(CLOCK);
         publisher.publishEvent(new PersonNotice(r.getParentId(), NotificationKind.COLLECTION, r.getStudentName() + " تم تسليمه",
-                r.getStudentName() + " was released", r.getStudentName() + " was released to " + r.getCollectorName() + " at " + at + "."));
+                r.getStudentName() + " was released", r.getStudentName() + " was released to " + r.getCollectorName() + " at " + at + ".",
+                "تم تسليم " + r.getStudentName() + " إلى " + r.getCollectorName() + " الساعة " + at + "."));
         return PickupDtos.RequestView.from(r);
     }
 
@@ -322,7 +325,8 @@ public class PickupService {
         audit.log(r.getOrgId(), r.getSiteId(), ActivityActions.PICKUP_DECLINED).by(user).on("PickupRequest", r.getId())
                 .change(null, r.getStudentName() + ": " + r.getDeclineReason()).save();
         publisher.publishEvent(new PersonNotice(r.getParentId(), NotificationKind.COLLECTION, "لم يتم تسليم " + r.getStudentName(),
-                r.getStudentName() + " was not released", "The school could not release " + r.getStudentName() + ": " + r.getDeclineReason()));
+                r.getStudentName() + " was not released", "The school could not release " + r.getStudentName() + ": " + r.getDeclineReason(),
+                "تعذّر على المدرسة تسليم " + r.getStudentName() + ": " + r.getDeclineReason()));
         return PickupDtos.RequestView.from(r);
     }
 
@@ -422,5 +426,15 @@ public class PickupService {
 
     private static String label(Relationship r) {
         return r.name().toLowerCase(Locale.ROOT);
+    }
+
+    private static String labelAr(Relationship r) {
+        return switch (r) {
+            case PARENT -> "وليّ أمر";
+            case DRIVER -> "سائق";
+            case RELATIVE -> "قريب";
+            case GUARDIAN -> "وصيّ";
+            case OTHER -> "آخر";
+        };
     }
 }
