@@ -305,7 +305,7 @@ public class MarksService {
                 .change(null, "term " + term).save();
         for (Person student : access.students(sectionId)) {
             publisher.publishEvent(new PersonNotice(student.getId(), NotificationKind.SYSTEM, "نتائجك منشورة الآن",
-                    "Your results are published", "Term " + term));
+                    "Your results are published", "Term " + term, "الفصل " + term));
         }
     }
 
@@ -415,7 +415,8 @@ public class MarksService {
         }
         outstanding.forEach((teacherId, n) -> publisher.publishEvent(new PersonNotice(teacherId, NotificationKind.GRADES,
                 "موعد تسليم الدرجات الأسبوعية", "Weekly grades are due",
-                "This week's grades are not submitted yet for " + n + (n == 1 ? " class." : " classes.") + " The week ends on Thursday.")));
+                "This week's grades are not submitted yet for " + n + (n == 1 ? " class." : " classes.") + " The week ends on Thursday.",
+                "لم تُسلَّم درجات هذا الأسبوع بعد لعدد " + n + (n == 1 ? " صف." : " صفوف.") + " ينتهي الأسبوع يوم الخميس.")));
         return outstanding.size();
     }
 

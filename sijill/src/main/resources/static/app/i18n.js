@@ -420,7 +420,265 @@ Object.assign(AR, { 'normal': 'عادية', 'urgent': 'عاجلة', 'Needs follo
   for (const k of Object.keys(more)) if (!(k in AR)) AR[k] = more[k];
 })();
 
+/** Screens that still showed English in Arabic: the principal's school page, invitations, the network overview,
+ *  the activity log, the starter rules and document types, incident texts. Only adds words that have no translation yet. */
+(function () {
+  const more = {
+    // principal: My school
+    'MY SCHOOL': 'مدرستي', 'HEALTH SCORE · OF 100': 'درجة السلامة · من 100', 'No score yet': 'لا توجد درجة بعد', '✓ On track': '✓ على المسار الصحيح',
+    'On track': 'على المسار الصحيح', '! Needs attention': '! يحتاج اهتماماً', 'Not enough history yet.': 'لا يوجد سجل كافٍ بعد.',
+    'Files waiting for a decision': 'ملفات بانتظار قرار', 'Act first': 'ابدأ بها', 'files need action first': 'ملفات تحتاج إجراءً أولاً',
+    'Nothing urgent': 'لا شيء عاجل', 'Teachers and coordinators': 'المعلمون والمنسقون', 'Who owns the open files': 'من يملك الملفات المفتوحة',
+    'Coordinators': 'المنسقون', 'Review and approve fixes': 'يراجعون الإصلاحات ويعتمدونها', 'Teachers': 'المعلمون',
+    'Own the files with issues': 'يملكون الملفات التي فيها مشكلات', 'Nobody yet.': 'لا أحد بعد.', 'open': 'مفتوحة',
+    'Score 0 to 100': 'الدرجة من 0 إلى 100', 'open files': 'ملفات مفتوحة', 'Issues by type': 'المشكلات حسب النوع', 'Other': 'أخرى',
+    // network overview
+    'Improving:': 'تحسّن:', 'Getting worse:': 'تراجع:', 'No change:': 'بلا تغيير:', 'the same number of issues as at the start.': 'عدد المشكلات نفسه كما في البداية.',
+    // invitations
+    'For': 'لمن', 'A parent (links one or more children)': 'وليّ أمر (يربط طفلاً أو أكثر)', 'A student (sets their password)': 'طالب (يختار كلمة مروره)',
+    'Student(s)': 'الطالب (الطلاب)', 'Expires': 'ينتهي', 'Code (shown only now):': 'الرمز (يظهر الآن فقط):', 'Valid until': 'صالح حتى',
+    '. Give it to the family; it cannot be shown again.': '. أعطه للأسرة؛ لا يمكن عرضه مرة أخرى.',
+    'Parent e-mail (optional: the code then works only for this address)': 'بريد وليّ الأمر (اختياري: يعمل الرمز عندها لهذا العنوان فقط)',
+    // other screens
+    'changed': 'تغييرات', 'Date': 'التاريخ', 'Present at school': 'حاضر في المدرسة', 'Link (https://…)': 'الرابط (https://…)', 'points': 'نقطة', 'overdue': 'متأخرة',
+    'No teaching assignments yet.': 'لا توجد إسنادات تدريس بعد.', 'No sections yet.': 'لا توجد شعب بعد.', 'No assessments yet.': 'لا توجد تقييمات بعد.',
+    'No schools yet.': 'لا توجد مدارس بعد.', 'The file could not be read.': 'تعذّرت قراءة الملف.', 'Person deleted.': 'تم حذف الشخص.',
+    'Delete this person permanently?': 'حذف هذا الشخص نهائياً؟', 'ID ends ••': 'آخر أرقام الهوية ••',
+    'Every student already has a class. New students appear here once the school has added them.': 'لكل طالب صف بالفعل. يظهر الطلاب الجدد هنا بعد أن تضيفهم المدرسة.',
+    'Test sign-in': 'دخول تجريبي', 'Sign in with a name (testing)': 'الدخول بالاسم (للتجربة)', 'Or pick a person:': 'أو اختر شخصاً:',
+    'For testing only. Type a name, for example Huda, to sign in with that person\'s role. There is no password.': 'للتجربة فقط. اكتب اسماً، مثل هدى، للدخول بدور ذلك الشخص. لا توجد كلمة مرور.',
+    'Test sign-in is switched off. Start the app with SIJILL_SIGNIN_TEST_MODE=true to use it.': 'الدخول التجريبي متوقف. شغّل التطبيق مع SIJILL_SIGNIN_TEST_MODE=true لاستخدامه.',
+    'Manual': 'يدوي', 'Unknown': 'غير معروف', 'Verifying': 'قيد التحقق', 'Declined': 'مرفوض',
+    // activity log: actions and what they are about
+    'POINTS_AWARDED': 'منح نقاط', 'STUDENT_RECORD_VIEWED': 'عرض سجل طالب', 'TICKET_CREATED': 'إنشاء تذكرة', 'TICKET_REPLIED': 'رد على تذكرة', 'TICKET_ASSIGNED': 'إسناد تذكرة',
+    'TICKET_STATUS_CHANGED': 'تغيير حالة تذكرة', 'PROFILE_UPDATED': 'تحديث الملف الشخصي', 'FILE_DELETED': 'حذف ملف',
+    'PICKUP_COLLECTOR_ADDED': 'إضافة مستلم', 'PICKUP_COLLECTOR_REMOVED': 'إزالة مستلم', 'PICKUP_ARRIVED': 'وصول للاستلام',
+    'PICKUP_VERIFIED': 'التحقق من المستلم', 'PICKUP_RELEASED': 'تسليم طالب', 'PICKUP_DECLINED': 'رفض التسليم', 'PICKUP_CANCELLED': 'إلغاء الاستلام',
+    'ApprovalRequest': 'طلب موافقة', 'DocType': 'نوع مستند', 'Exception': 'استثناء', 'Export': 'تصدير', 'Invitation': 'دعوة', 'JobRun': 'تشغيل مهمة',
+    'Notice': 'إعلان', 'PickupRequest': 'طلب استلام', 'PlanningSubmission': 'خطة درس', 'Report': 'تقرير', 'RestoreRequest': 'طلب استعادة',
+    'RoleGroup': 'مجموعة أدوار', 'SchoolFile': 'ملف مدرسي', 'Site': 'مدرسة', 'SupportTicket': 'تذكرة دعم',
+    'marks sheet': 'كشف الدرجات', 'parent view': 'عرض وليّ الأمر',
+    'OWNER_NOTIFIED': 'تم إبلاغ المالك', 'REMINDER_SENT': 'أُرسل تذكير', 'NEEDS_FOLLOW_UP': 'تحتاج متابعة', 'NEEDS_REVIEW': 'تحتاج مراجعة',
+    'OWNER_DISAGREES': 'المالك غير موافق', 'OWNER_ASKED_FOR_HELP': 'طلب المساعدة', 'FIXED': 'تم الإصلاح', 'ALLOWED_EXCEPTION': 'استثناء مسموح',
+    'RULE_PAUSED': 'القاعدة متوقفة', 'CLOSED_RULE_REMOVED': 'القاعدة محذوفة', 'OPEN': 'مفتوحة', 'IN_PROGRESS': 'قيد المعالجة', 'CLOSED': 'مغلقة',
+    'PENDING': 'بانتظار الموافقة', 'APPROVED': 'تمت الموافقة', 'REJECTED': 'مرفوض', 'CANCELLED': 'ملغى', 'ACTIVE': 'فعّالة', 'PAUSED': 'متوقفة', 'DRAFT': 'مسودة',
+    // document types (starter list)
+    'Mark book': 'سجل الدرجات', 'Student report': 'تقرير طالب', 'Behaviour record': 'سجل السلوك', 'Medical record': 'سجل طبي',
+    'Special-needs record': 'سجل الاحتياجات الخاصة', 'Contact list': 'قائمة جهات الاتصال', 'Exam': 'اختبار', 'Policy': 'سياسة', 'Lesson plan': 'خطة درس',
+    'Worksheet': 'ورقة عمل', 'Circular': 'تعميم', 'Meeting minutes': 'محضر اجتماع',
+    // starter rule names (their explanations already come in Arabic from the server)
+    'School files in the school shared drive': 'ملفات المدرسة في المساحة المشتركة للمدرسة', 'No public links on sensitive files': 'لا روابط عامة على الملفات الحساسة',
+    'Restricted files stay inside': 'الملفات المقيّدة تبقى في الداخل', 'Student records in Student Records': 'سجلات الطلاب في مساحة سجلات الطلاب',
+    'Only the right people open Restricted files': 'الملفات المقيّدة للأشخاص المعنيين فقط', 'No exam sharing before the exam': 'لا مشاركة للاختبار قبل موعده',
+    'One official copy per policy': 'نسخة رسمية واحدة لكل سياسة', 'Leavers move school files first': 'المغادرون ينقلون ملفات المدرسة أولاً',
+    'No files owned by shared accounts': 'لا ملفات تملكها حسابات مشتركة', 'No unapproved deletion of important files': 'لا حذف للملفات المهمة دون موافقة',
+    // incidents
+    'An exam file was shared before its date.': 'تمت مشاركة ملف اختبار قبل موعده.', 'An important file was deleted or moved to the trash.': 'حُذف ملف مهم أو نُقل إلى سلة المحذوفات.',
+    'An urgent issue is still open after one school day.': 'ما زالت مشكلة عاجلة مفتوحة بعد يوم دراسي.',
+    // common subject names
+    'Mathematics': 'الرياضيات', 'Science': 'العلوم', 'English': 'اللغة الإنجليزية', 'Arabic': 'اللغة العربية', 'Islamic Studies': 'التربية الإسلامية',
+    'Physics': 'الفيزياء', 'Chemistry': 'الكيمياء', 'Biology': 'الأحياء', 'History': 'التاريخ', 'Geography': 'الجغرافيا', 'Computing': 'الحوسبة',
+    'Art': 'الفنون', 'Quran': 'القرآن الكريم', 'Physical Education': 'التربية البدنية', 'Social Studies': 'الدراسات الاجتماعية'
+  };
+  for (const k of Object.keys(more)) if (!(k in AR)) AR[k] = more[k];
+  AR['Open'] = 'مفتوحة';   // the status (open issues, open tickets); links that open something say "فتح" themselves
+})();
+
+/** Messages the server sends back (errors, refusals). The toast and flash boxes pass them through the same lookup. */
+(function () {
+  const more = {
+    'A different person must approve this change (two-person approval).': 'يجب أن يوافق شخص آخر على هذا التغيير (موافقة شخصين).',
+    'A different person must approve this. You cannot approve your own request.': 'يجب أن يوافق شخص آخر على هذا. لا يمكنك الموافقة على طلبك.',
+    'A notice needs its Arabic title and text before it can be published.': 'يحتاج الإعلان إلى عنوان ونص بالعربية قبل نشره.',
+    'A request for this student is already waiting for the coordinator.': 'يوجد طلب لهذا الطالب بانتظار المنسق بالفعل.',
+    'A school with this domain already exists.': 'توجد مدرسة بهذا النطاق بالفعل.',
+    'A second, different person must approve this restore.': 'يجب أن يوافق شخص ثانٍ مختلف على هذه الاستعادة.',
+    'Assessments are not available for your role.': 'التقييمات غير متاحة لدورك.',
+    'Assign a teacher to this subject for the section first.': 'أسند معلماً لهذه المادة في الشعبة أولاً.',
+    'Attendance cannot be recorded for a future day.': 'لا يمكن تسجيل الحضور ليوم قادم.',
+    'Attendance is recorded by the school\'s attendance officer. Teachers can only read it.': 'يسجّل الحضور كاتب الحضور في المدرسة. يمكن للمعلمين الاطلاع عليه فقط.',
+    'Attendance summaries are not available for your role.': 'ملخصات الحضور غير متاحة لدورك.',
+    'Backup status is not available for your role.': 'حالة النسخ الاحتياطي غير متاحة لدورك.',
+    'Check runs are not available for your role.': 'عمليات الفحص غير متاحة لدورك.',
+    'Choose Teacher, Coordinator, Principal, Attendance Clerk, Student or Parent.': 'اختر معلماً أو منسقاً أو مدير مدرسة أو كاتب حضور أو طالباً أو وليّ أمر.',
+    'Choose a section.': 'اختر شعبة.', 'Choose at least one student.': 'اختر طالباً واحداً على الأقل.',
+    'Choose how this person is related to your child.': 'اختر صلة هذا الشخص بطفلك.', 'Choose someone from the list.': 'اختر شخصاً من القائمة.',
+    'Choose the student this parent follows.': 'اختر الطالب الذي يتابعه وليّ الأمر هذا.', 'Choose the student.': 'اختر الطالب.',
+    'Choose yourself or someone on your approved list.': 'اختر نفسك أو شخصاً من قائمة المخوَّلين.',
+    'Class points are for school staff.': 'نقاط الصف لموظفي المدرسة.', 'Class requests are for students and parents.': 'طلبات الصف للطلاب وأولياء الأمور.',
+    'Enter a phone number using digits, spaces, + ( ) and - only.': 'أدخل رقم هاتف بالأرقام والمسافات و+ ( ) و- فقط.',
+    'Enter the collector\'s ID number (at least 4 letters or digits). Only the last four are kept.': 'أدخل رقم هوية المستلم (4 أحرف أو أرقام على الأقل). تُحفظ آخر أربعة فقط.',
+    'Enter the collector\'s full name.': 'أدخل الاسم الكامل للمستلم.', 'Every student must belong to your school.': 'يجب أن ينتمي كل طالب إلى مدرستك.',
+    'Exceptions are not available for your role.': 'الاستثناءات غير متاحة لدورك.',
+    'Give a short reason, so the parent knows what to do.': 'اكتب سبباً مختصراً ليعرف وليّ الأمر ما يجب فعله.',
+    'Incidents are not available for your role.': 'الحوادث غير متاحة لدورك.',
+    'Leadership and School IT accounts cannot be deleted here.': 'لا يمكن حذف حسابات القيادة وتقنية المعلومات بالمدرسة من هنا.',
+    'Notices are shown to the school\'s own people.': 'تظهر الإعلانات لأفراد المدرسة فقط.',
+    'Only Leadership or an EAA administrator can do this.': 'القيادة أو تقنية المعلومات في الهيئة فقط يمكنهم ذلك.',
+    'Only School IT and Leadership can verify the log.': 'تقنية المعلومات بالمدرسة والقيادة فقط يمكنهم التحقق من السجل.',
+    'Only School IT can unmask an export, and it needs a reason.': 'تقنية المعلومات بالمدرسة فقط يمكنها كشف بيانات التصدير، ويلزم ذكر سبب.',
+    'Only School IT of this school can do this.': 'تقنية المعلومات في هذه المدرسة فقط يمكنها ذلك.',
+    'Only School IT, Leadership and EAA administrators assign tickets.': 'تقنية المعلومات بالمدرسة والقيادة وتقنية المعلومات في الهيئة فقط يسندون التذاكر.',
+    'Only a paused rule can be resumed.': 'لا يمكن استئناف إلا قاعدة متوقفة.',
+    'Only a principal can write to Leadership. Write to your School IT instead.': 'مدير المدرسة فقط يمكنه مراسلة القيادة. راسل تقنية المعلومات في مدرستك بدلاً من ذلك.',
+    'Only a student can be enrolled in a section.': 'لا يُسجَّل في الشعبة إلا الطلاب.',
+    'Only a teacher or a coordinator can verify and release a child.': 'المعلم أو المنسق فقط يمكنه التحقق من المستلم وتسليم الطفل.',
+    'Only an active rule can be paused.': 'لا يمكن إيقاف إلا قاعدة فعّالة.', 'Only network-wide rules need approval.': 'قواعد الشبكة فقط تحتاج إلى موافقة.',
+    'Only teachers award points. The principal can view them.': 'المعلمون فقط يمنحون النقاط. يمكن لمدير المدرسة الاطلاع عليها.',
+    'Only the file\'s owner or the subject coordinator can ask to delete a file.': 'مالك الملف أو منسق المادة فقط يمكنه طلب حذف الملف.',
+    'Only the owner of the file can do this.': 'مالك الملف فقط يمكنه ذلك.', 'Only the person who asked can withdraw this.': 'صاحب الطلب فقط يمكنه سحبه.',
+    'Only the subject coordinator can do this.': 'منسق المادة فقط يمكنه ذلك.', 'Only the subject coordinator can review this plan.': 'منسق المادة فقط يمكنه مراجعة هذه الخطة.',
+    'Only the subject coordinator or School IT can end this exception.': 'منسق المادة أو تقنية المعلومات بالمدرسة فقط يمكنهما إنهاء هذا الاستثناء.',
+    'Only the teacher of this subject for this section can create its assessments.': 'معلم هذه المادة في هذه الشعبة فقط يمكنه إنشاء تقييماتها.',
+    'Only the teacher of this subject for this section can enter or submit marks.': 'معلم هذه المادة في هذه الشعبة فقط يمكنه إدخال الدرجات أو تسليمها.',
+    'Only the teacher of this subject for this section can share materials.': 'معلم هذه المادة في هذه الشعبة فقط يمكنه مشاركة المواد.',
+    'Only the teacher who shared it, or School IT, can remove a material.': 'المعلم الذي شاركها أو تقنية المعلومات بالمدرسة فقط يمكنه إزالة المادة.',
+    'Planning files are not available for your role.': 'ملفات التخطيط غير متاحة لدورك.', 'Please choose a class.': 'يرجى اختيار صف.',
+    'Please choose a start date and an end date after it.': 'يرجى اختيار تاريخ بداية وتاريخ نهاية بعده.', 'Please choose a teacher of your school.': 'يرجى اختيار معلم من مدرستك.',
+    'Please choose an end date that is today or later.': 'يرجى اختيار تاريخ نهاية اليوم أو بعده.', 'Please choose one of your school\'s subjects.': 'يرجى اختيار مادة من مواد مدرستك.',
+    'Please choose the document type and the sensitivity.': 'يرجى اختيار نوع المستند ودرجة الحساسية.',
+    'Please fill in the grade, week, type and the drive link.': 'يرجى تعبئة الصف والأسبوع والنوع ورابط المساحة.',
+    'Please give a grade from 1 to 12 and a section name.': 'يرجى إدخال صف من 1 إلى 12 واسم الشعبة.', 'Please give a reason for the exception.': 'يرجى ذكر سبب الاستثناء.',
+    'Please give a short reason (up to 200 characters).': 'يرجى ذكر سبب مختصر (حتى 200 حرف).', 'Please give a valid e-mail address.': 'يرجى إدخال بريد إلكتروني صحيح.',
+    'Please give the directory group and the role.': 'يرجى إدخال مجموعة الدليل والدور.', 'Please give the material a title.': 'يرجى إعطاء المادة عنواناً.',
+    'Please give the person\'s name.': 'يرجى إدخال اسم الشخص.', 'Please give the school a name and its workspace domain.': 'يرجى إدخال اسم المدرسة ونطاق مساحة عملها.',
+    'Please give the setting name and value.': 'يرجى إدخال اسم الإعداد وقيمته.', 'Please give the subject a name.': 'يرجى إعطاء المادة اسماً.',
+    'Please give the type a name and a sensitivity.': 'يرجى إعطاء النوع اسماً ودرجة حساسية.', 'Please give your full name.': 'يرجى إدخال اسمك الكامل.',
+    'Please keep the reason under 500 characters.': 'يرجى أن يكون السبب أقل من 500 حرف.', 'Please name the assessment.': 'يرجى تسمية التقييم.',
+    'Please name the drive to restore.': 'يرجى تسمية المساحة المطلوب استعادتها.', 'Please name the term.': 'يرجى تسمية الفصل الدراسي.',
+    'Please say what to restore and why.': 'يرجى ذكر ما تريد استعادته والسبب.', 'Please sign in with your school account.': 'يرجى تسجيل الدخول بحساب مدرستك.',
+    'Please tell the teacher why the plan is returned.': 'يرجى إخبار المعلم بسبب إعادة الخطة.', 'Please tell us why this looks wrong.': 'يرجى إخبارنا لماذا يبدو هذا خطأ.',
+    'Please write the reason for changing attendance after the day.': 'يرجى كتابة سبب تعديل الحضور بعد انقضاء اليوم.',
+    'Please write the reason for unlocking the marks.': 'يرجى كتابة سبب فتح الدرجات.', 'Please write the reason for unpublishing the results.': 'يرجى كتابة سبب إلغاء نشر النتائج.',
+    'Recognition analytics are for school leadership.': 'تحليلات التقدير لقيادة المدرسة.', 'Reminder days must be 1, 2, 3 or 5.': 'يجب أن تكون أيام التذكير 1 أو 2 أو 3 أو 5.',
+    'Restore requests are not available for your role.': 'طلبات الاستعادة غير متاحة لدورك.', 'School days are Sunday to Thursday.': 'أيام الدراسة من الأحد إلى الخميس.',
+    'Sections are not available for your role.': 'الشعب غير متاحة لدورك.', 'Students and parents cannot see the class list.': 'لا يمكن للطلاب وأولياء الأمور رؤية قائمة الصف.',
+    'Study materials are not available for your role.': 'المواد الدراسية غير متاحة لدورك.', 'Teaching assignments are not available for your role.': 'إسنادات التدريس غير متاحة لدورك.',
+    'Terms are not available for your role.': 'الفصول الدراسية غير متاحة لدورك.',
+    'That e-mail already has an account. Sign in, or ask the school office.': 'لهذا البريد حساب بالفعل. سجّل الدخول أو راجع مكتب المدرسة.',
+    'That person cannot sign in.': 'لا يمكن لهذا الشخص تسجيل الدخول.', 'That subject does not belong to this school.': 'هذه المادة لا تتبع هذه المدرسة.',
+    'The activity log is not available for your role.': 'سجل النشاط غير متاح لدورك.', 'The attachment could not be read.': 'تعذّرت قراءة المرفق.',
+    'The attachment is empty.': 'المرفق فارغ.', 'The attachment needs a file name.': 'يحتاج المرفق إلى اسم ملف.',
+    'The connection is switched off. Reconnect it first.': 'الاتصال متوقف. أعد الاتصال أولاً.',
+    'The connection test failed. Please check the connection settings.': 'فشل اختبار الاتصال. يرجى مراجعة إعدادات الاتصال.',
+    'The end of a notice must be after its start.': 'يجب أن تكون نهاية الإعلان بعد بدايته.', 'The head office cannot be removed.': 'لا يمكن إزالة المكتب الرئيسي.',
+    'The invitation is for a parent or a student.': 'الدعوة لوليّ أمر أو طالب.', 'The link must start with https://': 'يجب أن يبدأ الرابط بـ https://',
+    'The maximum mark must be more than 0 and at most 1000.': 'يجب أن تكون الدرجة القصوى أكبر من 0 وألا تتجاوز 1000.',
+    'The owner has not disagreed with this issue.': 'لم يعترض المالك على هذه المشكلة.', 'The password must be at least 8 characters.': 'يجب أن تتكون كلمة المرور من 8 أحرف على الأقل.',
+    'The performance matrix is for school staff.': 'مصفوفة الأداء لموظفي المدرسة.', 'The period must be from 1 to 12.': 'يجب أن تكون الحصة من 1 إلى 12.',
+    'The photo could not be read.': 'تعذّرت قراءة الصورة.', 'The photo must be a PNG or JPEG image.': 'يجب أن تكون الصورة بصيغة PNG أو JPEG.',
+    'The pick-up board is for teachers, coordinators, the principal, School IT and the attendance clerk.': 'لوحة الاستلام للمعلمين والمنسقين ومدير المدرسة وتقنية المعلومات بالمدرسة وكاتب الحضور.',
+    'The restore must be approved first.': 'يجب الموافقة على الاستعادة أولاً.',
+    'The results of this term are published. Unpublish them first, then unlock the marks.': 'نتائج هذا الفصل منشورة. ألغِ نشرها أولاً ثم افتح الدرجات.',
+    'The school score is not available for your role.': 'درجة المدرسة غير متاحة لدورك.', 'The school workspace is not connected yet.': 'مساحة عمل المدرسة غير متصلة بعد.',
+    'The stage must be SIJIL or HIFZ.': 'يجب أن تكون المرحلة سجل أو حفظ.', 'The term must be 1, 2 or 3.': 'يجب أن يكون الفصل 1 أو 2 أو 3.',
+    'The term must end after it starts.': 'يجب أن ينتهي الفصل بعد بدايته.', 'The ticket already has this status.': 'التذكرة في هذه الحالة بالفعل.',
+    'The timetable is not available for your role.': 'الجدول غير متاح لدورك.', 'The weekly grade overview is for school leadership.': 'ملخص الدرجات الأسبوعية لقيادة المدرسة.',
+    'The weekly report is available to principals and Leadership.': 'التقرير الأسبوعي متاح لمديري المدارس والقيادة.',
+    'The welcome message was already sent.': 'أُرسلت رسالة الترحيب بالفعل.', 'There are no students in this section yet.': 'لا يوجد طلاب في هذه الشعبة بعد.',
+    'These are a student\'s own points.': 'هذه نقاط الطالب نفسه.', 'These marks are already submitted.': 'سُلّمت هذه الدرجات بالفعل.',
+    'These marks are not submitted, so there is nothing to unlock.': 'هذه الدرجات لم تُسلَّم، فلا يوجد ما يُفتح.',
+    'These marks are submitted and locked. Ask School IT to unlock them to make a change.': 'هذه الدرجات مسلّمة ومقفلة. اطلب من تقنية المعلومات بالمدرسة فتحها لإجراء تغيير.',
+    'These results are already published.': 'هذه النتائج منشورة بالفعل.', 'This belongs to another school.': 'هذا يتبع مدرسة أخرى.',
+    'This exception has already ended.': 'انتهى هذا الاستثناء بالفعل.', 'This incident is already resolved.': 'تم حل هذه الحادثة بالفعل.',
+    'This invitation was issued for a different e-mail address.': 'صدرت هذه الدعوة لبريد إلكتروني آخر.', 'This is already waiting for approval.': 'هذا بانتظار الموافقة بالفعل.',
+    'This is for parents.': 'هذا لأولياء الأمور.', 'This is the student\'s home.': 'هذه صفحة الطالب.', 'This is the student\'s own attendance.': 'هذا حضور الطالب نفسه.',
+    'This is the teacher\'s home.': 'هذه صفحة المعلم.', 'This issue is already closed.': 'هذه المشكلة مغلقة بالفعل.',
+    'This kind of attachment is not accepted. Use PDF, PNG, JPG, DOCX, XLSX, TXT or CSV.': 'هذا النوع من المرفقات غير مقبول. استخدم PDF أو PNG أو JPG أو DOCX أو XLSX أو TXT أو CSV.',
+    'This parent is no longer linked to the child. Decline the request.': 'لم يعد وليّ الأمر هذا مرتبطاً بالطفل. ارفض الطلب.',
+    'This person is no longer on the approved list. Decline the request.': 'لم يعد هذا الشخص في قائمة المخوَّلين. ارفض الطلب.',
+    'This plan is not waiting for review.': 'هذه الخطة ليست بانتظار المراجعة.', 'This plan was already submitted.': 'سُلّمت هذه الخطة بالفعل.',
+    'This request is already being checked or is finished.': 'هذا الطلب قيد التحقق أو انتهى بالفعل.', 'This request is already finished.': 'انتهى هذا الطلب بالفعل.',
+    'This request is no longer waiting for approval.': 'لم يعد هذا الطلب بانتظار الموافقة.', 'This request was already decided.': 'تم البت في هذا الطلب بالفعل.',
+    'This rule has been deleted.': 'حُذفت هذه القاعدة.', 'This rule has no approved version yet.': 'لا توجد نسخة معتمدة من هذه القاعدة بعد.',
+    'This student is already in a class.': 'هذا الطالب في صف بالفعل.', 'This version is already approved.': 'هذه النسخة معتمدة بالفعل.',
+    'Too many tries. Please wait a few minutes and try again.': 'محاولات كثيرة. يرجى الانتظار بضع دقائق ثم المحاولة مجدداً.',
+    'Too many wrong passwords. Please try again in 15 minutes.': 'كلمات مرور خاطئة كثيرة. يرجى المحاولة بعد 15 دقيقة.',
+    'Unknown action.': 'إجراء غير معروف.', 'Unknown kind of alert.': 'نوع تنبيه غير معروف.', 'Verify the collector\'s ID first.': 'تحقق من هوية المستلم أولاً.',
+    'You can award points only to students you teach.': 'يمكنك منح النقاط لطلابك فقط.', 'You cannot delete your own account.': 'لا يمكنك حذف حسابك.',
+    'You cannot reply to this ticket.': 'لا يمكنك الرد على هذه التذكرة.',
+    'You do not need to add yourself. Choose yourself when you arrive.': 'لا داعي لإضافة نفسك. اختر نفسك عند وصولك.',
+    'You do not teach this section.': 'أنت لا تدرّس هذه الشعبة.', 'You do not teach this subject to this section.': 'أنت لا تدرّس هذه المادة لهذه الشعبة.',
+    'Your child is not in a class yet. Ask the school office.': 'طفلك ليس في صف بعد. راجع مكتب المدرسة.',
+    'Your name must be between 2 and 200 characters.': 'يجب أن يكون اسمك بين 2 و200 حرف.', 'Your role cannot approve this.': 'لا يمكن لدورك الموافقة على هذا.',
+    'Your role cannot open a support ticket.': 'لا يمكن لدورك فتح تذكرة دعم.', 'Your role does not use support tickets.': 'دورك لا يستخدم تذاكر الدعم.',
+    'Your role is not allowed to do this.': 'دورك لا يسمح بهذا.', 'Your role is not allowed to resolve incidents.': 'دورك لا يسمح بحل الحوادث.',
+    'Your role sees counts only, not individual files.': 'يرى دورك الأعداد فقط، لا الملفات منفردة.',
+    'Your role sees counts only, not individual issues.': 'يرى دورك الأعداد فقط، لا المشكلات منفردة.',
+    'Your section': 'شعبتك', 'Your section (you are not enrolled in a section yet)': 'شعبتك (لم تُسجَّل في شعبة بعد)',
+    // "<thing> was not found."
+    'A person with this e-mail in your school': 'شخص بهذا البريد في مدرستك', 'The assessment': 'التقييم', 'The attachment': 'المرفق', 'The backup run': 'عملية النسخ الاحتياطي',
+    'The child': 'الطفل', 'The class': 'الصف', 'The collector': 'المستلم', 'The document type': 'نوع المستند', 'The exception': 'الاستثناء', 'The incident': 'الحادثة',
+    'The invitation': 'الدعوة', 'The issue': 'المشكلة', 'The lesson': 'الحصة', 'The material': 'المادة الدراسية', 'The notice': 'الإعلان', 'The notification': 'الإشعار',
+    'The person': 'الشخص', 'The plan': 'الخطة', 'The published results': 'النتائج المنشورة', 'The request': 'الطلب', 'The restore request': 'طلب الاستعادة',
+    'The rule': 'القاعدة', 'The rule version': 'نسخة القاعدة', 'The school': 'المدرسة', 'The section': 'الشعبة', 'The student': 'الطالب', 'The subject': 'المادة',
+    'The ticket': 'التذكرة', 'Your account': 'حسابك'
+  };
+  for (const k of Object.keys(more)) if (!(k in AR)) AR[k] = more[k];
+})();
+
+/** Bell titles the server writes. New entries carry both languages; older ones carry only the person's chosen language,
+ *  so these pairs translate them both ways (Arabic screen: English → Arabic; English screen: Arabic → English). */
+const NOTE_PAIRS = [
+  ['Your results are published', 'نتائجك منشورة الآن'], ['Weekly grades are due', 'موعد تسليم الدرجات الأسبوعية'],
+  ['Your request was approved', 'تمت الموافقة على طلبك'], ['Your request was rejected', 'تم رفض طلبك'],
+  ['The owner thinks this looks wrong', 'المالك يرى أن الملاحظة غير صحيحة'], ['The owner asked for help', 'المالك يطلب المساعدة'],
+  ['The coordinator kept the rule for your file; please review the steps', 'أبقى المنسق القاعدة على ملفك؛ يرجى مراجعة الخطوات'],
+  ['A file needs your review', 'ملف بحاجة إلى مراجعتك'], ['A file needs your attention', 'ملف يحتاج إلى انتباهك'],
+  ['Urgent: a file needs your attention', 'عاجل: ملف يحتاج إلى انتباهك'], ['Urgent: a file needs follow-up', 'عاجل: ملف يحتاج إلى متابعة'],
+  ['Urgent alert in your school', 'تنبيه عاجل في مدرستك'], ['A new file issue in your school', 'ملاحظة جديدة على ملف في مدرستك'],
+  ['Alert: a Restricted file with student or health data is exposed', 'تنبيه: ملف مقيّد يحتوي بيانات طلاب أو صحة مكشوف'],
+  ['Urgent: a file needs action', 'تنبيه عاجل: ملف يحتاج إلى معالجة'], ['Reminder: a file still needs your attention', 'تذكير: ملف ما زال يحتاج إلى انتباهك'],
+  ['Needs follow-up', 'يحتاج إلى متابعة'], ['The file still needs a fix', 'ما زال الملف بحاجة إلى تصحيح'],
+  ['A request needs your approval', 'طلب بانتظار موافقتك'], ['Your account was locked', 'تم قفل حسابك مؤقتاً'], ['Your role was changed', 'تم تغيير دورك'],
+  ['Welcome to Hafez', 'مرحبًا بك في حافظ'], ['A new plan is waiting for your review', 'خطة جديدة بانتظار مراجعتك'],
+  ['Your plan was approved', 'تمت الموافقة على خطتك'], ['Your plan was returned', 'أُعيدت خطتك للتعديل'],
+  ['Reminder: next week\'s plan is not submitted yet', 'تذكير: لم تُرسل خطة الأسبوع القادم'], ['New reply on your ticket', 'رد جديد على تذكرتك'],
+  ['A support ticket was assigned to you', 'تذكرة دعم أُسندت إليك'], ['Your ticket is being handled', 'تذكرتك قيد المعالجة'],
+  ['Your ticket changed status', 'تغيّرت حالة تذكرتك'],
+  ['Major incident: an exam was shared before its date', 'حادثة مهمة: تمت مشاركة اختبار قبل موعده'],
+  ['Major incident: an important file was deleted', 'حادثة مهمة: تم حذف ملف مهم'],
+  ['Major incident: many files were deleted in a short time', 'حادثة مهمة: حُذفت ملفات كثيرة في وقت قصير'],
+  ['Major incident: an urgent issue is still open', 'حادثة مهمة: ما زالت مشكلة عاجلة مفتوحة'],
+  ['Major incident: the connection to the workspace is lost', 'حادثة مهمة: انقطع الاتصال بمساحة العمل']
+];
+/** Titles with a name or date in them ("%" is that part, kept as it is). */
+const NOTE_FORMS = [['New notice: %', 'إشعار جديد: %'], ['A parent has arrived for %', 'وصل ولي أمر الطالب %'], ['New support ticket from %', 'تذكرة دعم جديدة من %'],
+  ['New reply from %', 'رد جديد من %'], ['An exception was allowed for your file until %', 'تم السماح باستثناء لملفك حتى %'],
+  ['% was not released', 'لم يتم تسليم %'], ['% was released', '% تم تسليمه']];
+for (const [en, ar] of NOTE_PAIRS) if (!(en in AR)) AR[en] = ar;
+function formPart(tpl, s) { const [a, b] = tpl.split('%'); return s.length > a.length + b.length && s.startsWith(a) && s.endsWith(b) ? s.slice(a.length, s.length - b.length) : null; }
+/** An older Arabic-only bell title in English, or null when it is not one the server writes. */
+function noteToEnglish(s) {
+  s = String(s || '').trim().replace(new RegExp(BRAND.ar, 'g'), 'حافظ');
+  const pair = NOTE_PAIRS.find(p => p[1] === s); if (pair) return brandify(pair[0]);
+  for (const [en, ar] of NOTE_FORMS) { const x = formPart(ar, s); if (x != null) return en.replace('%', x); }
+  return null;
+}
+
+const DAY_AR = { Sunday: 'الأحد', Monday: 'الاثنين', Tuesday: 'الثلاثاء', Wednesday: 'الأربعاء', Thursday: 'الخميس' };
+const ROLE_AR = { TEACHER: 'معلم', COORDINATOR: 'منسق', PRINCIPAL: 'مدير المدرسة', SCHOOL_IT: 'تقنية المعلومات بالمدرسة', LEADERSHIP: 'القيادة', EAA_ADMIN: 'تقنية المعلومات في الهيئة', ATTENDANCE_OFFICER: 'كاتب الحضور', STUDENT: 'طالب', PARENT: 'وليّ أمر' };
+
 const AR_RULES = [
+  [/^(.+) was not found\.$/, w => { const t = lookup(w); return t == null ? null : `لم يُعثر على ${t}.`; }],
+  [/^(\d+)% of (\d+) issues fixed$/, (a, b) => `تم إصلاح ${a}% من ${b} مشكلة`],
+  [/^average ([\d.]+) per student$/, n => `بمتوسط ${n} لكل طالب`],
+  [/^issues went from (\d+) to (\d+) over this period\.$/, (a, b) => `انتقل عدد المشكلات من ${a} إلى ${b} خلال هذه الفترة.`],
+  [/^Health score trend, (.+) to (.+)$/, (a, b) => `اتجاه درجة السلامة، من ${a} إلى ${b}`],
+  [/^Delete rule (\S+)\? Its open issues will be closed\. Pausing is usually better\.$/, c => `حذف القاعدة ${c}؟ ستُغلق مشكلاتها المفتوحة. الإيقاف المؤقت أفضل عادةً.`],
+  [/^(\d+) files were deleted within an hour\.$/, n => `حُذف ${n} ملفاً خلال ساعة.`],
+  [/^Room (.+)$/, n => 'القاعة ' + n],
+  [/^([A-Z_]+) → ([A-Z_]+)$/, (a, b) => { const x = lookup(a), y = lookup(b); return x == null && y == null ? null : `${x ?? a} → ${y ?? b}`; }],
+  [/^Collector: (.+) \(([a-z]+)\)\. Open the Pick-up board to verify and release\.$/, (n, r) => `المستلم: ${n} (${lookup(r[0].toUpperCase() + r.slice(1)) || r}). افتح لوحة الاستلام للتحقق والتسليم.`],
+  // a list of known words ("English, Mathematics, Science"): translated only when every item is known
+  [/^([^,]+(?:, [^,]+)+)$/, l => { const parts = l.split(', ').map(lookup); return parts.includes(null) ? null : parts.join('، '); }],
+  [/^out of ([\d.]+)$/, n => 'من ' + n],
+  [/^Week of (.+)$/, d => 'أسبوع ' + d],
+  [/^added (Sunday|Monday|Tuesday|Wednesday|Thursday) period (\d+)$/, (d, n) => `أُضيفت حصة ${DAY_AR[d]} رقم ${n}`],
+  [/^attendance (\d{4}-\d\d-\d\d)$/, d => 'الحضور ' + d],
+  [/^(\S+@\S+) as ([A-Z_]+)$/, (e, r) => ROLE_AR[r] ? `${e} بدور ${ROLE_AR[r]}` : null],
+  [/^(R\d+) ([A-Z_]+)$/, (c, s) => { const t = lookup(s); return t == null ? null : `${c} ${t}`; }],
+  [/^(.+) \(([A-Za-z][A-Za-z -]*)\)$/, (w, x) => { const t = lookup(x); return t == null ? null : `${w} (${t})`; }],
   [/^(\d+) of (\d+) days$/, (a, b) => `${a} من ${b} أيام`],
   [/^Following (.+)$/, n => 'تتابع ' + n],
   [/^Welcome, (.+)$/, n => 'مرحباً، ' + n],
@@ -428,7 +686,7 @@ const AR_RULES = [
   [/^Section (.+)$/, n => 'الشعبة ' + n],
   [/^Student ID (.+)$/, n => 'رقم الطالب ' + n],
   [/^Request failed \((\d+)\)$/, n => `تعذّر تنفيذ الطلب (${n})`],
-  [/^Rule (\S+): (.+)$/, (c, n) => `القاعدة ${c}: ${n}`],
+  [/^Rule (\S+): (.+)$/, (c, n) => `القاعدة ${c}: ${trCore(n)}`],
   [/^Edit rule (.+)$/, c => 'تعديل القاعدة ' + c],
   [/^Delete rule (.+)\?$/, c => `حذف القاعدة ${c}؟`],
   [/^New notice: (.+)$/, n => 'إعلان جديد: ' + n],
@@ -446,7 +704,7 @@ const AR_RULES = [
   [/^Done: (.+)$/, s => 'تم: ' + s],
   [/^(.+) can now sign in\.$/, e => e + ' يمكنه الآن تسجيل الدخول.'],
   [/^(\d+) people changed\.$/, n => `تغيّرت بيانات ${n} شخص.`],
-  [/^Attendance saved \((.+)\)\.?$/, s => `تم حفظ الحضور (${s})`],
+  [/^Attendance saved \((.+)\)\.?$/, s => `تم حفظ الحضور (${trCore(s)})`],
   [/^Opened (.+)$/, d => 'فُتحت ' + d],
   [/^Shared (.+)$/, d => 'شوركت ' + d],
   [/^(\d+) new$/, n => `${n} جديدة`],
@@ -457,6 +715,7 @@ const AR_RULES = [
   [/^([a-z]+) ([\d.]+)$/, (w, n) => { const t = lookup(w); return t == null ? null : `${t} ${n}`; }],
   [/^(\d+) (.+?)$/, (n, rest) => { const t = lookup(rest) ?? lookup(rest.replace(/s$/, '')); return t == null ? null : `${n} ${t}`; }],
 ];
+for (const [en, ar] of NOTE_FORMS) AR_RULES.push([{ [Symbol.match]: s => { const x = formPart(en, s); return x == null ? null : [s, x]; } }, x => ar.replace('%', x)]);
 
 function lookup(c) {
   if (Object.prototype.hasOwnProperty.call(AR, c)) return AR[c];
@@ -480,7 +739,11 @@ function trCore(c) {
 /** Translates one piece of interface text, keeping the whitespace around it. English mode returns it unchanged. */
 const BRAND = { en: 'Hafez', ar: 'حافظ' };   // replaced at start-up by /api/auth/brand (sijill.brand in application.yml)
 function brandify(s) { return (BRAND.en === 'Hafez' && BRAND.ar === 'حافظ') || s == null ? s : String(s).replace(/Hafez/g, BRAND.en).replace(/حافظ/g, BRAND.ar); }
-function trText(s) { return brandify(trTextRaw(s)); }
+function trText(s) {
+  const r = brandify(trTextRaw(s));
+  // Arabic text from the server (rule steps, messages) can name the app in Latin letters: show the Arabic name
+  return I18N.lang === 'ar' && r != null && /[؀-ۿ]/.test(r) ? String(r).replace(/Hafez/g, BRAND.ar) : r;
+}
 function trTextRaw(s) {
   if (I18N.lang !== 'ar' || s == null) return s;
   s = String(s);

@@ -85,7 +85,7 @@ public class IssueNotificationListener {
         if (event.needsReview()) {
             // Uncertain file: never tell the owner as a guess (design principle 4).
             if (coordinator != null) {
-                bell.send(coordinator, NotificationKind.FOLLOW_UP, title(coordinator, "ملف بحاجة إلى مراجعتك",
+                send(coordinator, NotificationKind.FOLLOW_UP, title(coordinator, "ملف بحاجة إلى مراجعتك",
                         "A file needs your review"), file.getName(), issue.getId());
             }
             return;
@@ -102,7 +102,7 @@ public class IssueNotificationListener {
                     version.getWhyItMatters(), version.getWhyItMattersAr(),
                     version.getFixStepsEn(), version.getFixStepsAr());
             saveMessage(issue, owner, urgent ? coordinator : null, text, urgent);
-            bell.send(owner, NotificationKind.ISSUE, title(owner,
+            send(owner, NotificationKind.ISSUE, title(owner,
                     urgent ? "عاجل: ملف يحتاج إلى انتباهك" : "ملف يحتاج إلى انتباهك",
                     urgent ? "Urgent: a file needs your attention" : "A file needs your attention"),
                     file.getName(), issue.getId());
@@ -110,12 +110,12 @@ public class IssueNotificationListener {
 
         // Coordinator: copied (and pushed) only when urgent; normal issues just appear in her list.
         if (urgent && coordinator != null) {
-            bell.send(coordinator, NotificationKind.ISSUE, title(coordinator, "عاجل: ملف يحتاج إلى متابعة",
+            send(coordinator, NotificationKind.ISSUE, title(coordinator, "عاجل: ملف يحتاج إلى متابعة",
                     "Urgent: a file needs follow-up"), file.getName(), issue.getId());
         }
 
         // Principal: sees every school notification (feed for normal, alert for urgent).
-        principalFor(issue.getSiteId()).ifPresent(p -> bell.send(p, NotificationKind.ISSUE,
+        principalFor(issue.getSiteId()).ifPresent(p -> send(p, NotificationKind.ISSUE,
                 title(p, urgent ? "تنبيه عاجل في مدرستك" : "ملاحظة جديدة على ملف في مدرستك",
                         urgent ? "Urgent alert in your school" : "A new file issue in your school"),
                 file.getName(), issue.getId()));
@@ -125,7 +125,7 @@ public class IssueNotificationListener {
         if (urgent && event.incidentHint() == null) {
             String where = sites.findById(issue.getSiteId()).map(Site::getName).orElse("") + " · " + version.getName();
             boolean personal = isRestrictedPersonalData(issue.getFileId());
-            leadership(issue.getOrgId()).forEach(l -> bell.send(l, NotificationKind.INCIDENT,
+            leadership(issue.getOrgId()).forEach(l -> send(l, NotificationKind.INCIDENT,
                     personal ? title(l, "تنبيه: ملف مقيّد يحتوي بيانات طلاب أو صحة مكشوف",
                             "Alert: a Restricted file with student or health data is exposed")
                             : title(l, "تنبيه عاجل: ملف يحتاج إلى معالجة", "Urgent: a file needs action"),
@@ -145,7 +145,7 @@ public class IssueNotificationListener {
             SchoolFile file = file(issue);
             saveMessage(issue, owner, null, MessageTemplates.reminder(owner.getLanguage(), file.getName()),
                     issue.getSeverity() == Severity.URGENT);
-            bell.send(owner, NotificationKind.REMINDER, title(owner, "تذكير: ملف ما زال يحتاج إلى انتباهك",
+            send(owner, NotificationKind.REMINDER, title(owner, "تذكير: ملف ما زال يحتاج إلى انتباهك",
                     "Reminder: a file still needs your attention"), file.getName(), issue.getId());
         });
     }
@@ -155,7 +155,7 @@ public class IssueNotificationListener {
     @Transactional
     public void on(IssueEvents.NeedsFollowUp event) {
         Issue issue = issue(event.issueId());
-        coordinatorFor(issue.getSiteId(), issue.getSubjectId()).ifPresent(c -> bell.send(c, NotificationKind.FOLLOW_UP,
+        coordinatorFor(issue.getSiteId(), issue.getSubjectId()).ifPresent(c -> send(c, NotificationKind.FOLLOW_UP,
                 title(c, "يحتاج إلى متابعة", "Needs follow-up"), file(issue).getName(), issue.getId()));
     }
 
@@ -171,7 +171,7 @@ public class IssueNotificationListener {
             SchoolFile file = file(issue);
             saveMessage(issue, owner, null, MessageTemplates.stillBroken(owner.getLanguage(), file.getName(),
                     issue.getDetailEn(), issue.getDetailAr()), true);
-            bell.send(owner, NotificationKind.ISSUE, title(owner, "ما زال الملف بحاجة إلى تصحيح",
+            send(owner, NotificationKind.ISSUE, title(owner, "ما زال الملف بحاجة إلى تصحيح",
                     "The file still needs a fix"), file.getName(), issue.getId());
         });
     }
@@ -181,7 +181,7 @@ public class IssueNotificationListener {
     @Transactional
     public void on(IssueEvents.OwnerResponded event) {
         Issue issue = issue(event.issueId());
-        coordinatorFor(issue.getSiteId(), issue.getSubjectId()).ifPresent(c -> bell.send(c, NotificationKind.FOLLOW_UP,
+        coordinatorFor(issue.getSiteId(), issue.getSubjectId()).ifPresent(c -> send(c, NotificationKind.FOLLOW_UP,
                 title(c, event.titleAr(), event.titleEn()), file(issue).getName(), issue.getId()));
     }
 
@@ -205,7 +205,7 @@ public class IssueNotificationListener {
     @Transactional
     public void on(IssueEvents.Reassigned event) {
         Issue issue = issue(event.issueId());
-        coordinatorFor(issue.getSiteId(), issue.getSubjectId()).ifPresent(c -> bell.send(c, NotificationKind.FOLLOW_UP,
+        coordinatorFor(issue.getSiteId(), issue.getSubjectId()).ifPresent(c -> send(c, NotificationKind.FOLLOW_UP,
                 title(c, "ملف بحاجة إلى مراجعتك", "A file needs your review"), file(issue).getName(), issue.getId()));
     }
 
@@ -246,7 +246,7 @@ public class IssueNotificationListener {
                     .forEach(it -> audience.put(it.getId(), it));
         }
 
-        audience.values().forEach(p -> bell.send(p, NotificationKind.INCIDENT, title(p, ar, en),
+        audience.values().forEach(p -> send(p, NotificationKind.INCIDENT, title(p, ar, en),
                 incident.getDescription(), incident.getIssueId()));
     }
 
@@ -310,7 +310,7 @@ public class IssueNotificationListener {
         if (issue.getOwnerId() == null) {
             return;
         }
-        people.findById(issue.getOwnerId()).ifPresent(owner -> bell.send(owner, NotificationKind.ISSUE,
+        people.findById(issue.getOwnerId()).ifPresent(owner -> send(owner, NotificationKind.ISSUE,
                 title(owner, titleAr, titleEn), file(issue).getName(), issue.getId()));
     }
 
@@ -328,8 +328,15 @@ public class IssueNotificationListener {
                 .isPresent();
     }
 
-    private String title(Person person, String ar, String en) {
-        return MessageTemplates.title(person.getLanguage(), ar, en);
+    /** A bell title in both languages; the bell keeps both so the screen can follow the language switch. */
+    private record Both(String ar, String en) {}
+
+    private Both title(Person person, String ar, String en) {
+        return new Both(ar, en);
+    }
+
+    private void send(Person to, NotificationKind kind, Both title, String body, UUID issueId) {
+        bell.send(to, kind, title.ar(), title.en(), body, null, issueId);
     }
 
     /** Stores the message with its earliest delivery time (quiet hours applied unless urgent). */

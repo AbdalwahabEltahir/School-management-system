@@ -121,7 +121,7 @@ public class SupportService {
         String school = schoolName(t.getSiteId());
         for (Person handler : handlers(t)) {
             notify(handler, "تذكرة دعم جديدة من " + user.name() + " (" + school + ")", "New support ticket from " + user.name() + " (" + school + ")",
-                    t.getTitle() + " (" + t.getUrgency().name().toLowerCase(Locale.ROOT) + ")");
+                    t.getTitle() + " (" + t.getUrgency().name().toLowerCase(Locale.ROOT) + ")", t.getTitle() + " (" + urgencyAr(t.getUrgency().name()) + ")");
         }
         return SupportDtos.view(t, school, 0);
     }
@@ -248,7 +248,7 @@ public class SupportService {
         audit.log(t.getOrgId(), t.getSiteId(), ActivityActions.TICKET_STATUS_CHANGED).by(user).on("SupportTicket", t.getId())
                 .change(before.name(), next.name()).save();
         people.findById(t.getCreatedBy()).ifPresent(p -> notify(p, "تغيّرت حالة تذكرتك", "Your ticket changed status",
-                t.getTitle() + ": " + next.name().replace('_', ' ').toLowerCase(Locale.ROOT)));
+                t.getTitle() + ": " + next.name().replace('_', ' ').toLowerCase(Locale.ROOT), t.getTitle() + ": " + statusAr(next.name())));
         return SupportDtos.view(t, schoolName(t.getSiteId()), replies.findByTicketIdOrderByCreatedAt(t.getId()).size());
     }
 
@@ -307,7 +307,30 @@ public class SupportService {
     }
 
     private void notify(Person to, String titleAr, String titleEn, String body) {
-        publisher.publishEvent(new PersonNotice(to.getId(), NotificationKind.TICKET, titleAr, titleEn, body));
+        notify(to, titleAr, titleEn, body, null);
+    }
+
+    private void notify(Person to, String titleAr, String titleEn, String body, String bodyAr) {
+        publisher.publishEvent(new PersonNotice(to.getId(), NotificationKind.TICKET, titleAr, titleEn, body, bodyAr));
+    }
+
+    private static String urgencyAr(String urgency) {
+        return switch (urgency) {
+            case "LOW" -> "منخفضة";
+            case "NORMAL" -> "عادية";
+            case "HIGH" -> "عالية";
+            case "URGENT" -> "عاجلة";
+            default -> urgency;
+        };
+    }
+
+    private static String statusAr(String status) {
+        return switch (status) {
+            case "OPEN" -> "مفتوحة";
+            case "IN_PROGRESS" -> "قيد المعالجة";
+            case "CLOSED" -> "مغلقة";
+            default -> status;
+        };
     }
 
     private String schoolName(UUID siteId) {
