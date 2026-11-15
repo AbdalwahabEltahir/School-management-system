@@ -46,14 +46,15 @@ public class ActivityLogController {
     /** CSV download of the log. Names are initials; School IT may unmask one export with a reason. */
     @GetMapping("/activity-log/download")
     public ResponseEntity<String> download(CurrentUser user, @RequestParam(defaultValue = "false") boolean unmask,
-                                           @RequestParam(required = false) String reason) {
-        return csv("activity-log.csv", exports.activityLogCsv(user, unmask, reason));
+                                           @RequestParam(required = false) String reason,
+                                           @RequestParam(defaultValue = "en") String lang) {
+        return csv("activity-log.csv", exports.activityLogCsv(user, unmask, reason, "ar".equals(lang)));
     }
 
-    /** CSV download of the user's issues: always name-free. */
+    /** CSV download of the user's issues: always name-free. {@code lang=ar} writes it in Arabic. */
     @GetMapping("/exports/issues.csv")
-    public ResponseEntity<String> issues(CurrentUser user) {
-        return csv("issues.csv", exports.issuesCsv(user));
+    public ResponseEntity<String> issues(CurrentUser user, @RequestParam(defaultValue = "en") String lang) {
+        return csv("issues.csv", exports.issuesCsv(user, "ar".equals(lang)));
     }
 
     private ResponseEntity<String> csv(String filename, String content) {

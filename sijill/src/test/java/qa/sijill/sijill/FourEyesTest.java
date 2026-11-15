@@ -14,6 +14,7 @@ import qa.sijill.sijill.files.service.FileService;
 import qa.sijill.sijill.organisation.service.SiteService;
 import qa.sijill.sijill.people.model.Person;
 import qa.sijill.sijill.people.service.PeopleService;
+import qa.sijill.sijill.shared.exception.BadRequestException;
 import qa.sijill.sijill.shared.exception.ForbiddenException;
 import qa.sijill.sijill.shared.model.NotificationKind;
 import qa.sijill.sijill.shared.model.Role;
@@ -52,6 +53,22 @@ class FourEyesTest extends WorldTestSupport {
 
         assertThat(files.findById(f.getId()).orElseThrow().getTrashedAt()).isNotNull();
         assertThat(count(w.teacher(), NotificationKind.SECURITY)).isEqualTo(1);                      // the requester is told
+    }
+
+    @Test
+    void aTeachersWrittenRequestNeedsAReasonAndACoordinatorCanApproveIt() {
+        World w = world();
+        var f = teacherFile(w);
+        assertThatThrownBy(() -> fileService.requestDelete(user(w.teacher()), f.getId(), "  ")).isInstanceOf(BadRequestException.class);
+        assertThatThrownBy(() -> fileService.requestDelete(user(w.teacher()), f.getId(), "x".repeat(201))).isInstanceOf(BadRequestException.class);
+
+        fileService.requestDelete(user(w.teacher()), f.getId(), "Old copy, replaced by the new plan");
+        var request = approvals.list(user(w.coordinator())).stream().filter(r -> r.getAction().equals("FILE_DELETE")).findFirst().orElseThrow();
+        assertThat(request.getSummary()).contains("reason: Old copy, replaced by the new plan");
+        assertThat(approvals.list(user(w.principal()))).extracting(r -> r.getId()).contains(request.getId());
+
+        approvals.approve(user(w.coordinator()), request.getId());
+        assertThat(files.findById(f.getId()).orElseThrow().getTrashedAt()).isNotNull();
     }
 
     @Test

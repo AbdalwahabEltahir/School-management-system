@@ -24,6 +24,7 @@ import qa.sijill.sijill.shared.exception.BadRequestException;
 import qa.sijill.sijill.shared.exception.ForbiddenException;
 import qa.sijill.sijill.shared.model.Role;
 import qa.sijill.sijill.shared.security.CurrentUser;
+import qa.sijill.sijill.shared.util.ArabicLabels;
 import qa.sijill.sijill.shared.util.NameMasker;
 
 /**
@@ -50,19 +51,27 @@ public class ExportService {
     /** The user's issues as CSV. Always masked: owners appear as initials, files by id, never by name. */
     @Transactional
     public String issuesCsv(CurrentUser user) {
+        return issuesCsv(user, false);
+    }
+
+    /** As {@link #issuesCsv(CurrentUser)}; {@code arabic} writes the headings, values and footer in Arabic. */
+    @Transactional
+    public String issuesCsv(CurrentUser user, boolean arabic) {
         List<Issue> issues = issueService.listFor(user, IssueService.Filter.ALL);
         Map<UUID, Person> owners = people.findAllById(issues.stream().map(Issue::getOwnerId)
                 .filter(java.util.Objects::nonNull).distinct().toList())
                 .stream().collect(Collectors.toMap(Person::getId, Function.identity()));
 
-        StringBuilder csv = new StringBuilder("issue,severity,status,opened_at,closed_at,owner\n");
+        StringBuilder csv = new StringBuilder(arabic ? "المشكلة,الأهمية,الحالة,فُتحت في,أُغلقت في,المالك\n"
+                : "issue,severity,status,opened_at,closed_at,owner\n");
         for (Issue i : issues) {
             Person owner = owners.get(i.getOwnerId());
-            csv.append(row(shortId(i.getId()), i.getSeverity(), i.getStatus(), i.getOpenedAt(), i.getClosedAt(),
+            csv.append(row(shortId(i.getId()), arabic ? ArabicLabels.of(i.getSeverity()) : i.getSeverity(),
+                    arabic ? ArabicLabels.issueStatus(i.getStatus()) : i.getStatus(), i.getOpenedAt(), i.getClosedAt(),
                     owner == null ? "-" : NameMasker.initials(owner.getDisplayName())));
         }
         record(user, "issues", true, null, issues.size());
-        return csv.append(footer(user)).toString();
+        return csv.append(footer(user, arabic)).toString();
     }
 
     /**
@@ -71,6 +80,12 @@ public class ExportService {
      */
     @Transactional
     public String activityLogCsv(CurrentUser user, boolean unmask, String reason) {
+        return activityLogCsv(user, unmask, reason, false);
+    }
+
+    /** As {@link #activityLogCsv(CurrentUser, boolean, String)}; {@code arabic} writes headings, actions and footer in Arabic. */
+    @Transactional
+    public String activityLogCsv(CurrentUser user, boolean unmask, String reason, boolean arabic) {
         if (unmask && (!user.is(Role.SCHOOL_IT) || reason == null || reason.isBlank())) {
             throw new ForbiddenException("Only School IT can unmask an export, and it needs a reason.");
         }
@@ -82,16 +97,19 @@ public class ExportService {
                 .filter(java.util.Objects::nonNull).distinct().toList())
                 .stream().collect(Collectors.toMap(Person::getId, Function.identity()));
 
-        StringBuilder csv = new StringBuilder("seq,time,actor,action,entity,entity_id,before,after\n");
+        StringBuilder csv = new StringBuilder(arabic ? "التسلسل,الوقت,المنفّذ,الإجراء,السجل,رقم السجل,قبل,بعد\n"
+                : "seq,time,actor,action,entity,entity_id,before,after\n");
         for (ActivityLogEntry e : entries) {
             Person actor = actors.get(e.getActorId());
-            String who = actor == null ? "system"
+            String who = actor == null ? (arabic ? "النظام" : "system")
                     : unmask ? actor.getDisplayName() : NameMasker.initials(actor.getDisplayName());
-            csv.append(row(e.getSeq(), e.getCreatedAt(), who, e.getAction(), e.getEntityType(), e.getEntityId(),
-                    e.getBeforeState(), e.getAfterState()));
+            csv.append(row(e.getSeq(), e.getCreatedAt(), who, arabic ? ArabicLabels.of(e.getAction()) : e.getAction(),
+                    arabic ? ArabicLabels.of(e.getEntityType()) : e.getEntityType(), e.getEntityId(),
+                    arabic ? ArabicLabels.issueStatus(e.getBeforeState()) : e.getBeforeState(),
+                    arabic ? ArabicLabels.issueStatus(e.getAfterState()) : e.getAfterState()));
         }
         record(user, "activity-log", !unmask, reason, entries.size());
-        return csv.append(footer(user)).toString();
+        return csv.append(footer(user, arabic)).toString();
     }
 
     /** Stores who exported what, masked or not, and why (FR-10.2), and audits it. */
@@ -110,7 +128,10 @@ public class ExportService {
     }
 
     /** Every document footer shows who, when and the sensitivity (FR-10.2). */
-    private String footer(CurrentUser user) {
+    private String footer(CurrentUser user, boolean arabic) {
+        if (arabic) {
+            return "# صدّره " + NameMasker.initials(user.name()) + " في " + Instant.now(clock) + " | الحساسية: سري\n";
+        }
         return "# Exported by " + NameMasker.initials(user.name()) + " at " + Instant.now(clock)
                 + " | Sensitivity: " + SENSITIVITY + "\n";
     }

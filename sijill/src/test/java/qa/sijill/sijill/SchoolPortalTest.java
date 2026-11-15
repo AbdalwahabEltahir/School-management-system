@@ -340,6 +340,29 @@ class SchoolPortalTest extends WorldTestSupport {
     }
 
     @Test
+    void aPublishedTermTakesMoreAssessmentsAndEachAppearsOnceSubmitted() {
+        School s = school();
+        var teacher = user(s.w().teacher());
+        UUID quiz = assessment(s, "Quiz 1", 1, "40");
+        marks.enter(teacher, quiz, allMarks(s, "35", "28.5", "30"));
+        marks.submit(teacher, quiz);
+        marks.publish(teacher, s.b(), 1);
+
+        // a second assessment in the published term: allowed, but hidden while the marks are being entered
+        UUID test = assessment(s, "Short test", 1, "20");
+        assertThat(marks.list(teacher, null)).filteredOn(a -> a.id().equals(test)).singleElement()
+                .satisfies(a -> { assertThat(a.published()).isFalse(); assertThat(a.termPublished()).isTrue(); });
+        marks.enter(teacher, test, allMarks(s, "18", "15", "12"));
+        assertThat(marks.myResults(user(s.s1()))).extracting(r -> r.assessment()).containsExactly("Quiz 1");
+
+        long told = count(s.s1(), NotificationKind.SYSTEM);
+        marks.submit(teacher, test);
+        assertThat(count(s.s1(), NotificationKind.SYSTEM)).isEqualTo(told + 1);    // the student (and so the parent) is told
+        assertThat(marks.myResults(user(s.s1()))).extracting(r -> r.assessment()).containsExactlyInAnyOrder("Quiz 1", "Short test");
+        assertThat(marks.list(teacher, null)).allSatisfy(a -> assertThat(a.published()).isTrue());
+    }
+
+    @Test
     void thisWeeksSubmissionsAreVisibleToLeadershipAndTheMatrixShowsEveryAssessment() {
         School s = school();
         UUID quiz = assessment(s, "Quiz 1", 1, "40");
