@@ -64,11 +64,11 @@ class SupportAndSettingsTest extends WorldTestSupport {
         assertThat(count(w.principal(), NotificationKind.TICKET)).isZero();
         assertThat(count(w.leader(), NotificationKind.TICKET)).isZero();               // head office is not involved
 
-        // who sees it: the teacher, their School IT, and (read only) the principal. Nobody else.
+        // who sees it: the teacher and their School IT. Nobody else, not even the principal.
         assertThat(support.list(user(w.teacher()))).extracting(SupportDtos.TicketView::id).containsExactly(ticket.id());
         assertThat(support.list(user(w.it()))).extracting(SupportDtos.TicketView::id).contains(ticket.id());
-        assertThat(support.get(user(w.principal()), ticket.id()).canReply()).isFalse();
-        assertThatThrownBy(() -> support.reply(user(w.principal()), ticket.id(), "fyi")).isInstanceOf(ForbiddenException.class);
+        assertThatThrownBy(() -> support.get(user(w.principal()), ticket.id())).isInstanceOf(NotFoundException.class);
+        assertThat(support.list(user(w.principal()))).extracting(SupportDtos.TicketView::id).doesNotContain(ticket.id());
         assertThatThrownBy(() -> support.get(user(w.coordinator()), ticket.id())).isInstanceOf(NotFoundException.class);
         assertThatThrownBy(() -> support.get(user(otherIt), ticket.id())).isInstanceOf(NotFoundException.class);
         assertThatThrownBy(() -> support.get(user(w.leader()), ticket.id())).isInstanceOf(NotFoundException.class);
@@ -95,7 +95,12 @@ class SupportAndSettingsTest extends WorldTestSupport {
         assertThatThrownBy(() -> support.list(user(person(w.org(), w.school(), "s-" + UUID.randomUUID() + "@f.example", "Some Student", Role.STUDENT, null))))
                 .isInstanceOf(ForbiddenException.class);
         assertThat(support.create(user(w.coordinator()), request("Account", "SCHOOL_IT")).audience()).isEqualTo("SCHOOL_IT");
-        assertThat(support.create(user(w.principal()), request("Our IT", "SCHOOL_IT")).audience()).isEqualTo("SCHOOL_IT");
+        // the principal writes to Leadership only; the principal assistant, like other staff, to School IT
+        assertThatThrownBy(() -> support.create(user(w.principal()), request("Our IT", "SCHOOL_IT"))).isInstanceOf(ForbiddenException.class);
+        assertThat(support.create(user(w.principal()), request("To head office", "LEADERSHIP")).audience()).isEqualTo("LEADERSHIP");
+        Person assistant = person(w.org(), w.school(), "pa-" + UUID.randomUUID() + "@" + w.school().getDomain(), "Pat Assistant", Role.PRINCIPAL_ASSISTANT, null);
+        assertThat(support.create(user(assistant), request("Printer", "SCHOOL_IT")).audience()).isEqualTo("SCHOOL_IT");
+        assertThatThrownBy(() -> support.create(user(assistant), request("x", "LEADERSHIP"))).isInstanceOf(ForbiddenException.class);
     }
 
     // ------------------------------------------------------------------ principals to Leadership
@@ -111,14 +116,17 @@ class SupportAndSettingsTest extends WorldTestSupport {
         assertThat(count(lead, NotificationKind.TICKET)).isEqualTo(1);
         assertThat(count(w.it(), NotificationKind.TICKET)).isZero();                   // School IT is not involved
 
-        // Leadership and EAA administrators see it across schools and handle it
+        // Leadership can read it but is read-only; EAA IT handles it
         assertThat(support.list(user(lead))).extracting(SupportDtos.TicketView::id).contains(ticket.id());
-        assertThat(support.get(user(lead), ticket.id()).canManage()).isTrue();
-        support.reply(user(lead), ticket.id(), "We are looking into it.");
+        assertThat(support.get(user(lead), ticket.id()).canManage()).isFalse();
+        assertThat(support.get(user(lead), ticket.id()).canReply()).isFalse();
+        assertThatThrownBy(() -> support.setStatus(user(lead), ticket.id(), "CLOSED")).isInstanceOf(ForbiddenException.class);
+        assertThat(support.get(user(admin), ticket.id()).canManage()).isTrue();
+        support.reply(user(admin), ticket.id(), "We are looking into it.");
         assertThat(count(w.principal(), NotificationKind.TICKET)).isEqualTo(1);
-        assertThat(support.assignees(user(lead))).extracting(SupportDtos.Assignee::id).contains(lead.getId(), admin.getId());
-        support.assign(user(admin), ticket.id(), lead.getId());
-        support.setStatus(user(lead), ticket.id(), "CLOSED");
+        assertThat(support.assignees(user(admin))).extracting(SupportDtos.Assignee::id).contains(admin.getId()).doesNotContain(lead.getId());
+        support.assign(user(admin), ticket.id(), admin.getId());
+        support.setStatus(user(admin), ticket.id(), "CLOSED");
         assertThat(support.get(user(w.principal()), ticket.id()).ticket().status()).isEqualTo("CLOSED");
 
         // School IT of the same school cannot read or handle a ticket to Leadership
@@ -135,6 +143,31 @@ class SupportAndSettingsTest extends WorldTestSupport {
                 "p2-" + UUID.randomUUID() + "@o.edu.qa", "Other Principal", Role.PRINCIPAL, null);
         assertThatThrownBy(() -> support.get(user(other), ticket.id())).isInstanceOf(NotFoundException.class);
         assertThat(support.list(user(other))).isEmpty();
+    }
+
+    @Test
+    void leadershipIsReadOnlyAndWritesItsTicketsToEaaIt() {
+        World w = world();
+        Person admin = headOfficeAdmin(w);
+        Person lead = leadership(w);
+
+        var ticket = support.create(user(lead), request("Please add a rule for exam files", "EAA_IT"));
+        assertThat(ticket.audience()).isEqualTo("EAA_IT");
+        assertThat(count(admin, NotificationKind.TICKET)).isEqualTo(1);               // EAA IT is told
+        assertThat(count(lead, NotificationKind.TICKET)).isZero();
+        assertThat(support.list(user(lead))).extracting(SupportDtos.TicketView::id).contains(ticket.id());
+        assertThat(support.list(user(admin))).extracting(SupportDtos.TicketView::id).contains(ticket.id());
+        assertThat(support.get(user(lead), ticket.id()).canReply()).isTrue();         // the writer can add to it
+        assertThat(support.get(user(lead), ticket.id()).canManage()).isFalse();
+        support.setStatus(user(admin), ticket.id(), "IN_PROGRESS");
+
+        // Leadership writes only to EAA IT, and nobody else writes to EAA IT
+        assertThatThrownBy(() -> support.create(user(lead), request("x", "SCHOOL_IT"))).isInstanceOf(ForbiddenException.class);
+        assertThatThrownBy(() -> support.create(user(lead), request("x", "LEADERSHIP"))).isInstanceOf(ForbiddenException.class);
+        assertThatThrownBy(() -> support.create(user(w.principal()), request("x", "EAA_IT"))).isInstanceOf(ForbiddenException.class);
+        assertThatThrownBy(() -> support.assignees(user(lead))).isInstanceOf(ForbiddenException.class);
+        // a school's own IT never sees it
+        assertThatThrownBy(() -> support.get(user(w.it()), ticket.id())).isInstanceOf(NotFoundException.class);
     }
 
     @Test

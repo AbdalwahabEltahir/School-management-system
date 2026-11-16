@@ -80,4 +80,11 @@ public class PickupRequest extends BaseEntity {
 
     @Column(name = "updated_at", nullable = false)
     private Instant updatedAt = Instant.now();
+
+    /** When the parent accepted responsibility by pressing "Pick up", and the statement they accepted. */
+    @Column(name = "parent_acknowledged_at")
+    private Instant parentAcknowledgedAt;
+
+    @Column(name = "acknowledgement", length = 800)
+    private String acknowledgement;
 }

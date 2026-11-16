@@ -74,7 +74,11 @@ public final class AcademicDtos {
                             boolean absent) {}
 
     public record NoticeView(UUID id, String titleEn, String titleAr, String bodyEn, String bodyAr, Instant startsAt,
-                             Instant endsAt, NoticeAudience audience) {}
+                             Instant endsAt, NoticeAudience audience, UUID sectionId, String section, String author) {}
+
+    /** A notice a teacher writes for one class. Arabic is optional: the English text is shown when it is missing. */
+    public record ClassNoticeRequest(@NotNull UUID sectionId, @NotBlank String titleEn, String titleAr, @NotBlank String bodyEn,
+                                     String bodyAr, Instant startsAt, @NotNull Instant endsAt) {}
 
     public record MaterialView(UUID id, UUID sectionId, String section, UUID subjectId, String subject, String title,
                                String link, String teacher, Instant createdAt) {}

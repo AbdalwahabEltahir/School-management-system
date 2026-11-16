@@ -41,4 +41,8 @@ public class Notice extends BaseEntity {
 
     @Column(name = "created_by", nullable = false)
     private UUID createdBy;
+
+    /** Set when a teacher wrote the notice for one class: only that class's students and their parents see it. */
+    @Column(name = "section_id")
+    private UUID sectionId;
 }

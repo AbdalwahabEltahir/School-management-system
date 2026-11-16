@@ -62,8 +62,8 @@ public class DemoPickup {
             String[] c = PEOPLE[k % PEOPLE.length];
             approved[k] = collector(site, students.get(linked.get(k)), parentOf.get(linked.get(k)), c[0], Relationship.valueOf(c[1]), c[2], c[3]);
         }
-        // today: one parent has just arrived, one child was released to a driver, one collector is being checked, one child is home
-        PickupStatus[] today = {PickupStatus.ARRIVED, PickupStatus.RELEASED, PickupStatus.VERIFYING, PickupStatus.RELEASED};
+        // today: four children already picked up, each confirmed by the parent (no staff approval)
+        PickupStatus[] today = {PickupStatus.RELEASED, PickupStatus.RELEASED, PickupStatus.RELEASED, PickupStatus.RELEASED};
         int[] minutesAgo = {4, 48, 11, 55};
         for (int k = 0; k < Math.min(linked.size(), today.length); k++) {
             int i = linked.get(k);
@@ -125,18 +125,13 @@ public class DemoPickup {
         r.setStatus(status);
         r.setArrivedAt(arrived);
         r.setUpdatedAt(arrived);
-        if (status != PickupStatus.ARRIVED) {
-            r.setVerifiedBy(staff.getId());
-            r.setVerifiedByName(staff.getDisplayName());
-            r.setVerifiedAt(arrived.plus(Duration.ofMinutes(2)));
-            r.setUpdatedAt(r.getVerifiedAt());
-        }
         if (status == PickupStatus.RELEASED) {
-            Instant at = arrived.plus(Duration.ofMinutes(4));
-            r.setDecidedBy(staff.getId());
-            r.setDecidedByName(staff.getDisplayName());
-            r.setDecidedAt(at);
-            r.setUpdatedAt(at);
+            // the parent pressed Pick up and accepted responsibility: done at once
+            r.setDecidedBy(parent.getId());
+            r.setDecidedByName(parent.getDisplayName() + " (parent)");
+            r.setDecidedAt(arrived);
+            r.setParentAcknowledgedAt(arrived);
+            r.setAcknowledgement(qa.sijill.sijill.pickup.service.PickupService.ACKNOWLEDGEMENT_EN + " | " + qa.sijill.sijill.pickup.service.PickupService.ACKNOWLEDGEMENT_AR);
         }
         requests.save(r);
         if (status == PickupStatus.RELEASED) {
@@ -149,8 +144,8 @@ public class DemoPickup {
             log.setSectionLabel(labels.get(index));
             log.setCollectorName(r.getCollectorName());
             log.setCollectorRelationship(r.getCollectorRelationship());
-            log.setReleasedBy(staff.getId());
-            log.setReleasedByName(staff.getDisplayName());
+            log.setReleasedBy(parent.getId());
+            log.setReleasedByName(parent.getDisplayName() + " (parent confirmed)");
             log.setReleasedAt(r.getDecidedAt());
             releases.save(log);
         }

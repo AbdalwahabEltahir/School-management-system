@@ -63,7 +63,7 @@ public class InvitationService {
     /** The school issues a code: PARENT for one or more of its students, or STUDENT to let a student set a password. */
     @Transactional
     public Issued issue(CurrentUser user, String kind, List<UUID> studentIds, String email) {
-        policy.requireRole(user, Role.SCHOOL_IT, Role.COORDINATOR);
+        policy.requireRole(user, Role.SCHOOL_IT, Role.PRINCIPAL_ASSISTANT);
         if (!"PARENT".equals(kind) && !"STUDENT".equals(kind)) {
             throw new BadRequestException("The invitation is for a parent or a student.");
         }
@@ -94,7 +94,7 @@ public class InvitationService {
 
     @Transactional(readOnly = true)
     public List<InvitationView> list(CurrentUser user) {
-        policy.requireRole(user, Role.SCHOOL_IT, Role.COORDINATOR);
+        policy.requireRole(user, Role.SCHOOL_IT, Role.PRINCIPAL_ASSISTANT);
         Instant now = Instant.now(clock);
         return jdbc.queryForList("SELECT id, kind, email, created_at, expires_at, used_at, revoked FROM invitations WHERE site_id = ? ORDER BY created_at DESC LIMIT 100",
                 user.siteId()).stream().map(r -> {
@@ -110,7 +110,7 @@ public class InvitationService {
 
     @Transactional
     public void revoke(CurrentUser user, UUID id) {
-        policy.requireRole(user, Role.SCHOOL_IT, Role.COORDINATOR);
+        policy.requireRole(user, Role.SCHOOL_IT, Role.PRINCIPAL_ASSISTANT);
         int n = jdbc.update("UPDATE invitations SET revoked = TRUE WHERE id = ? AND site_id = ? AND used_at IS NULL", id, user.siteId());
         if (n == 0) {
             throw new NotFoundException("The invitation");

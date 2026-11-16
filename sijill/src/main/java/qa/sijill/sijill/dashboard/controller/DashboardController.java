@@ -61,7 +61,7 @@ public class DashboardController {
         return ResponseEntity.ok()
                 .contentType(MediaType.APPLICATION_PDF)
                 .header(HttpHeaders.CONTENT_DISPOSITION,
-                        ContentDisposition.attachment().filename("sijill-weekly-report.pdf").build().toString())
+                        ContentDisposition.attachment().filename(qa.sijill.sijill.shared.config.Brand.en().toLowerCase(java.util.Locale.ROOT) + "-weekly-report.pdf").build().toString())
                 .body(reports.weeklyReportPdf(user, "ar".equals(lang)));
     }
 

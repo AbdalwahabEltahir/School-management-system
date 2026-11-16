@@ -19,7 +19,7 @@ class FileDeleteApproval implements ApprovalHandler {
 
     @Override public String action() { return ApprovalActions.FILE_DELETE; }
 
-    @Override public Set<Role> approvers() { return Set.of(Role.PRINCIPAL, Role.COORDINATOR, Role.SCHOOL_IT); }
+    @Override public Set<Role> approvers() { return Set.of(Role.PRINCIPAL, Role.PRINCIPAL_ASSISTANT, Role.COORDINATOR, Role.SCHOOL_IT); }
 
     @Override public boolean mayDecide(CurrentUser approver, ApprovalRequest request) {
         return approver.siteId().equals(request.getSiteId());

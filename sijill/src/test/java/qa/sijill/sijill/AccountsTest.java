@@ -92,7 +92,7 @@ class AccountsTest extends WorldTestSupport {
 
         var both = invitations.issue(user(w.it()), "PARENT", java.util.List.of(layla.getId(), noor.getId()), null);
         var mum = invitations.redeemNewParent(both.code(), "Mona Parent", mail("mona"), "mum password", ip);
-        var justLayla = invitations.issue(user(w.coordinator()), "PARENT", java.util.List.of(layla.getId()), null);
+        var justLayla = invitations.issue(user(w.it()), "PARENT", java.util.List.of(layla.getId()), null);
         var dad = invitations.redeemNewParent(justLayla.code(), "Omar Parent", mail("omar"), "dad password", ip);
 
         assertThat(mum.getRole()).isEqualTo(Role.PARENT);
@@ -137,9 +137,9 @@ class AccountsTest extends WorldTestSupport {
     }
 
     @Test
-    void aStudentOrParentAsksForAClassAndTheCoordinatorConfirms() {
+    void aStudentOrParentAsksForAClassAndSchoolItConfirms() {
         World w = world();
-        var coordinator = user(w.coordinator());
+        var coordinator = user(w.it());   // School IT runs the class requests now
         var section = academic.createSection(coordinator, 7, "B");
         var kid = activated(w, "Rana Student", "correct horse");
         var stranger = activated(w, "Other Student", "correct horse");

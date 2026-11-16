@@ -70,7 +70,7 @@ public class MaterialService {
             rows = (sectionId == null ? materials.findBySiteIdOrderByCreatedAtDesc(user.siteId())
                     : materials.findBySectionIdOrderByCreatedAtDesc(access.section(user, sectionId).getId())).stream()
                     .filter(m -> access.teaches(user, m.getSectionId(), m.getSubjectId())).toList();
-        } else if (user.isAny(Role.SCHOOL_IT, Role.PRINCIPAL)) {
+        } else if (user.isAny(Role.SCHOOL_IT, Role.PRINCIPAL, Role.PRINCIPAL_ASSISTANT)) {
             rows = sectionId == null ? materials.findBySiteIdOrderByCreatedAtDesc(user.siteId())
                     : materials.findBySectionIdOrderByCreatedAtDesc(access.section(user, sectionId).getId());
         } else {

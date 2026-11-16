@@ -1,8 +1,8 @@
-# Copies the LOCAL Sijill database (the sijill-postgres Docker container) into the Render database.
+# Copies the LOCAL Hafez database (the sijill-postgres Docker container) into the Render database.
 # Everything is copied: people, files, issues, scores and the saved Google connection. The Render database is
 # wiped and replaced. Run it from PowerShell:   .\scripts\copy-db-to-render.ps1
 #
-# Before: in Render open the web service "sijill" > Suspend (so nothing is connected while the data is replaced).
+# Before: in Render open the web service "hafez" > Suspend (so nothing is connected while the data is replaced).
 # After:  Resume the service (or Manual Deploy > Restart).
 param([string]$RenderUrl)
 
@@ -33,4 +33,4 @@ $ok = ($LASTEXITCODE -eq 0)
 Remove-Item $dump -Force -ErrorAction SilentlyContinue
 if (-not $ok) { throw 'The restore failed. Read the message above, and send it to me if you need help.' }
 
-Write-Host '3/3 Done. Now Resume (or Restart) the "sijill" web service in Render.'
+Write-Host '3/3 Done. Now Resume (or Restart) the "hafez" web service in Render.'

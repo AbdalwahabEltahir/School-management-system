@@ -113,7 +113,7 @@ public class IncidentService {
         return switch (user.role()) {
             case LEADERSHIP, EAA_ADMIN -> incidents.findByOrgIdOrderByDetectedAtDesc(user.orgId());
             case PRINCIPAL, SCHOOL_IT, COORDINATOR -> incidents.findBySiteIdOrderByDetectedAtDesc(user.siteId());
-            case TEACHER, ATTENDANCE_OFFICER, STUDENT, PARENT -> throw new ForbiddenException("Incidents are not available for your role.");
+            case TEACHER, PRINCIPAL_ASSISTANT, ATTENDANCE_OFFICER, STUDENT, PARENT -> throw new ForbiddenException("Incidents are not available for your role.");
         };
     }
 

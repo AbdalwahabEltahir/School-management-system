@@ -23,7 +23,7 @@ function setLang(l, remember) {
 applyLang();
 
 /** Locale for dates: Arabic month and day names, Latin digits so numbers read the same everywhere. */
-const uiLocale = () => (I18N.lang === 'ar' ? 'ar-QA-u-nu-latn' : undefined);
+const uiLocale = () => (I18N.lang === 'ar' ? 'ar-QA-u-nu-latn' : 'en-GB');
 
 const AR = {
   'Invitations': 'الدعوات', 'Invitation code': 'رمز الدعوة', 'I have an invitation code': 'لدي رمز دعوة', 'Activate my account': 'تفعيل حسابي', 'Create my account': 'إنشاء حسابي',
@@ -781,3 +781,254 @@ function trTextRaw(s) {
   if (!m[2] || !/[A-Za-z→]/.test(m[2])) return s;
   return m[1] + trCore(m[2].replace(/\s+/g, ' ')) + m[3];
 }
+
+// Homework, quizzes (Assessments), chat with the teacher, class notices, points progression, school names
+Object.assign(AR, {
+  '1st Assalam School': 'مدرسة السلم الأولى', '2nd Assalam School': 'مدرسة السلم الثانية', '3rd Assalam School': 'مدرسة السلم الثالثة',
+  '4th Assalam School': 'مدرسة السلم الرابعة', '5th Assalam School': 'مدرسة السلم الخامسة',
+  'Homework': 'الواجبات', 'Set homework': 'إضافة واجب', 'Daily schedule': 'الجدول اليومي', 'Sunday to Thursday': 'من الأحد إلى الخميس',
+  'Due on': 'تاريخ التسليم', 'Details (optional)': 'التفاصيل (اختياري)', 'Class and subject': 'الصف والمادة', 'No homework due': 'لا يوجد واجب',
+  'Week of': 'أسبوع', 'piece of homework this week': 'واجب هذا الأسبوع', 'pieces of homework this week': 'واجبات هذا الأسبوع', 'Today': 'اليوم',
+  'Remove this homework?': 'حذف هذا الواجب؟', 'Homework removed.': 'تم حذف الواجب.', 'Homework set. The class and their parents can see it.': 'تمت إضافة الواجب. يراه الصف وأولياء أمورهم.',
+  'The class and their parents see it on their daily schedule, under the day it is due.': 'يراه الصف وأولياء أمورهم في جدولهم اليومي تحت يوم التسليم.',
+  'What you have set, day by day, by the date it is due.': 'ما أضفته يوماً بيوم حسب تاريخ التسليم.',
+  "Your children's homework for every subject, day by day.": 'واجبات أبنائك في كل المواد يوماً بيوم.',
+  'Your homework for every subject, day by day, by the date it is due.': 'واجباتك في كل المواد يوماً بيوم حسب تاريخ التسليم.',
+  'Assessments': 'التقييمات', 'New quiz': 'اختبار جديد', 'Your quizzes': 'اختباراتك', 'Quiz': 'الاختبار', 'Questions': 'الأسئلة', 'Taken by': 'أدّاه',
+  'Question': 'السؤال', 'question': 'سؤال', 'questions': 'أسئلة', 'Answer': 'إجابة', 'Answer (optional)': 'إجابة (اختياري)', '+ Add question': '+ إضافة سؤال', 'Publish quiz': 'نشر الاختبار',
+  'Source material': 'المادة المرجعية', 'Link to the material (optional)': 'رابط المادة (اختياري)', 'Explanation of the correct answer': 'شرح الإجابة الصحيحة',
+  'Tick the circle next to the correct answer.': 'اختر الدائرة بجانب الإجابة الصحيحة.', 'Explanation': 'الشرح', 'Correct answer': 'الإجابة الصحيحة', 'Your answer': 'إجابتك',
+  '✓ Correct': '✓ صحيح', '✗ Not quite': '✗ غير صحيح', 'No answer': 'بدون إجابة', 'Your grade': 'درجتك', 'Answers and explanations': 'الإجابات والشرح',
+  'Excellent': 'ممتاز', 'Very good': 'جيد جداً', 'Good': 'جيد', 'Pass': 'ناجح', 'Keep practising': 'واصل التدريب',
+  'Your answers': 'إجاباتك', 'Send my answers': 'إرسال إجاباتي', 'You can send it once. Your grade appears straight away.': 'يمكنك الإرسال مرة واحدة. تظهر درجتك فوراً.',
+  'Read the explanations below to see why each answer is right.': 'اقرأ الشرح أدناه لتعرف سبب صحة كل إجابة.',
+  'To do': 'المطلوب', 'Completed': 'المكتملة', 'Waiting for you': 'بانتظارك', 'Average score': 'متوسط الدرجات', 'Start quiz →': 'ابدأ الاختبار ←',
+  'No quiz is waiting for you.': 'لا يوجد اختبار بانتظارك.', 'Quizzes you finish appear here with your grade.': 'تظهر هنا الاختبارات التي تنهيها مع درجتك.',
+  'Quizzes from your teachers. You get your grade and the explanations as soon as you send your answers.': 'اختبارات من معلميك. تحصل على درجتك والشرح فور إرسال إجاباتك.',
+  'Build a quiz from your material. Students get their grade and the explanations as soon as they send it.': 'أنشئ اختباراً من مادتك. يحصل الطلاب على درجاتهم والشرح فور الإرسال.',
+  'Write each question, its answers, tick the correct one and explain why.': 'اكتب كل سؤال وإجاباته، واختر الصحيحة واشرح السبب.',
+  'Questions and answers': 'الأسئلة والإجابات', 'The correct answer is marked in green.': 'الإجابة الصحيحة مظللة بالأخضر.', 'Nobody has taken it yet.': 'لم يؤدّه أحد بعد.',
+  'Results': 'النتائج', 'Sent': 'أُرسل', 'Percent': 'النسبة', 'Score': 'الدرجة', 'Quiz published to the class.': 'تم نشر الاختبار للصف.', 'Quiz removed.': 'تم حذف الاختبار.',
+  'Remove this quiz and its results?': 'حذف هذا الاختبار ونتائجه؟',
+  'Chat with teachers': 'محادثة المعلمين', 'Messages': 'الرسائل', 'Send': 'إرسال', 'Find a person': 'ابحث عن شخص', 'Nobody yet.': 'لا أحد بعد.',
+  'Choose someone to write to': 'اختر من تريد مراسلته', 'Nobody to write to yet': 'لا يوجد من تراسله بعد',
+  'Write a message. Enter sends, Shift+Enter starts a new line.': 'اكتب رسالة. Enter للإرسال وShift+Enter لسطر جديد.',
+  'Write to the students you teach and to their parents.': 'راسل الطلاب الذين تدرّسهم وأولياء أمورهم.', "Write to your children's teachers.": 'راسل معلمي أبنائك.',
+  'Ask your teachers a question.': 'اطرح سؤالاً على معلميك.', 'Your students and their parents are listed on the left.': 'يظهر طلابك وأولياء أمورهم في القائمة.',
+  'Your teachers are listed with the subjects they teach.': 'يظهر معلموك مع المواد التي يدرّسونها.', 'Your teachers appear here once you are in a class.': 'يظهر معلموك هنا بعد تسجيلك في صف.',
+  'Class notices': 'إشعارات الصف', 'New class notice': 'إشعار صف جديد', 'Your class notices': 'إشعارات صفوفك', 'Class': 'الصف', 'Message': 'الرسالة', 'Show until': 'يظهر حتى',
+  'Arabic version (optional)': 'النسخة العربية (اختياري)', 'Publish to the class': 'نشر للصف', 'Showing': 'معروض', 'Ended': 'منتهٍ', 'Notice removed.': 'تم حذف الإشعار.',
+  'A notice for one of your classes appears at the top of the home page of its students and their parents, beside the exam banner.': 'يظهر إشعار الصف أعلى الصفحة الرئيسية لطلابه وأولياء أمورهم بجانب لافتة الاختبارات.',
+  "Notice published. It shows at the top of the class's and their parents' home page.": 'تم نشر الإشعار. يظهر أعلى الصفحة الرئيسية للصف وأولياء أمورهم.',
+  'What your school and your teachers want you to know.': 'ما تريد مدرستك ومعلموك أن تعرفه.', 'You are not assigned to a class yet.': 'لم يتم تعيينك لصف بعد.',
+  'points': 'نقاط', 'Top level reached!': 'وصلت إلى أعلى مستوى!', 'Starter': 'مبتدئ', 'Bronze': 'برونزي', 'Silver': 'فضي', 'Gold': 'ذهبي', 'Platinum': 'بلاتيني', 'Diamond': 'ماسي',
+  'Each day you are present earns a point; teachers add more for great work.': 'كل يوم حضور يمنحك نقطة، ويضيف المعلمون المزيد للعمل المتميز.',
+  'You have reached the highest level. Keep it up!': 'وصلت إلى أعلى مستوى. استمر!',
+  'Test sign-in': 'الدخول التجريبي', 'Or type a name': 'أو اكتب اسماً', 'For testing only. Press a person to sign in with their role. There is no password.': 'للتجربة فقط. اضغط على شخص للدخول بدوره. لا توجد كلمة مرور.',
+  'Chat messages': 'رسائل المحادثة', 'Homework, quizzes and class notices': 'الواجبات والاختبارات وإشعارات الصف'
+,
+  'Until': 'حتى', 'Class notice': 'إشعار الصف', 'this week': 'هذا الأسبوع', 'Set on': 'أُضيف في'
+});
+Object.assign(AR, { 'EAA IT': 'تقنية المعلومات في الهيئة', 'Head office IT team': 'فريق تقنية المعلومات في المكتب الرئيسي', 'Waiting for the first check': 'بانتظار الفحص الأول',
+  'Your requests to EAA IT, and the tickets principals wrote to head office (read-only).': 'طلباتك إلى تقنية المعلومات في الهيئة، والتذاكر التي كتبها المديرون إلى المكتب الرئيسي (للاطلاع فقط).' });
+Object.assign(AR, { 'Ticket sent to EAA IT.': 'أُرسلت التذكرة إلى تقنية المعلومات في الهيئة.', 'Leadership has read-only access. Ask EAA IT for any change. Replies and status changes appear here and in your notifications.': 'القيادة لديها صلاحية الاطلاع فقط. اطلب أي تغيير من تقنية المعلومات في الهيئة. تظهر الردود وتغييرات الحالة هنا وفي إشعاراتك.' });
+Object.assign(AR, {
+  'Level': 'المستوى', 'Level up!': 'مستوى جديد!', 'Homework done': 'إنجاز واجب', 'Quiz taken': 'أداء اختبار قصير', 'Exam result': 'نتيجة اختبار',
+  '+2 to +10': '+2 إلى +10', 'up to +10': 'حتى +10', 'done': 'أنجزوا', '✓ Done': '✓ تم', 'Mark as done · +5 points': 'تم الإنجاز · +5 نقاط',
+  'Earn points by finishing your homework, taking quizzes and doing well in exams.': 'اكسب النقاط بإنجاز واجباتك وأداء الاختبارات القصيرة والتفوق في الاختبارات.',
+  'Well done! +5 points.': 'أحسنت! +5 نقاط.', 'Marked as not done. Its points were taken back.': 'أُلغي الإنجاز وسُحبت نقاطه.',
+  'Students earn points for homework they finish, quizzes they take and their published exam results. Add recognition with a short reason.': 'يكسب الطلاب النقاط بإنجاز الواجبات وأداء الاختبارات القصيرة ونتائج الاختبارات المنشورة. أضف تقديراً مع سبب مختصر.',
+  'Record today. Everyone starts as present; change only the absences and leave.': 'سجّل اليوم. يبدأ الجميع حاضرين؛ غيّر الغياب والإجازات فقط.'
+});
+
+// School metrics, achievements, teacher performance, trends, sidebar groups, today's tasks
+Object.assign(AR, {
+  'Teaching': 'التدريس', 'Students and families': 'الطلاب والأسر', 'My files': 'ملفاتي', 'School': 'المدرسة', 'Academics': 'الشؤون الأكاديمية', 'Staff': 'الكادر', 'Files': 'الملفات', 'Requests': 'الطلبات',
+  'Weekly plans': 'الخطط الأسبوعية', 'Weekly plan review': 'مراجعة الخطط الأسبوعية', 'School metrics': 'مؤشرات المدرسة', 'Achievements': 'الإنجازات', 'Teacher performance': 'أداء المعلمين',
+  'Investigations': 'التحقيقات', 'Schools & achievements': 'المدارس والإنجازات', 'Schools and achievements': 'المدارس والإنجازات',
+  'Attendance': 'الحضور', 'Average grade': 'متوسط الدرجات', 'Homework done': 'الواجبات المنجزة', 'Quiz average': 'متوسط الاختبارات القصيرة', 'File health': 'سلامة الملفات',
+  'Students present, last 30 days': 'الطلاب الحاضرون، آخر 30 يوماً', 'All published marks': 'كل الدرجات المنشورة', 'Homework marked done, last 30 days': 'الواجبات المنجزة، آخر 30 يوماً',
+  'Average quiz score': 'متوسط درجات الاختبارات القصيرة', "Teachers' weekly plans submitted, last 4 weeks": 'الخطط الأسبوعية المسلّمة، آخر 4 أسابيع', 'Files kept safely, out of 100': 'حفظ الملفات بأمان، من 100',
+  'Strong': 'قوي', 'Watch': 'يحتاج متابعة', 'Needs attention': 'يحتاج اهتماماً', 'No data yet': 'لا توجد بيانات بعد', 'Overall': 'الإجمالي', 'Report': 'التقرير', 'Open report': 'فتح التقرير',
+  'Outstanding schools': 'المدارس المتميزة', 'Ranked by the average of their key percentages.': 'مرتبة حسب متوسط نسبها الرئيسية.', 'All schools': 'كل المدارس',
+  'Key percentages by school': 'النسب الرئيسية لكل مدرسة', 'Green 85% and above, amber 70–84%, red below 70%. Open a school for its full report.': 'الأخضر 85% فأكثر، والبرتقالي 70–84%، والأحمر أقل من 70%. افتح مدرسة لتقريرها الكامل.',
+  'Achievements across the network': 'الإنجازات في الشبكة', 'Latest achievements': 'أحدث الإنجازات', 'No achievements recorded yet.': 'لم تُسجّل إنجازات بعد.',
+  "Every school's key percentages, achievements and a report for each.": 'النسب الرئيسية لكل مدرسة وإنجازاتها وتقرير لكل منها.', 'Average across schools': 'المتوسط بين المدارس', 'Published marks': 'الدرجات المنشورة',
+  'Last 30 days': 'آخر 30 يوماً', 'Submitted, last 4 weeks': 'المسلّمة، آخر 4 أسابيع', 'Month by month': 'شهراً بشهر', 'The last twelve months. Hover a point for its value.': 'آخر اثني عشر شهراً. مرّر المؤشر على نقطة لمعرفة قيمتها.',
+  'Outstanding students': 'الطلاب المتميزون', 'Most points from homework, quizzes and exams.': 'أكثر النقاط من الواجبات والاختبارات.', 'students': 'طلاب', 'teachers': 'معلمون', 'student points': 'نقاط الطلاب', 'achievements': 'إنجازات', 'achievement': 'إنجاز', 'pts': 'نقطة',
+  'School report': 'تقرير المدرسة', 'Print or save as PDF': 'طباعة أو حفظ PDF', 'Printable report': 'تقرير للطباعة', "Your school's key percentages and how they changed month by month.": 'النسب الرئيسية لمدرستك وتغيّرها شهراً بشهر.',
+  'Record an achievement': 'تسجيل إنجاز', 'What kind of achievement?': 'ما نوع الإنجاز؟', 'Title': 'العنوان', 'Date': 'التاريخ', 'What was achieved': 'ما الذي تحقق', 'Impact (who benefited, numbers)': 'الأثر (المستفيدون والأرقام)',
+  'Evidence link (optional)': 'رابط الدليل (اختياري)', 'Add to our achievements': 'إضافة إلى إنجازاتنا', 'Our achievements': 'إنجازاتنا', 'No achievements yet. Add the first one above.': 'لا توجد إنجازات بعد. أضف أول إنجاز أعلاه.',
+  'Recognition points': 'نقاط التقدير', 'Evidence': 'الدليل', 'Remove this achievement?': 'حذف هذا الإنجاز؟', 'Achievement removed.': 'تم حذف الإنجاز.',
+  "Achievement added. Leadership can see it in your school's report.": 'تمت إضافة الإنجاز. تراه القيادة في تقرير مدرستك.',
+  "The school's achievements against EAA's success measures, and the recognition points they earned.": 'إنجازات المدرسة وفق مؤشرات النجاح في الهيئة ونقاط التقدير التي حققتها.',
+  'Facilities and innovation': 'المرافق والابتكار', 'Academic results': 'النتائج الأكاديمية', 'Student competitions and awards': 'مسابقات الطلاب وجوائزهم', 'Community and partnerships': 'المجتمع والشراكات',
+  'Staff development': 'تطوير الكادر', 'Wellbeing and inclusion': 'الرفاه والدمج', 'Other': 'أخرى',
+  'Record an indicator': 'تسجيل مؤشر', 'Teacher': 'المعلم', 'About': 'بخصوص', 'What happened': 'ما الذي حدث', 'Record indicator': 'تسجيل المؤشر', 'Indicators': 'المؤشرات', 'Warnings': 'الإنذارات', 'Warning': 'إنذار',
+  'Indicator': 'مؤشر', 'Investigation': 'تحقيق', 'Status': 'الحالة', 'Clear': 'لا شيء', 'Warned': 'مُنذر', 'Under investigation': 'قيد التحقيق', 'Open investigations': 'التحقيقات المفتوحة',
+  'Teachers': 'المعلمون', 'Indicators count towards the next warning.': 'تُحتسب المؤشرات نحو الإنذار التالي.', 'Indicators towards the next warning': 'المؤشرات نحو الإنذار التالي',
+  'Record an indicator when a teacher is not delivering as expected. 3 indicators make 1 warning; 3 warnings open an investigation automatically.': 'سجّل مؤشراً عندما لا يؤدي المعلم كما هو متوقع. 3 مؤشرات = إنذار واحد؛ و3 إنذارات تفتح تحقيقاً تلقائياً.',
+  'You record it, with what happened': 'تسجّله مع ما حدث', 'The teacher is told': 'يُبلَّغ المعلم', 'Opens by itself; you and the subject coordinator are involved': 'يُفتح تلقائياً؛ وتشارك فيه أنت ومنسق المادة',
+  'Weekly plans late or missing': 'خطط أسبوعية متأخرة أو مفقودة', 'Marks or grades late': 'تأخر الدرجات', 'Lesson delivery': 'تقديم الدروس', 'Attendance or punctuality': 'الحضور والانضباط', 'Professional conduct': 'السلوك المهني',
+  'People involved': 'المشاركون', 'Why it was opened': 'سبب فتحه', 'Notes': 'الملاحظات', 'Add note': 'إضافة ملاحظة', 'Add a note': 'أضف ملاحظة', 'Add': 'إضافة', 'Close the investigation': 'إغلاق التحقيق',
+  'Close with this outcome': 'الإغلاق بهذه النتيجة', 'Outcome': 'النتيجة', 'Investigations you are involved in.': 'التحقيقات التي تشارك فيها.', 'You are not involved in any investigation.': 'لا تشارك في أي تحقيق.',
+  'Note added.': 'أُضيفت الملاحظة.', 'Added. They were told.': 'تمت الإضافة وإبلاغه.', 'Investigation closed.': 'أُغلق التحقيق.', 'Third warning: an investigation was opened.': 'الإنذار الثالث: فُتح تحقيق.',
+  'Your school at a glance': 'مدرستك في لمحة', 'Key percentages in plain numbers. Press one for the details.': 'النسب الرئيسية بأرقام واضحة. اضغط على أي منها للتفاصيل.', 'All metrics': 'كل المؤشرات', 'All': 'الكل',
+  'open investigations': 'تحقيقات مفتوحة', 'Is file health improving?': 'هل تتحسن سلامة الملفات؟', 'File health over time': 'سلامة الملفات عبر الزمن', 'Score 0 to 100. Higher is better.': 'الدرجة من 0 إلى 100. الأعلى أفضل.',
+  '1 month': 'شهر', '3 months': '3 أشهر', '6 months': '6 أشهر', '1 year': 'سنة', '▲ Improving': '▲ يتحسن', '▼ Getting worse': '▼ يتراجع', '● Steady': '● مستقر', 'from': 'من', 'to': 'إلى', 'over this period.': 'خلال هذه الفترة.',
+  'File health score': 'درجة سلامة الملفات', 'Not enough history yet. The chart fills in as days pass.': 'لا يوجد سجل كافٍ بعد. يمتلئ الرسم مع مرور الأيام.',
+  "Today's tasks": 'مهام اليوم', 'All done. Well done!': 'أنجزت كل شيء. أحسنت!', 'thing to do': 'مهمة', 'things to do': 'مهام', 'Due today': 'التسليم اليوم', 'Quiz': 'اختبار قصير',
+  'Multiple choice': 'اختيار من متعدد', 'True or false': 'صح أو خطأ', 'Short answer': 'إجابة قصيرة', 'True': 'صح', 'False': 'خطأ', 'Accepted answers, one per line': 'الإجابات المقبولة، كل إجابة في سطر',
+  'Capitals, extra spaces and a full stop at the end do not matter.': 'لا تهم الأحرف الكبيرة أو المسافات الزائدة أو النقطة في النهاية.', 'Your answer': 'إجابتك', 'Accepted answers': 'الإجابات المقبولة', 'Tick the correct one.': 'اختر الإجابة الصحيحة.',
+  'Submit your plan for each week; your coordinator reviews it.': 'سلّم خطتك لكل أسبوع؛ ويراجعها منسقك.', "Every teacher's weekly plan and its review status.": 'الخطة الأسبوعية لكل معلم وحالة مراجعتها.',
+  "Points from homework, quizzes and exams: each school's total, average per student and its outstanding students.": 'النقاط من الواجبات والاختبارات: مجموع كل مدرسة ومتوسط الطالب وطلابها المتميزون.'
+});
+Object.assign(AR, {
+  'Pick up': 'استلام', '✓ Picked up': '✓ تم الاستلام', 'Picked up': 'تم الاستلام', 'Picked up today': 'تم استلامهم اليوم', 'Picked up today at': 'تم الاستلام اليوم الساعة',
+  'Confirm the pick-up': 'تأكيد الاستلام', 'Collected by': 'استلمه', 'Cancel': 'إلغاء', 'Not picked up yet today.': 'لم يتم الاستلام اليوم بعد.',
+  'I have read this and I accept responsibility for my child from now on.': 'قرأت ذلك وأتحمّل مسؤولية طفلي من الآن.',
+  'You confirmed the pick-up and accepted responsibility for your child.': 'أكدت الاستلام وتحمّلت مسؤولية طفلك.', 'Picked up. The school can see it now.': 'تم الاستلام. تراه المدرسة الآن.',
+  'Choose who is collecting, then press Pick up.': 'اختر من سيستلم ثم اضغط استلام.', 'Recent pick-ups': 'آخر عمليات الاستلام', 'Nobody has been picked up yet today.': 'لم يُستلم أي طالب اليوم بعد.',
+  'Approve who may collect your child. Press Pick up when you collect them: it is confirmed at once and the school sees it.': 'حدّد من يحق له استلام طفلك. اضغط استلام عند الاستلام؛ يُؤكَّد فوراً وتراه المدرسة.',
+  'Live: when a parent presses Pick up, the child shows here in green at once. No approval is needed.': 'مباشر: عندما يضغط ولي الأمر استلام، يظهر الطالب هنا باللون الأخضر فوراً. لا حاجة لموافقة.',
+  'Parents confirm the pick-up themselves and accept responsibility. Newest first; it updates by itself.': 'يؤكد أولياء الأمور الاستلام بأنفسهم ويتحمّلون المسؤولية. الأحدث أولاً؛ يتحدّث تلقائياً.',
+  'Pick-up log': 'سجل الاستلام', 'Confirmed by': 'أكّده', 'Older requests': 'طلبات سابقة', 'Older requests waiting': 'طلبات سابقة بانتظار',
+  'From before parents confirmed pick-ups themselves.': 'من قبل أن يؤكد أولياء الأمور الاستلام بأنفسهم.',
+  'Every pick-up is kept permanently and cannot be changed, with the parent who confirmed it. The last 30 days are shown.': 'تُحفظ كل عملية استلام بشكل دائم ولا يمكن تغييرها، مع ولي الأمر الذي أكّدها. تُعرض آخر 30 يوماً.'
+});
+
+// Short Arabic for cards and tiles: written to fit the space, not translated word for word
+ROLE_AR.PRINCIPAL_ASSISTANT = 'وكيل المدرسة';
+Object.assign(AR, {
+  'Principal Assistant': 'وكيل المدرسة',
+  // measure tiles
+  'Strong': 'جيد', 'Watch': 'متوسط', 'Needs attention': 'ضعيف', 'No data yet': 'لا بيانات',
+  'Attendance': 'الحضور', 'Average grade': 'متوسط الدرجات', 'Homework done': 'الواجبات', 'Quiz average': 'الاختبارات القصيرة', 'Weekly plans': 'الخطط الأسبوعية', 'File health': 'سلامة الملفات',
+  'Students present, last 30 days': 'آخر 30 يوماً', 'All published marks': 'الدرجات المنشورة', 'Homework marked done, last 30 days': 'المنجزة، آخر 30 يوماً',
+  'Average quiz score': 'متوسط النتائج', "Teachers' weekly plans submitted, last 4 weeks": 'المسلّمة، آخر 4 أسابيع', 'Files kept safely, out of 100': 'الدرجة من 100',
+  'Your school at a glance': 'مدرستك في لمحة', 'Key percentages in plain numbers. Press one for the details.': 'اضغط على أي مؤشر لعرض تفاصيله.',
+  "Your school's key percentages and how they changed month by month.": 'مؤشرات مدرستك وتغيّرها شهرياً.', 'Month by month': 'شهرياً',
+  'The last twelve months. Hover a point for its value.': 'آخر 12 شهراً.',
+  // coordinator overview cards
+  'OPEN ISSUES': 'مشكلات مفتوحة', 'FOLLOW-UP': 'المتابعة', 'FIXED': 'تم الإصلاح', 'Needs review': 'للمراجعة', 'Needs you': 'تحتاجك', 'All clear': 'لا شيء',
+  'Resolved': 'محلولة', 'Owners waiting on you': 'بانتظارك', 'No owners waiting on you': 'لا أحد بانتظارك',
+  // principal staff card
+  'Issues fixed in their subject': 'المشكلات المحلولة في مادتهم', 'Files with an open issue': 'ملفات فيها مشكلة مفتوحة', 'fixed': 'محلولة', 'open': 'مفتوحة',
+  'Fixed': 'المحلولة', 'Open': 'المفتوحة',
+  ": issues fixed in their subject.": ': المشكلات المحلولة في مادتهم.', "70% or more of the subject's issues fixed": '70% فأكثر', '40–69%': '40–69%', 'under 40%': 'أقل من 40%',
+  ': files with an issue they still need to fix.': ': ملفات ما زال عليهم إصلاحها.', 'none': 'لا شيء', '1–3': '1–3', '4 or more': '4 فأكثر',
+  // support and setup moves
+  'Write to Leadership at head office. Replies and status changes appear here and in your notifications.': 'راسل القيادة في المكتب الرئيسي. تظهر الردود والتحديثات هنا وفي إشعاراتك.',
+  'Your tickets to Leadership at head office.': 'تذاكرك إلى القيادة في المكتب الرئيسي.',
+  'No term exists yet. School IT creates the terms under Academic setup.': 'لا يوجد فصل دراسي بعد. تنشئه تقنية المعلومات من الإعداد الأكاديمي.',
+  'is waiting for School IT to confirm.': 'بانتظار تأكيد تقنية المعلومات.', 'Ask for a place in a class. School IT confirms it.': 'اطلب مكاناً في صف. تؤكده تقنية المعلومات.'
+});
+
+// Wording review: school register, and buttons that say what they do
+Object.assign(AR, {
+  'Mark as done · +5 points': 'أنجزتُ الواجب · +5 نقاط',          // a button: "I've done it", not "done"
+  'Pass': 'مقبول', 'Keep practising': 'يحتاج إلى تحسين',             // the grade scale schools use: ممتاز، جيد جداً، جيد، مقبول
+  'Clear': 'لا ملاحظات',                                             // a teacher's status, not "nothing"
+  'Quiz taken': 'إكمال اختبار قصير',
+  'Tick the circle next to the correct answer.': 'ضع علامة على الدائرة بجانب الإجابة الصحيحة.',
+  'Tick the correct one.': 'حدّد الإجابة الصحيحة.',
+  'Indicator': 'ملاحظة أداء', 'Indicators': 'ملاحظات الأداء', 'Record an indicator': 'تسجيل ملاحظة أداء', 'Record indicator': 'تسجيل الملاحظة',
+  'Indicators towards the next warning': 'الملاحظات قبل الإنذار التالي', 'Indicators count towards the next warning.': 'كل 3 ملاحظات تصبح إنذاراً.',
+  'You record it, with what happened': 'تسجّلها مع وصف ما حدث'
+});
+
+// ---------------------------------------------------------------- counted nouns: "12 students" / "12 طالباً"
+/** English singular and plural, and the Arabic forms: [singular, dual, plural (3–10), accusative singular (11–99), gender]. */
+const COUNTED = {
+  student: ['student', 'students', 'طالب', 'طالبان', 'طلاب', 'طالباً', 'm'],
+  teacher: ['teacher', 'teachers', 'معلم', 'معلمان', 'معلمين', 'معلماً', 'm'],
+  question: ['question', 'questions', 'سؤال', 'سؤالان', 'أسئلة', 'سؤالاً', 'm'],
+  achievement: ['achievement', 'achievements', 'إنجاز', 'إنجازان', 'إنجازات', 'إنجازاً', 'm'],
+  point: ['point', 'points', 'نقطة', 'نقطتان', 'نقاط', 'نقطة', 'f'],
+  file: ['file', 'files', 'ملف', 'ملفان', 'ملفات', 'ملفاً', 'm'],
+  issue: ['issue', 'issues', 'مشكلة', 'مشكلتان', 'مشكلات', 'مشكلة', 'f'],
+  incident: ['incident', 'incidents', 'حادثة', 'حادثتان', 'حوادث', 'حادثة', 'f'],
+  assessment: ['assessment', 'assessments', 'تقييم', 'تقييمان', 'تقييمات', 'تقييماً', 'm'],
+  day: ['day', 'days', 'يوم', 'يومان', 'أيام', 'يوماً', 'm'],
+  result: ['result', 'results', 'نتيجة', 'نتيجتان', 'نتائج', 'نتيجة', 'f'],
+  homework: ['piece of homework', 'pieces of homework', 'واجب', 'واجبان', 'واجبات', 'واجباً', 'm'],
+  task: ['thing to do', 'things to do', 'مهمة', 'مهمتان', 'مهام', 'مهمة', 'f'],
+  person: ['person', 'people', 'شخص', 'شخصان', 'أشخاص', 'شخصاً', 'm'],
+  school: ['school', 'schools', 'مدرسة', 'مدرستان', 'مدارس', 'مدرسة', 'f'],
+  note: ['note', 'notes', 'ملاحظة', 'ملاحظتان', 'ملاحظات', 'ملاحظة', 'f'],
+  warning: ['warning', 'warnings', 'إنذار', 'إنذاران', 'إنذارات', 'إنذاراً', 'm'],
+  week: ['week', 'weeks', 'أسبوع', 'أسبوعان', 'أسابيع', 'أسبوعاً', 'm'],
+  ticket: ['ticket', 'tickets', 'تذكرة', 'تذكرتان', 'تذاكر', 'تذكرة', 'f']
+};
+/** A number with its noun, grammatical in the language on screen. 1 → "طالب واحد", 2 → "طالبان", 3–10 → "3 طلاب", 11–99 → "12 طالباً", 100 → "100 طالب". */
+function count(n, key) {
+  const f = COUNTED[key];
+  n = Number(n) || 0;
+  if (!f) return String(n);
+  if (I18N.lang !== 'ar') return n + ' ' + (n === 1 ? f[0] : f[1]);
+  const [, , one, two, few, many, g] = f;
+  if (n === 0) return '0 ' + few;
+  if (n === 1) return one + (g === 'f' ? ' واحدة' : ' واحد');
+  if (n === 2) return two;
+  const r = n % 100;
+  if (n < 100) return n + ' ' + (n <= 10 ? few : many);
+  return n + ' ' + (r <= 2 ? one : r <= 10 ? few : many);
+}
+
+/** "13 of 85 days" / "13 من 85 يوماً" */
+const ofDays = (n, days) => I18N.lang === 'ar' ? n + ' من ' + count(days, 'day') : n + ' of ' + count(days, 'day');
+Object.assign(AR, {
+  'open and urgent': 'مفتوحة وعاجلة', 'took it': 'أدّوه', 'fixed by staff': 'أصلحها الكادر', 'checked': 'تم فحصها', 'need action first': 'تحتاج إجراءً أولاً',
+  'Absence rate': 'نسبة الغياب', 'Documented absence': 'غياب بعذر', 'Undocumented absence': 'غياب بدون عذر', 'Student points': 'نقاط الطلاب',
+  'average per student': 'متوسط الطالب', 'Done': 'المنجز', 'last': 'آخر', 'with notes': 'لديهم ملاحظات'
+});
+
+// ---------------------------------------------------------------- interface text that still showed in English
+Object.assign(AR, {
+  'Due': 'التسليم', 'Class': 'الصف', 'Weekly plan': 'خطة أسبوعية', 'Lesson plan': 'خطة درس', 'Unit plan': 'خطة وحدة',
+  'A new message from a teacher, a student or a parent.': 'رسالة جديدة من معلم أو طالب أو ولي أمر.',
+  'New homework, a new quiz or a notice from a teacher.': 'واجب أو اختبار قصير أو إشعار جديد من المعلم.',
+  'Message (Arabic)': 'الرسالة (بالعربية)', 'Title (Arabic)': 'العنوان (بالعربية)',
+  "The network's file-health score, 0 to 100 (higher is better). Daily for a month, weekly averages for longer.": 'درجة سلامة الملفات في الشبكة من 0 إلى 100 (الأعلى أفضل). يومياً لمدة شهر، ومتوسط أسبوعي للفترات الأطول.',
+  'Tickets from Leadership, and from principals to head office. Open one to assign, reply or close it.': 'تذاكر القيادة وتذاكر المديرين إلى المكتب الرئيسي. افتح أي تذكرة لإسنادها أو الرد عليها أو إغلاقها.',
+  "Fill in the school template. Each kind of achievement is worth recognition points for the school; Leadership sees it in its report.": 'املأ نموذج المدرسة. لكل نوع من الإنجازات نقاط تقدير للمدرسة، وتطّلع عليه القيادة في تقريرها.',
+  'A new learning space or technology, for example a VR room or a science lab.': 'مرفق تعليمي أو تقنية جديدة، مثل غرفة واقع افتراضي أو مختبر علوم.',
+  'Results that improved, a subject that outperformed the target.': 'تحسّن في النتائج، أو مادة تجاوزت هدفها.',
+  'Prizes and places students won at school, national or international level.': 'جوائز ومراكز حققها الطلاب محلياً أو وطنياً أو دولياً.',
+  'Work with parents, the community, universities or companies.': 'تعاون مع أولياء الأمور أو المجتمع أو الجامعات أو الشركات.',
+  'Training, certification or recognition of teachers and staff.': 'تدريب الكادر أو اعتماده أو تكريمه.',
+  'Programmes for student wellbeing, attendance or inclusion.': 'برامج لرفاه الطلاب أو انتظامهم أو دمجهم.',
+  'Anything else worth recognising.': 'أي إنجاز آخر يستحق التقدير.',
+  // placeholders
+  'e.g. Opened a VR room': 'مثال: افتتاح غرفة واقع افتراضي', 'A few sentences about it': 'بضع جمل عن الإنجاز', 'e.g. 240 students use it every week': 'مثال: يستخدمها 240 طالباً أسبوعياً',
+  'https://… photos, certificate or news': 'https://… صور أو شهادة أو خبر', 'Facts only: what, when': 'الوقائع فقط: ماذا ومتى',
+  'e.g. Exercise 4, page 32': 'مثال: التمرين 4، صفحة 32', 'What to do, what to bring': 'المطلوب وما يجب إحضاره', 'e.g. Fractions check': 'مثال: اختبار الكسور',
+  'The chapter, pages or text the questions come from': 'الفصل أو الصفحات أو النص الذي أُخذت منه الأسئلة', 'e.g. Doha': 'مثال: الدوحة',
+  'Shown to the student after they send the quiz': 'يظهر للطالب بعد إرسال الاختبار', 'e.g. Bring your geometry set tomorrow': 'مثال: أحضروا أدوات الهندسة غداً',
+  'Answer': 'إجابة', 'Your answer': 'إجابتك'
+});
+AR_RULES.push(
+  [/^(.+) \(parent confirmed\)$/, n => `${n} (أكّده ولي الأمر)`],
+  [/^(.+) \(parent\)$/, n => `${n} (ولي الأمر)`],
+  [/^Homework: (.+?)( — .+)?$/, (s, t) => `واجب: ${trTextRaw(s)}${t || ''}`],
+  [/^Quiz: (.+) \((\d+)\/(\d+)\)$/, (q, a, b) => `اختبار قصير: ${q} (${a}/${b})`],
+  [/^(\d+) questions?\. Open Assessments to take it\.$/, n => `${count(Number(n), 'question')}. افتح التقييمات لأدائه.`],
+  [/^Class ([0-9]+[A-Za-z]?)$/, c => `الصف ${c}`],
+  [/^Due (\d{4}-\d{2}-\d{2})\. ?(.*)$/, (d, rest) => `موعد التسليم ${new Date(d + 'T00:00:00').toLocaleDateString(uiLocale(), { day: 'numeric', month: 'long' })}. ${rest}`.trim()]
+);
+
+// ---------------------------------------------------------------- activity log: newer actions and the details the server writes
+Object.assign(AR, {
+  'TEACHER_INDICATOR': 'تسجيل ملاحظة أداء', 'TEACHER_WARNING': 'إصدار إنذار', 'INVESTIGATION_OPENED': 'فتح تحقيق', 'INVESTIGATION_CLOSED': 'إغلاق تحقيق',
+  'MATERIAL_ADDED': 'إضافة مادة دراسية', 'POINTS_AWARDED': 'منح نقاط', 'ASSESSMENT_PUBLISHED': 'نشر تقييم', 'ASSESSMENT_UNPUBLISHED': 'إلغاء نشر تقييم',
+  'investigation opened': 'فُتح تحقيق', 'performance matrix': 'مصفوفة الأداء', 'open': 'مفتوحة', 'closed': 'مغلقة'
+});
+AR_RULES.push(
+  [/^warning (\d+)$/, n => `إنذار ${n}`],
+  [/^(.+) picked up by (.+); parent accepted responsibility$/, (s, c) => `استلم ${c} الطالب ${s}، وتحمّل ولي الأمر المسؤولية`],
+  [/^(EAA_IT|SCHOOL_IT|LEADERSHIP) \/ (LOW|NORMAL|HIGH|URGENT): (.+)$/, (to, u, t) =>
+    `${{ EAA_IT: 'تقنية المعلومات في الهيئة', SCHOOL_IT: 'تقنية المعلومات بالمدرسة', LEADERSHIP: 'القيادة' }[to]} / ${{ LOW: 'منخفضة', NORMAL: 'عادية', HIGH: 'مرتفعة', URGENT: 'عاجلة' }[u]}: ${t}`],
+  [/^(.+) \(term (\d+), max ([\d.]+)\)$/, (a, t, m) => `${a} (الفصل ${t}، من ${m})`],
+  [/^(.+) \(term (\d+)\)$/, (a, t) => `${a} (الفصل ${t})`],
+  [/^(.+) for (\d+[A-Za-z])$/, (a, c) => `${a} للصف ${c}`]
+);

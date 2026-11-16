@@ -113,6 +113,21 @@ public class DemoSchoolBuilder {
         site.setChecksEnabled(false);              // invented school: the nightly Drive check must not read it
         site.setFirstCheckAt(Instant.now(clock));
         sites.save(site);
+        populate(org, site, profile, admins);
+        return site;
+    }
+
+    /**
+     * Fills a school that exists but has nobody in it yet (for example one added for testing): staff, students and
+     * parents, terms, classes and timetable, months of marks and attendance, notices, files with issues, the file-health
+     * history and support tickets, following the profile.
+     */
+    @Transactional
+    public void populate(Org org, Site site, DemoSchools.Profile profile, List<Person> admins) {
+        if (site.getFirstCheckAt() == null) {
+            site.setFirstCheckAt(Instant.now(clock));
+            sites.save(site);
+        }
         Names names = new Names(profile.letter().charAt(0) - 'A' + 1);
 
         Person it = person(org, site, names.person(), Role.SCHOOL_IT, null);
@@ -151,27 +166,28 @@ public class DemoSchoolBuilder {
         }
 
         CurrentUser coord = user(subs.get(0).coordinator(), org, site);
+        CurrentUser setupBy = user(it, org, site);   // School IT sets up terms, classes, enrolment and the timetable
         LocalDate today = LocalDate.now(clock.withZone(SchoolCalendar.ZONE));
-        academic.saveTerm(coord, 1, "Term 1", today.minusMonths(4), today.minusDays(45));
-        academic.saveTerm(coord, 2, "Term 2", today.minusDays(44), today.plusDays(45));
-        academic.saveTerm(coord, 3, "Term 3", today.plusDays(46), today.plusMonths(4));
+        academic.saveTerm(setupBy, 1, "Term 1", today.minusMonths(4), today.minusDays(45));
+        academic.saveTerm(setupBy, 2, "Term 2", today.minusDays(44), today.plusDays(45));
+        academic.saveTerm(setupBy, 3, "Term 3", today.plusDays(46), today.plusMonths(4));
 
-        var sectionA = academic.createSection(coord, 8, "A");
-        var sectionB = academic.createSection(coord, 8, "B");
+        var sectionA = academic.createSection(setupBy, 8, "A");
+        var sectionB = academic.createSection(setupBy, 8, "B");
         var sections = List.of(sectionA, sectionB);
         for (int i = 0; i < students.size(); i++) {
-            academic.enrol(coord, (i < 6 ? sectionA : sectionB).id(), students.get(i).getEmail());
+            academic.enrol(setupBy, (i < 6 ? sectionA : sectionB).id(), students.get(i).getEmail());
         }
         int room = 1;
         for (var section : sections) {
             for (Sub sub : subs) {
-                academic.assign(coord, section.id(), sub.subject().getId(), sub.teacher().getId());
+                academic.assign(setupBy, section.id(), sub.subject().getId(), sub.teacher().getId());
             }
             int offset = section == sectionA ? 0 : 3;     // the other class's lessons sit in different periods, so no teacher is double-booked
             for (int s = 0; s < subs.size(); s++) {
                 Sub sub = subs.get(s);
-                academic.addLesson(coord, section.id(), sub.subject().getId(), s, 1 + offset, "Room " + (10 + room));
-                academic.addLesson(coord, section.id(), sub.subject().getId(), (s + 2) % 5, 2 + offset, "Room " + (10 + room));
+                academic.addLesson(setupBy, section.id(), sub.subject().getId(), s, 1 + offset, "Room " + (10 + room));
+                academic.addLesson(setupBy, section.id(), sub.subject().getId(), (s + 2) % 5, 2 + offset, "Room " + (10 + room));
             }
             room++;
         }
@@ -195,10 +211,9 @@ public class DemoSchoolBuilder {
         history.scores(site, profile);
         history.tickets(site, profile, principal, admins);
         history.schoolItTickets(site, subs.get(0).teacher(), it);
-        log.info("{} created. Sign in by name: {} (principal), {} (School IT), {} (coordinator), {} (teacher), {} (student).",
-                profile.name(), principal.getDisplayName(), it.getDisplayName(), subs.get(0).coordinator().getDisplayName(),
+        log.info("{} filled with demo data: {} (principal), {} (School IT), {} (coordinator), {} (teacher), {} (student).",
+                site.getName(), principal.getDisplayName(), it.getDisplayName(), subs.get(0).coordinator().getDisplayName(),
                 subs.get(0).teacher().getDisplayName(), students.get(0).getDisplayName());
-        return site;
     }
 
     // ------------------------------------------------------------------ files and issues

@@ -29,9 +29,9 @@ public final class DemoSchools {
                           int lateSubjects) {}
 
     public static final List<Profile> ALL = List.of(
-            new Profile("A", "Al Noor Academy", "alnoor-academy.edu.qa", .08, .03, .03, .02, 2, 120, 1, 0, 2, 0),
-            new Profile("B", "Al Rayyan Model School", "rayyan-model.edu.qa", .03, .04, .06, .04, 3, 72, 2, 1, 3, 0),
-            new Profile("C", "Doha Heritage School", "doha-heritage.edu.qa", -.02, .06, .08, .05, 5, 42, 3, 1, 4, 1),
-            new Profile("D", "Al Khor Preparatory School", "alkhor-prep.edu.qa", -.10, .09, .13, .08, 6, 38, 3, 2, 6, 2),
-            new Profile("E", "Al Wakrah Independent School", "wakrah-independent.edu.qa", -.14, .12, .16, .09, 7, 34, 4, 2, 7, 3));
+            new Profile("A", "5th Assalam School", "alnoor-academy.edu.qa", .08, .03, .03, .02, 2, 120, 1, 0, 2, 0),
+            new Profile("B", "1st Assalam School", "rayyan-model.edu.qa", .03, .04, .06, .04, 3, 72, 2, 1, 3, 0),
+            new Profile("C", "2nd Assalam School", "doha-heritage.edu.qa", -.02, .06, .08, .05, 5, 42, 3, 1, 4, 1),
+            new Profile("D", "3rd Assalam School", "alkhor-prep.edu.qa", -.10, .09, .13, .08, 6, 38, 3, 2, 6, 2),
+            new Profile("E", "4th Assalam School", "wakrah-independent.edu.qa", -.14, .12, .16, .09, 7, 34, 4, 2, 7, 3));
 }

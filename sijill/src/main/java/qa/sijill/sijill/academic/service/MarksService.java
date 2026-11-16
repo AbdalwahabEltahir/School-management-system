@@ -75,6 +75,7 @@ public class MarksService {
     private final qa.sijill.sijill.academic.repository.SectionRepository sectionRepo;
     private final qa.sijill.sijill.organisation.repository.SiteRepository siteRepo;
     private final qa.sijill.sijill.people.repository.PersonRepository peopleRepo;
+    private final SchoolworkPoints schoolwork;
 
     // ================================================================== defining
 
@@ -239,6 +240,7 @@ public class MarksService {
             throw new ConflictException((students - entered) + " student(s) have no mark yet. Enter a mark or Absent for everyone, then submit.");
         }
         a.setSubmittedAt(Instant.now(clock));
+        schoolwork.syncExams(a.getSectionId());   // in a published term the marks are visible now, and earn points
         audit.log(user.orgId(), user.siteId(), ActivityActions.MARKS_SUBMITTED).by(user).on("Section", a.getSectionId())
                 .subject(a.getSubjectId()).change("open", "submitted: " + a.getName()).save();
         // The term is already published: this assessment is visible now, so its students (and their parents) are told.
@@ -306,6 +308,7 @@ public class MarksService {
         p.setPublishedAt(Instant.now(clock));
         p.setPublishedBy(user.personId());
         publications.save(p);
+        schoolwork.syncExams(sectionId);
         audit.log(user.orgId(), user.siteId(), ActivityActions.RESULTS_PUBLISHED).by(user).on("Section", sectionId)
                 .change(null, "term " + term).save();
         for (Person student : access.students(sectionId)) {
@@ -330,6 +333,7 @@ public class MarksService {
             throw new ConflictException("These results are already published.");
         }
         a.setPublishedAt(Instant.now(clock));
+        schoolwork.syncExams(a.getSectionId());
         audit.log(user.orgId(), user.siteId(), ActivityActions.ASSESSMENT_PUBLISHED).by(user).on("Section", a.getSectionId())
                 .subject(a.getSubjectId()).change(null, a.getName() + " (term " + a.getTerm() + ")").save();
         for (Person student : access.students(a.getSectionId())) {
@@ -350,6 +354,7 @@ public class MarksService {
             throw new NotFoundException("The published results");
         }
         a.setPublishedAt(null);
+        schoolwork.syncExams(a.getSectionId());
         audit.log(user.orgId(), user.siteId(), ActivityActions.ASSESSMENT_UNPUBLISHED).by(user).on("Section", a.getSectionId())
                 .subject(a.getSubjectId()).change(a.getName() + " published", "unpublished: " + reason.trim()).save();
     }
@@ -364,6 +369,7 @@ public class MarksService {
         ResultPublication p = publications.findBySectionIdAndTerm(sectionId, term)
                 .orElseThrow(() -> new NotFoundException("The published results"));
         publications.delete(p);
+        schoolwork.syncExams(sectionId);
         audit.log(user.orgId(), user.siteId(), ActivityActions.RESULTS_UNPUBLISHED).by(user).on("Section", sectionId)
                 .change("term " + term + " published", "unpublished: " + reason.trim()).save();
     }
@@ -409,7 +415,7 @@ public class MarksService {
     /** Who has submitted this week's grades, per teacher, section and subject. */
     @Transactional(readOnly = true)
     public List<qa.sijill.sijill.academic.dto.AcademicDtos.WeeklyRow> weekly(CurrentUser user, java.time.LocalDate week) {
-        if (!user.isAny(Role.SCHOOL_IT, Role.PRINCIPAL, Role.COORDINATOR, Role.LEADERSHIP)) {
+        if (!user.isAny(Role.SCHOOL_IT, Role.PRINCIPAL, Role.PRINCIPAL_ASSISTANT, Role.COORDINATOR, Role.LEADERSHIP)) {
             throw new ForbiddenException("The weekly grade overview is for school leadership.");
         }
         java.time.LocalDate start = SchoolCalendar.weekStart(week == null ? access.today() : week);
@@ -478,8 +484,8 @@ public class MarksService {
         }
         access.requireView(user, sectionId);
         List<Assessment> columns = assessments.findBySectionIdOrderByTermAscNameAsc(sectionId).stream()
-                .filter(a -> user.isAny(Role.SCHOOL_IT, Role.PRINCIPAL) || access.teaches(user, sectionId, a.getSubjectId())
-                        || (user.is(Role.COORDINATOR) && access.teaches(user, sectionId)))
+                .filter(a -> user.isAny(Role.SCHOOL_IT, Role.PRINCIPAL, Role.PRINCIPAL_ASSISTANT) || access.teaches(user, sectionId, a.getSubjectId())
+                        || (user.is(Role.COORDINATOR) && (access.teaches(user, sectionId) || a.getSubjectId().equals(user.subjectId()))))   // a subject coordinator sees their subject in every class
                 .sorted(java.util.Comparator.comparing(Assessment::getWeekStart).thenComparing(Assessment::getName)).toList();
         Map<UUID, Map<UUID, Mark>> byAssessment = new HashMap<>();
         for (Assessment a : columns) {

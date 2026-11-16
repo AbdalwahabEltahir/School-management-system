@@ -77,6 +77,10 @@ public final class ActivityActions {
     public static final String NOTICE_PUBLISHED = "NOTICE_PUBLISHED";
     public static final String NOTICE_REMOVED = "NOTICE_REMOVED";
     public static final String MATERIAL_ADDED = "MATERIAL_ADDED";
+    public static final String TEACHER_INDICATOR = "TEACHER_INDICATOR";
+    public static final String TEACHER_WARNING = "TEACHER_WARNING";
+    public static final String INVESTIGATION_OPENED = "INVESTIGATION_OPENED";
+    public static final String INVESTIGATION_CLOSED = "INVESTIGATION_CLOSED";
     // ---- support tickets and personal settings ----
     public static final String TICKET_CREATED = "TICKET_CREATED";
     public static final String TICKET_REPLIED = "TICKET_REPLIED";
