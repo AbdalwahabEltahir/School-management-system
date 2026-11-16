@@ -18,9 +18,9 @@ if anything else is offered):
 
 | Name | Role |
 |---|---|
-| Abdalwahab | School IT |
+| Abdalwahab | EAA IT (the only role that adds, edits and removes rules and schools) |
 | Clerk | Attendance Clerk |
-| EAA | EAA IT (the only role that adds, edits and removes rules and schools) |
+| School IT | School IT |
 | Huda | Principal |
 | Nora | Leadership |
 | Parent | Parent |

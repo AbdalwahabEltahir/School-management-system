@@ -114,8 +114,8 @@ sijill:
         role: COORDINATOR
       # The two test-sign-in accounts that the copied database may not contain yet (added on every start if missing).
       - email: hafez.eaa.it.test@gmail.com
-        name: EAA
-        role: EAA_ADMIN
+        name: School IT
+        role: SCHOOL_IT
       - email: hafez.clerk.test@gmail.com
         name: Clerk
         role: ATTENDANCE_OFFICER

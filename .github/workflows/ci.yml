@@ -136,7 +136,7 @@ jobs:
           people=$(curl -sf http://localhost:8080/api/auth/test/people)
           echo "offered: $people"
           # Whatever is offered must be one of the eleven approved accounts, and nothing else.
-          approved='Abdalwahab Assistant Clerk EAA Huda Nora Noora Parent Rajaa Student Teacher1 Teacher2'
+          approved='Abdalwahab Assistant Clerk School IT Huda Nora Noora Parent Rajaa Student Teacher1 Teacher2'
           for offered in $(echo "$people" | grep -o '"name":"[^"]*"' | sed 's/"name":"//; s/"$//' | tr ' ' '_'); do
             n=$(echo "$offered" | tr '_' ' ')
             case " $approved " in *" $n "*) ;; *) echo "$n is offered but is not an approved account"; exit 1;; esac
