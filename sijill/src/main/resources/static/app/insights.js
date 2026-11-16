@@ -44,7 +44,13 @@ function lineChart({ labels, series, max = 100, unit = '%', height = 240, width 
   const W = width, H = height, L = 44, R = 56, T = 14, B = 30;
   const x = i => L + i * (W - L - R) / (n - 1), y = v => T + (1 - Math.max(0, Math.min(max, v)) / max) * (H - T - B);
   const ticks = [0, .25, .5, .75, 1].map(f => Math.round(max * f));
-  const every = Math.max(1, Math.ceil(n / 8));
+  // date labels: as many as fit side by side (longer Arabic month names mean fewer), evenly spaced and counted back from
+  // the newest point, so the last date is always shown and no two labels ever touch
+  const longest = Math.max(...labels.map(l => String(l).length));
+  const fits = Math.max(2, Math.floor((W - L - R) / (longest * 7.5 + 22)) + 1);
+  const every = Math.max(1, Math.ceil((n - 1) / (fits - 1)));
+  const shown = new Set();
+  for (let i = n - 1; i >= 0; i -= every) shown.add(i);
   // end-of-line labels never sit on top of each other: each keeps at least 15 units from the one above
   const ends = series.map((s, si) => { const vs = s.values.map((v, i) => v == null ? null : [i, v]).filter(Boolean); const l = vs[vs.length - 1]; return l ? { si, y: y(l[1]) } : null; }).filter(Boolean).sort((a, b) => a.y - b.y);
   const labelY = {};
@@ -61,7 +67,7 @@ function lineChart({ labels, series, max = 100, unit = '%', height = 240, width 
   });
   return html`<div class="tr"><svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${series.map(s => s.name).join(', ')}">
     ${ticks.map(t => html`<line x1="${L}" x2="${W - R}" y1="${y(t).toFixed(1)}" y2="${y(t).toFixed(1)}" class="tr-grid"/><text x="${L - 8}" y="${(y(t) + 4).toFixed(1)}" class="tr-y">${t}${unit}</text>`)}
-    ${labels.map((l, i) => i % every === 0 || i === n - 1 ? html`<text x="${x(i).toFixed(1)}" y="${H - 8}" class="tr-x">${l}</text>` : '')}
+    ${labels.map((l, i) => shown.has(i) ? html`<text x="${x(i).toFixed(1)}" y="${H - 8}" class="tr-x">${l}</text>` : '')}
     ${paths}</svg>
     ${series.length > 1 ? html`<div class="tr-legend">${series.map(s => html`<span><i style="background:${s.colour}"></i>${s.name}</span>`)}</div>` : ''}</div>`;
 }
