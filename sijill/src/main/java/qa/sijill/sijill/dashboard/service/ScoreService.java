@@ -82,7 +82,7 @@ public class ScoreService {
     @Transactional(readOnly = true)
     public SiteScore siteScore(CurrentUser user, UUID siteId) {
         Site site = sites.findById(siteId).orElseThrow(() -> new NotFoundException("The school"));
-        if (!user.isAny(Role.PRINCIPAL, Role.SCHOOL_IT, Role.LEADERSHIP, Role.EAA_ADMIN)) {
+        if (!user.isAny(Role.PRINCIPAL, Role.PRINCIPAL_ASSISTANT, Role.SCHOOL_IT, Role.LEADERSHIP, Role.EAA_ADMIN)) {
             throw new ForbiddenException("The school score is not available for your role.");
         }
         policy.requireSiteAccess(user, siteId, site.getOrgId());

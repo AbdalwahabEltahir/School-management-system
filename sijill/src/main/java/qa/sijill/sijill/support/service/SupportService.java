@@ -77,12 +77,24 @@ public class SupportService {
 
     @Transactional
     public SupportDtos.TicketView create(CurrentUser user, SupportDtos.CreateRequest in) {
-        TicketAudience audience = parse(TicketAudience.class, in.audience() == null ? "SCHOOL_IT" : in.audience(), "recipient");
-        if (audience == TicketAudience.LEADERSHIP) {
+        TicketAudience audience = parse(TicketAudience.class, in.audience() == null
+                ? (user.is(Role.LEADERSHIP) ? "EAA_IT" : user.is(Role.PRINCIPAL) ? "LEADERSHIP" : "SCHOOL_IT") : in.audience(), "recipient");
+        if (audience == TicketAudience.EAA_IT) {
+            if (!user.is(Role.LEADERSHIP)) {
+                throw new ForbiddenException("Only Leadership writes to EAA IT.");
+            }
+            if (user.siteId() == null) {
+                throw new BadRequestException("Your account has no school or head office set. Ask EAA IT to set it.");
+            }
+        } else if (user.is(Role.LEADERSHIP)) {
+            throw new ForbiddenException("Leadership writes its tickets to EAA IT.");
+        } else if (audience == TicketAudience.LEADERSHIP) {
             if (!user.is(Role.PRINCIPAL)) {
                 throw new ForbiddenException("Only a principal can write to Leadership. Write to your School IT instead.");
             }
-        } else if (!user.isAny(Role.TEACHER, Role.COORDINATOR, Role.PRINCIPAL, Role.ATTENDANCE_OFFICER)) {
+        } else if (user.is(Role.PRINCIPAL)) {
+            throw new ForbiddenException("The principal writes to Leadership. School staff write to School IT.");
+        } else if (!user.isAny(Role.TEACHER, Role.COORDINATOR, Role.PRINCIPAL_ASSISTANT, Role.ATTENDANCE_OFFICER)) {
             throw new ForbiddenException("Your role cannot open a support ticket.");
         }
         String title = clean(in.title(), 200, "A title is required.");
@@ -132,13 +144,18 @@ public class SupportService {
     @Transactional(readOnly = true)
     public List<SupportDtos.TicketView> list(CurrentUser user) {
         List<SupportTicket> rows;
-        if (user.isNetwork()) {
-            rows = tickets.findTop500ByOrgIdOrderByUpdatedAtDesc(user.orgId()).stream().filter(t -> t.getAudience() == TicketAudience.LEADERSHIP).toList();
+        if (user.is(Role.EAA_ADMIN)) {
+            rows = tickets.findTop500ByOrgIdOrderByUpdatedAtDesc(user.orgId()).stream().filter(t -> t.getAudience() != TicketAudience.SCHOOL_IT).toList();
+        } else if (user.is(Role.LEADERSHIP)) {
+            // read-only: the principals' tickets to head office, and the tickets Leadership wrote to EAA IT
+            rows = tickets.findTop500ByOrgIdOrderByUpdatedAtDesc(user.orgId()).stream()
+                    .filter(t -> t.getAudience() == TicketAudience.LEADERSHIP || t.getCreatedBy().equals(user.personId())).toList();
         } else if (user.is(Role.PRINCIPAL)) {
-            rows = tickets.findTop200BySiteIdOrderByUpdatedAtDesc(user.siteId());
+            // the principal's own tickets to Leadership; staff tickets to School IT stay between staff and School IT
+            rows = tickets.findTop200ByCreatedByOrderByUpdatedAtDesc(user.personId());
         } else if (user.is(Role.SCHOOL_IT)) {
             rows = tickets.findTop200BySiteIdOrderByUpdatedAtDesc(user.siteId()).stream().filter(t -> t.getAudience() == TicketAudience.SCHOOL_IT).toList();
-        } else if (user.isAny(Role.TEACHER, Role.COORDINATOR, Role.ATTENDANCE_OFFICER)) {
+        } else if (user.isAny(Role.TEACHER, Role.COORDINATOR, Role.PRINCIPAL_ASSISTANT, Role.ATTENDANCE_OFFICER)) {
             rows = tickets.findTop200ByCreatedByOrderByUpdatedAtDesc(user.personId());
         } else {
             throw new ForbiddenException("Your role does not use support tickets.");
@@ -168,10 +185,10 @@ public class SupportService {
         List<Person> pool;
         if (user.is(Role.SCHOOL_IT)) {
             pool = people.findBySiteIdAndRole(user.siteId(), Role.SCHOOL_IT);
-        } else if (user.isNetwork()) {
-            pool = headOffice(user.orgId());
+        } else if (user.is(Role.EAA_ADMIN)) {
+            pool = people.findByOrgIdAndRole(user.orgId(), Role.EAA_ADMIN);
         } else {
-            throw new ForbiddenException("Only School IT, Leadership and EAA administrators assign tickets.");
+            throw new ForbiddenException("Only School IT and EAA IT assign tickets.");
         }
         return pool.stream().filter(p -> p.getStatus() != PersonStatus.LEFT).map(p -> new SupportDtos.Assignee(p.getId(), p.getDisplayName())).toList();
     }
@@ -259,24 +276,24 @@ public class SupportService {
         SupportTicket t = tickets.findById(id).filter(x -> x.getOrgId().equals(user.orgId())).orElseThrow(() -> new NotFoundException("The ticket"));
         boolean ok = t.getCreatedBy().equals(user.personId())
                 || canManage(user, t)
-                || (user.is(Role.PRINCIPAL) && t.getSiteId().equals(user.siteId()));
+                || (user.is(Role.LEADERSHIP) && t.getAudience() == TicketAudience.LEADERSHIP);   // read-only
         if (!ok) {
             throw new NotFoundException("The ticket");
         }
         return t;
     }
 
-    /** School IT handles School IT tickets of their own school; Leadership and EAA administrators handle Leadership tickets. */
+    /** School IT handles School IT tickets of their own school; EAA IT handles head-office tickets. Leadership is read-only. */
     private boolean canManage(CurrentUser user, SupportTicket t) {
         return t.getAudience() == TicketAudience.SCHOOL_IT
                 ? user.is(Role.SCHOOL_IT) && t.getSiteId().equals(user.siteId())
-                : user.isNetwork();
+                : user.is(Role.EAA_ADMIN);
     }
 
     private void requireManager(CurrentUser user, SupportTicket t) {
         if (!canManage(user, t)) {
             throw new ForbiddenException(t.getAudience() == TicketAudience.SCHOOL_IT
-                    ? "Only School IT of this school can do this." : "Only Leadership or an EAA administrator can do this.");
+                    ? "Only School IT of this school can do this." : "Only EAA IT can do this.");
         }
     }
 
@@ -295,7 +312,11 @@ public class SupportService {
     }
 
     private List<Person> pool(SupportTicket t) {
-        List<Person> all = t.getAudience() == TicketAudience.SCHOOL_IT ? people.findBySiteIdAndRole(t.getSiteId(), Role.SCHOOL_IT) : headOffice(t.getOrgId());
+        List<Person> all = switch (t.getAudience()) {
+            case SCHOOL_IT -> people.findBySiteIdAndRole(t.getSiteId(), Role.SCHOOL_IT);
+            case EAA_IT -> people.findByOrgIdAndRole(t.getOrgId(), Role.EAA_ADMIN);
+            case LEADERSHIP -> headOffice(t.getOrgId());
+        };
         return all.stream().filter(p -> p.getStatus() != PersonStatus.LEFT && p.canSignIn()).toList();
     }
 

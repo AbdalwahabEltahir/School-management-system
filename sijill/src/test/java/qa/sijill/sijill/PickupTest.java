@@ -71,57 +71,50 @@ class PickupTest extends WorldTestSupport {
     }
 
     @Test
-    void aChildIsReleasedOnlyAfterStaffVerifyAnApprovedCollector() {
+    void theParentsConfirmationCompletesThePickupAndStaffSeeItAtOnce() {
         Scene s = scene();
         var collector = driver(s);
         assertThat(collector.idLast4()).isEqualTo("7890");                                   // only the last four are kept
 
-        var arrival = pickup.arrive(user(s.parent()), s.child().getId(), collector.id());
-        assertThat(arrival.status()).isEqualTo("ARRIVED");
-        assertThat(count(s.w().teacher(), NotificationKind.COLLECTION)).isEqualTo(1);        // the class teacher is alerted
+        // nothing happens until the parent accepts responsibility
+        assertThatThrownBy(() -> pickup.arrive(user(s.parent()), s.child().getId(), collector.id(), false)).isInstanceOf(BadRequestException.class);
+        assertThat(pickup.log(user(s.w().principal()), null, null)).isEmpty();
+
+        var done = pickup.arrive(user(s.parent()), s.child().getId(), collector.id(), true);
+        assertThat(done.status()).isEqualTo("RELEASED");                                      // green straight away, no staff approval
+        assertThat(done.acknowledgedAt()).isNotNull();
+        assertThat(jdbc.queryForObject("SELECT acknowledgement FROM pickup_requests WHERE id = ?", String.class, done.id()))
+                .contains("no longer responsible");                                          // the statement is kept with the pick-up
+        assertThat(count(s.w().teacher(), NotificationKind.COLLECTION)).isEqualTo(1);        // the class teacher is told
         assertThat(count(s.w().coordinator(), NotificationKind.COLLECTION)).isEqualTo(1);    // and the coordinator
         assertThat(count(s.w().principal(), NotificationKind.COLLECTION)).isZero();
 
         var board = pickup.board(user(s.w().teacher()));
-        assertThat(board.arrivals()).extracting(PickupDtos.RequestView::id).containsExactly(arrival.id());
-        assertThat(board.canAct()).isTrue();
+        assertThat(board.arrivals()).isEmpty();
+        assertThat(board.pending()).isEmpty();
+        assertThat(board.completed()).extracting(PickupDtos.RequestView::student).containsExactly("Amal Al-Sulaiti");
+        assertThat(pickup.board(user(s.w().coordinator())).completed()).hasSize(1);
 
-        // a child cannot be released before the ID was verified
-        assertThatThrownBy(() -> pickup.release(user(s.w().teacher()), arrival.id())).isInstanceOf(ConflictException.class);
-
-        pickup.verify(user(s.w().teacher()), arrival.id());
-        assertThat(pickup.board(user(s.w().coordinator())).pending()).hasSize(1);
-        var released = pickup.release(user(s.w().coordinator()), arrival.id());
-        assertThat(released.status()).isEqualTo("RELEASED");
-
-        // the chain-of-custody record: student, collector, exact time and the staff member
+        // the chain-of-custody record names the parent who confirmed
         var log = pickup.log(user(s.w().principal()), null, null);
         assertThat(log).hasSize(1);
-        assertThat(log.get(0).student()).isEqualTo("Amal Al-Sulaiti");
         assertThat(log.get(0).collector()).isEqualTo("Yusuf Driver");
-        assertThat(log.get(0).releasedBy()).isEqualTo(s.w().coordinator().getDisplayName());
-        assertThat(log.get(0).releasedAt()).isNotNull();
-        assertThat(pickup.board(user(s.w().teacher())).completed()).hasSize(1);
-        assertThat(count(s.parent(), NotificationKind.COLLECTION)).isEqualTo(1);             // the parent is told
-        assertThat(pickup.log(user(s.parent()), null, null)).hasSize(1);                    // and can see the record
+        assertThat(log.get(0).releasedBy()).isEqualTo(s.parent().getDisplayName() + " (parent confirmed)");
+        assertThat(pickup.log(user(s.parent()), null, null)).hasSize(1);
 
-        // the same child can be collected again another day, or once finished, again now
-        assertThat(pickup.arrive(user(s.parent()), s.child().getId(), null).collector()).isEqualTo("Maha Al-Sulaiti");
+        // once a day per child
+        assertThatThrownBy(() -> pickup.arrive(user(s.parent()), s.child().getId(), null, true)).isInstanceOf(ConflictException.class);
     }
 
     @Test
-    void onlyApprovedCollectorsCanBeReleased() {
+    void onlyApprovedCollectorsCanBeNamed() {
         Scene s = scene();
         Scene other = scene();
         var strangers = driver(other);                                                       // approved for someone else's child
-        assertThatThrownBy(() -> pickup.arrive(user(s.parent()), s.child().getId(), strangers.id())).isInstanceOf(BadRequestException.class);
-
+        assertThatThrownBy(() -> pickup.arrive(user(s.parent()), s.child().getId(), strangers.id(), true)).isInstanceOf(BadRequestException.class);
         var mine = driver(s);
-        var arrival = pickup.arrive(user(s.parent()), s.child().getId(), mine.id());
-        pickup.removeCollector(user(s.parent()), mine.id());                                 // approval withdrawn before release
-        assertThatThrownBy(() -> pickup.verify(user(s.w().teacher()), arrival.id())).isInstanceOf(ConflictException.class);
-        assertThatThrownBy(() -> pickup.release(user(s.w().teacher()), arrival.id())).isInstanceOf(ConflictException.class);
-        assertThat(pickup.decline(user(s.w().teacher()), arrival.id(), "Not on the approved list any more").status()).isEqualTo("DECLINED");
+        pickup.removeCollector(user(s.parent()), mine.id());                                 // approval withdrawn
+        assertThatThrownBy(() -> pickup.arrive(user(s.parent()), s.child().getId(), mine.id(), true)).isInstanceOf(BadRequestException.class);
         assertThat(pickup.log(user(s.w().principal()), null, null)).isEmpty();
     }
 
@@ -131,42 +124,33 @@ class PickupTest extends WorldTestSupport {
         Scene other = scene();
         assertThatThrownBy(() -> pickup.addCollector(user(other.parent()), s.child().getId(),
                 new PickupDtos.CollectorRequest("X Person", "DRIVER", null, "12345678"))).isInstanceOf(NotFoundException.class);
-        assertThatThrownBy(() -> pickup.arrive(user(s.w().teacher()), s.child().getId(), null)).isInstanceOf(NotFoundException.class);
+        assertThatThrownBy(() -> pickup.arrive(user(s.w().teacher()), s.child().getId(), null, true)).isInstanceOf(NotFoundException.class);
+        assertThatThrownBy(() -> pickup.arrive(user(other.parent()), s.child().getId(), null, true)).isInstanceOf(NotFoundException.class);
         assertThatThrownBy(() -> pickup.addCollector(user(s.parent()), s.child().getId(),
                 new PickupDtos.CollectorRequest("A", "DRIVER", null, "12345678"))).isInstanceOf(BadRequestException.class);
         assertThatThrownBy(() -> pickup.addCollector(user(s.parent()), s.child().getId(),
                 new PickupDtos.CollectorRequest("Short Id", "DRIVER", null, "12"))).isInstanceOf(BadRequestException.class);
 
-        var arrival = pickup.arrive(user(s.parent()), s.child().getId(), null);
-        assertThatThrownBy(() -> pickup.arrive(user(s.parent()), s.child().getId(), null)).isInstanceOf(ConflictException.class); // one at a time
-
-        // the principal can read the board but cannot verify, release or decline
-        assertThat(pickup.board(user(s.w().principal())).canAct()).isFalse();
-        assertThatThrownBy(() -> pickup.verify(user(s.w().principal()), arrival.id())).isInstanceOf(ForbiddenException.class);
+        pickup.arrive(user(s.parent()), s.child().getId(), null, true);
+        // the principal reads the board; a parent cannot
+        assertThat(pickup.board(user(s.w().principal())).completed()).hasSize(1);
         assertThatThrownBy(() -> pickup.board(user(s.parent()))).isInstanceOf(ForbiddenException.class);
-        // a teacher of another class, and another school's staff, do not even see it
+        // a teacher of another class, and another school's staff, do not see it
         Person otherTeacher = person(s.w().org(), s.w().school(), "t2-" + UUID.randomUUID() + "@" + s.w().school().getDomain(), "Other Teacher", Role.TEACHER, s.w().maths());
-        assertThat(pickup.board(user(otherTeacher)).arrivals()).isEmpty();
-        assertThatThrownBy(() -> pickup.verify(user(otherTeacher), arrival.id())).isInstanceOf(NotFoundException.class);
-        assertThatThrownBy(() -> pickup.verify(user(other.w().teacher()), arrival.id())).isInstanceOf(NotFoundException.class);
-        // declining needs a reason; the parent can withdraw their own request
-        assertThatThrownBy(() -> pickup.decline(user(s.w().teacher()), arrival.id(), " ")).isInstanceOf(BadRequestException.class);
-        assertThat(pickup.cancel(user(s.parent()), arrival.id()).status()).isEqualTo("CANCELLED");
-        assertThatThrownBy(() -> pickup.cancel(user(other.parent()), arrival.id())).isInstanceOf(NotFoundException.class);
+        assertThat(pickup.board(user(otherTeacher)).completed()).isEmpty();
+        assertThat(pickup.board(user(other.w().teacher())).completed()).isEmpty();
     }
 
     @Test
     void theReleaseLogCannotBeChangedOrDeleted() {
         Scene s = scene();
-        var arrival = pickup.arrive(user(s.parent()), s.child().getId(), null);
-        pickup.verify(user(s.w().teacher()), arrival.id());
-        pickup.release(user(s.w().teacher()), arrival.id());
+        var done = pickup.arrive(user(s.parent()), s.child().getId(), null, true);
 
-        assertThatThrownBy(() -> jdbc.update("UPDATE pickup_release_log SET collector_name = 'Someone Else' WHERE request_id = ?", arrival.id()))
+        assertThatThrownBy(() -> jdbc.update("UPDATE pickup_release_log SET collector_name = 'Someone Else' WHERE request_id = ?", done.id()))
                 .isInstanceOf(DataAccessException.class).hasMessageContaining("cannot be changed or deleted");
-        assertThatThrownBy(() -> jdbc.update("DELETE FROM pickup_release_log WHERE request_id = ?", arrival.id()))
+        assertThatThrownBy(() -> jdbc.update("DELETE FROM pickup_release_log WHERE request_id = ?", done.id()))
                 .isInstanceOf(DataAccessException.class);
-        assertThat(jdbc.queryForObject("SELECT count(*) FROM pickup_release_log WHERE request_id = ?", Integer.class, arrival.id())).isEqualTo(1);
+        assertThat(jdbc.queryForObject("SELECT count(*) FROM pickup_release_log WHERE request_id = ?", Integer.class, done.id())).isEqualTo(1);
     }
 
     @Test
@@ -176,7 +160,7 @@ class PickupTest extends WorldTestSupport {
             t.setMuted(java.util.Set.of(NotificationKind.COLLECTION));
             people.save(t);
         });
-        pickup.arrive(user(s.parent()), s.child().getId(), null);
+        pickup.arrive(user(s.parent()), s.child().getId(), null, true);
         assertThat(count(s.w().teacher(), NotificationKind.COLLECTION)).isZero();
         assertThat(count(s.w().coordinator(), NotificationKind.COLLECTION)).isEqualTo(1);
     }

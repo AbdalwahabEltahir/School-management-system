@@ -56,7 +56,7 @@ import qa.sijill.sijill.workspace.ShareTargetType;
  *
  * <ul>
  *   <li>Head office with Leadership: {@code lina.sabbagh@alnoor-academy.edu.qa};</li>
- *   <li>School A (Al Noor Academy) with an IT admin, a principal, a coordinator (Mathematics) and a teacher;</li>
+ *   <li>School A (5th Assalam School) with an IT admin, a principal, a coordinator (Mathematics) and a teacher;</li>
  *   <li>four files owned by the teacher, three of which break rules, checked by the real rule engine.</li>
  * </ul>
  * Does nothing if an organisation already exists, so it never touches real data. All names and files are
@@ -185,19 +185,19 @@ public class DevDataSeeder implements ApplicationRunner {
         // The coordinator creates terms, classes and sections; the teacher sets assessments and grades; IT unlocks and publishes.
         CurrentUser coord = new CurrentUser(coordinator.getId(), org.getId(), school.getId(), Role.COORDINATOR, coordinator.getSubjectId(), coordinator.getEmail(), coordinator.getDisplayName());
         LocalDate year = LocalDate.now(clock.withZone(SchoolCalendar.ZONE));
-        academic.saveTerm(coord, 1, "Term 1", year.minusMonths(3), year.plusDays(30));
-        academic.saveTerm(coord, 2, "Term 2", year.plusDays(60), year.plusMonths(5));
-        academic.saveTerm(coord, 3, "Term 3", year.plusMonths(6), year.plusMonths(9));
-        var section = academic.createSection(coord, 7, "B");
+        academic.saveTerm(admin, 1, "Term 1", year.minusMonths(3), year.plusDays(30));
+        academic.saveTerm(admin, 2, "Term 2", year.plusDays(60), year.plusMonths(5));
+        academic.saveTerm(admin, 3, "Term 3", year.plusMonths(6), year.plusMonths(9));
+        var section = academic.createSection(admin, 7, "B");
         for (Person s : List.of(amal, bader, cara)) {
-            academic.enrol(coord, section.id(), s.getEmail());
+            academic.enrol(admin, section.id(), s.getEmail());
         }
-        academic.assign(coord, section.id(), maths.getId(), teacher.getId());
-        academic.assign(coord, section.id(), english.getId(), englishTeacher.getId());
-        academic.addLesson(coord, section.id(), maths.getId(), 0, 1, "Room 12");
-        academic.addLesson(coord, section.id(), maths.getId(), 2, 1, "Room 12");
-        academic.addLesson(coord, section.id(), english.getId(), 1, 2, "Room 4");
-        academic.addLesson(coord, section.id(), english.getId(), 3, 2, "Room 4");
+        academic.assign(admin, section.id(), maths.getId(), teacher.getId());
+        academic.assign(admin, section.id(), english.getId(), englishTeacher.getId());
+        academic.addLesson(admin, section.id(), maths.getId(), 0, 1, "Room 12");
+        academic.addLesson(admin, section.id(), maths.getId(), 2, 1, "Room 12");
+        academic.addLesson(admin, section.id(), english.getId(), 1, 2, "Room 4");
+        academic.addLesson(admin, section.id(), english.getId(), 3, 2, "Room 4");
 
         var quiz = marks.create(sara, section.id(), maths.getId(), 1, "Quiz 1", new BigDecimal("40"));
         marks.enter(sara, quiz.id(), List.of(new AcademicDtos.MarkInput(amal.getId(), new BigDecimal("36"), false),

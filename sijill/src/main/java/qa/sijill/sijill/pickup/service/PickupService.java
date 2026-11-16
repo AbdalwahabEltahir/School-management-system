@@ -147,16 +147,36 @@ public class PickupService {
                 .change(c.getName(), null).save();
     }
 
-    // =============================================================== parent: "I have arrived"
+    // =============================================================== parent: "Pick up"
 
+    /** What the parent accepts before the pick-up is recorded. Kept, word for word, with every pick-up. */
+    public static final String ACKNOWLEDGEMENT_EN = "I confirm that I am collecting my child, or that I sent the person named. By pressing Pick up I accept that "
+            + "from this moment the school is no longer responsible for my child, and the responsibility for the pick-up is mine.";
+    public static final String ACKNOWLEDGEMENT_AR = "أؤكد أنني أستلم طفلي أو أنني أرسلت الشخص المذكور. بالضغط على زر الاستلام أقرّ بأن المدرسة تُخلي مسؤوليتها "
+            + "عن طفلي من هذه اللحظة، وأن مسؤولية الاستلام تقع عليّ.";
+
+    /**
+     * The parent presses "Pick up": the pick-up is completed at once, without staff approval. The parent must first
+     * accept that the school is no longer responsible for the child; that acceptance and its time are kept, and the
+     * pick-up goes into the permanent release log with the parent as the person who confirmed it. Staff see it on the
+     * board straight away, in green, with the child's name.
+     */
     @Transactional
-    public PickupDtos.RequestView arrive(CurrentUser user, UUID studentId, UUID collectorId) {
+    public PickupDtos.RequestView arrive(CurrentUser user, UUID studentId, UUID collectorId, boolean acknowledged) {
+        if (!acknowledged) {
+            throw new BadRequestException("Please confirm that you accept responsibility for the pick-up.");
+        }
         Person student = requireParentOf(user, studentId);
         Enrolment enrolment = enrolments.findByStudentId(studentId)
                 .orElseThrow(() -> new BadRequestException("Your child is not in a class yet. Ask the school office."));
         Section section = sections.findById(enrolment.getSectionId()).orElseThrow(() -> new NotFoundException("The class"));
         if (requests.findFirstByStudentIdAndStatusIn(studentId, OPEN).isPresent()) {
             throw new ConflictException("You have already told the school you have arrived for this child.");
+        }
+        Instant startOfDay = startOfToday();
+        if (requests.findFirstByStudentIdOrderByArrivedAtDesc(studentId)
+                .filter(x -> x.getStatus() == PickupStatus.RELEASED && x.getDecidedAt() != null && x.getDecidedAt().isAfter(startOfDay)).isPresent()) {
+            throw new ConflictException("This child has already been picked up today.");
         }
         Person parent = people.findById(user.personId()).orElseThrow(() -> new NotFoundException("Your account"));
 
@@ -182,16 +202,42 @@ public class PickupService {
             r.setCollectorIdLast4(c.getIdLast4());
             r.setCollectorPhone(c.getPhone());
         }
+        // the parent's confirmation completes the pick-up: no verification or release by staff
+        Instant now = Instant.now(clock);
+        r.setStatus(PickupStatus.RELEASED);
+        r.setArrivedAt(now);
+        r.setDecidedBy(parent.getId());
+        r.setDecidedByName(parent.getDisplayName() + " (parent)");
+        r.setDecidedAt(now);
+        r.setUpdatedAt(now);
+        r.setParentAcknowledgedAt(now);
+        r.setAcknowledgement(ACKNOWLEDGEMENT_EN + " | " + ACKNOWLEDGEMENT_AR);
         requests.save(r);
-        audit.log(r.getOrgId(), r.getSiteId(), ActivityActions.PICKUP_ARRIVED).by(user).on("PickupRequest", r.getId())
-                .change(null, r.getStudentName() + " / " + r.getCollectorName()).save();
 
-        String detail = "Collector: " + r.getCollectorName() + " (" + label(r.getCollectorRelationship()) + "). Open the Pick-up board to verify and release.";
-        String detailAr = "المستلم: " + r.getCollectorName() + " (" + labelAr(r.getCollectorRelationship()) + "). افتح لوحة الاستلام للتحقق والتسليم.";
+        PickupRelease log = new PickupRelease();
+        log.setOrgId(r.getOrgId());
+        log.setSiteId(r.getSiteId());
+        log.setRequestId(r.getId());
+        log.setStudentId(r.getStudentId());
+        log.setStudentName(r.getStudentName());
+        log.setSectionLabel(r.getSectionLabel());
+        log.setCollectorName(r.getCollectorName());
+        log.setCollectorRelationship(r.getCollectorRelationship());
+        log.setReleasedBy(parent.getId());
+        log.setReleasedByName(parent.getDisplayName() + " (parent confirmed)");
+        log.setReleasedAt(now);
+        releases.save(log);
+
+        audit.log(r.getOrgId(), r.getSiteId(), ActivityActions.PICKUP_RELEASED).by(user).on("PickupRequest", r.getId())
+                .change(null, r.getStudentName() + " picked up by " + r.getCollectorName() + "; parent accepted responsibility").save();
+
+        String at = ZonedDateTime.ofInstant(now, SchoolCalendar.ZONE).format(CLOCK);
+        String detail = "Collected by " + r.getCollectorName() + " (" + label(r.getCollectorRelationship()) + ") at " + at + ". The parent confirmed and accepted responsibility.";
+        String detailAr = "استلمه " + r.getCollectorName() + " (" + labelAr(r.getCollectorRelationship()) + ") الساعة " + at + ". أكّد ولي الأمر الاستلام وتحمّل المسؤولية.";
         for (Person staff : staffToAlert(r)) {
             publisher.publishEvent(new PersonNotice(staff.getId(), NotificationKind.COLLECTION,
-                    "وصل ولي أمر الطالب " + r.getStudentName() + " (" + r.getSectionLabel() + ")",
-                    "A parent has arrived for " + r.getStudentName() + " (" + r.getSectionLabel() + ")", detail, detailAr));
+                    "تم استلام " + r.getStudentName() + " (" + r.getSectionLabel() + ")",
+                    r.getStudentName() + " was picked up (" + r.getSectionLabel() + ")", detail, detailAr));
         }
         return PickupDtos.RequestView.from(r);
     }
@@ -361,7 +407,7 @@ public class PickupService {
     }
 
     private void requireStaffReader(CurrentUser user) {
-        if (!user.isAny(Role.TEACHER, Role.COORDINATOR, Role.PRINCIPAL, Role.SCHOOL_IT, Role.ATTENDANCE_OFFICER)) {
+        if (!user.isAny(Role.TEACHER, Role.COORDINATOR, Role.PRINCIPAL, Role.PRINCIPAL_ASSISTANT, Role.SCHOOL_IT, Role.ATTENDANCE_OFFICER)) {
             throw new ForbiddenException("The pick-up board is for teachers, coordinators, the principal, School IT and the attendance clerk.");
         }
     }

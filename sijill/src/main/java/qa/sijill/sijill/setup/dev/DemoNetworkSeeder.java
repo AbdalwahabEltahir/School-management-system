@@ -41,6 +41,8 @@ public class DemoNetworkSeeder implements ApplicationRunner {
     private final SiteRepository sites;
     private final PersonRepository people;
     private final DemoSchoolBuilder builder;
+    private final DemoTopUp topUp;
+    private final jakarta.persistence.EntityManager em;
 
     @Override
     @Transactional
@@ -51,6 +53,8 @@ public class DemoNetworkSeeder implements ApplicationRunner {
             return;
         }
         seed(org);
+        em.flush();               // the schools built above must be visible to the top-up's queries
+        topUp.topUp(org.getId());  // history, weekly plans, achievements, homework and quizzes the newer screens need
     }
 
     /** Adds whichever of the five demonstration schools are missing from this organisation. */

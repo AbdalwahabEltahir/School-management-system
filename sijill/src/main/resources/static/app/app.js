@@ -33,8 +33,16 @@ const html = (strs, ...vals) => {
 const locVal = v => v instanceof Raw ? v.s : Array.isArray(v) ? v.map(locVal).join('') : esc(trText(v == null ? '' : String(v)));
 /** Static HTML strings (sidebar art, small snippets) through the same translator. */
 const loc = s => html([s]);
-const fmt = d => d ? new Date(d).toLocaleString(uiLocale()) : '—';
-const fmtDate = d => d ? new Date(d).toLocaleDateString(uiLocale()) : '—';
+/** Dates everywhere read the same way, with the month's name: "16 Nov 2026" (Arabic month names in Arabic).
+ *  A plain "2026-11-16" is a calendar day, so it is read as local midnight and never shifts a day. */
+const toDate = d => typeof d === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(d) ? new Date(d + 'T00:00:00') : new Date(d);
+const DATE_OPTS = { day: 'numeric', month: 'short', year: 'numeric' };
+const fmt = d => d ? toDate(d).toLocaleString(uiLocale(), { ...DATE_OPTS, hour: '2-digit', minute: '2-digit' }) : '—';
+const fmtDate = d => d ? toDate(d).toLocaleDateString(uiLocale(), DATE_OPTS) : '—';
+const fmtDay = d => d ? toDate(d).toLocaleDateString(uiLocale(), { weekday: 'long', ...DATE_OPTS }) : '—';
+const fmtDayShort = d => d ? toDate(d).toLocaleDateString(uiLocale(), { day: 'numeric', month: 'short' }) : '—';
+/** A calendar day as yyyy-mm-dd in local time (toISOString would move it to UTC). */
+const isoLocal = d => d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
 const cookie = n => (document.cookie.split('; ').find(c => c.startsWith(n + '=')) || '').split('=')[1];
 const iso = d => d.toISOString().slice(0, 10);
 const monday = () => { const d = new Date(); d.setDate(d.getDate() - ((d.getDay() + 6) % 7)); return iso(d); };
@@ -65,7 +73,7 @@ const del = p => api(p, { method: 'DELETE' });
 
 // =============================================================== state and reference data
 const S = { me: null, files: null, rules: null, people: null, sites: null, subjects: null, docTypes: null, unread: 0, flash: null };
-const ROLE_LABEL = { TEACHER: 'Teacher', COORDINATOR: 'Coordinator', PRINCIPAL: 'Principal', SCHOOL_IT: 'School IT', LEADERSHIP: 'Leadership', EAA_ADMIN: 'EAA IT', ATTENDANCE_OFFICER: 'Attendance Clerk', STUDENT: 'Student', PARENT: 'Parent' };
+const ROLE_LABEL = { TEACHER: 'Teacher', COORDINATOR: 'Coordinator', PRINCIPAL: 'Principal', PRINCIPAL_ASSISTANT: 'Principal Assistant', SCHOOL_IT: 'School IT', LEADERSHIP: 'Leadership', EAA_ADMIN: 'EAA IT', ATTENDANCE_OFFICER: 'Attendance Clerk', STUDENT: 'Student', PARENT: 'Parent' };
 const OPEN = ['OWNER_NOTIFIED', 'REMINDER_SENT', 'NEEDS_FOLLOW_UP', 'NEEDS_REVIEW', 'OWNER_DISAGREES', 'OWNER_ASKED_FOR_HELP'];
 const STATUS = {
   OWNER_NOTIFIED: ['Owner notified', 'b-internal'], REMINDER_SENT: ['Reminder sent', 'b-watch'], NEEDS_FOLLOW_UP: ['Needs follow-up', 'b-bad'],
@@ -74,25 +82,41 @@ const STATUS = {
 };
 const CHECK_TYPES = ['LOCATION', 'PUBLIC_LINK', 'OUTSIDE_SHARING', 'INTERNAL_ACCESS', 'DUPLICATES', 'SHARING_BEFORE_DATE', 'OWNER_LEAVING', 'GENERIC_OWNER', 'DELETED_OR_TRASHED'];
 const SENS = ['PUBLIC', 'INTERNAL', 'CONFIDENTIAL', 'RESTRICTED'];
-const ROLES = ['TEACHER', 'COORDINATOR', 'PRINCIPAL', 'SCHOOL_IT', 'LEADERSHIP', 'EAA_ADMIN', 'ATTENDANCE_OFFICER', 'STUDENT', 'PARENT'];
+const ROLES = ['TEACHER', 'COORDINATOR', 'PRINCIPAL', 'PRINCIPAL_ASSISTANT', 'SCHOOL_IT', 'LEADERSHIP', 'EAA_ADMIN', 'ATTENDANCE_OFFICER', 'STUDENT', 'PARENT'];
 const DAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday'];
 
 const isNetworkRole = () => !!S.me && (S.me.role === 'LEADERSHIP' || S.me.role === 'EAA_ADMIN');
 const HIDDEN_ROUTES = {
-  LEADERSHIP: ['weekly', 'recognition', 'support', 'sites'],
+  LEADERSHIP: ['weekly', 'recognition', 'sites'],
   SCHOOL_IT: ['pickup', 'weekly', 'matrix', 'recognition', 'sites'],
-  EAA_ADMIN: ['overview', 'support']
+  EAA_ADMIN: ['overview']
 };
 const NAV = {
-  EAA_ADMIN: [['incidents', 'Incidents'], ['rules', 'Rules'], ['sites', 'Schools & settings'], ['connection', 'Connection'], ['approvals', 'Approvals'], ['restores', 'Restores'], ['activity', 'Activity log'], ['notifications', 'Notifications']],
+  EAA_ADMIN: [['incidents', 'Incidents'], ['support', 'Support tickets'], ['rules', 'Rules'], ['sites', 'Schools & settings'], ['connection', 'Connection'], ['approvals', 'Approvals'], ['restores', 'Restores'], ['activity', 'Activity log'], ['notifications', 'Notifications']],
   ATTENDANCE_OFFICER: [['attendance', 'Attendance'], ['pickup', 'Pick-up board'], ['support', 'Support tickets'], ['notices', 'Notices'], ['notifications', 'Notifications']],
-  TEACHER: [['today', 'Today'], ['pickup', 'Pick-up board'], ['attendance', 'Attendance'], ['marks', 'Marks'], ['points', 'Points'], ['matrix', 'Matrix'], ['approvals', 'Approvals'], ['support', 'Support tickets'], ['materials', 'Study materials'], ['mine', 'My issues'], ['files', 'My files'], ['planning', 'Lesson plans'], ['notices', 'Notices'], ['notifications', 'Notifications']],
-  PARENT: [['children', 'My children'], ['pickup', 'Pick-up'], ['notices', 'Notices'], ['notifications', 'Notifications']],
-  STUDENT: [['mydash', 'My day'], ['results', 'My results'], ['mymaterials', 'Study materials'], ['notices', 'Notices'], ['notifications', 'Notifications']],
-  COORDINATOR: [['dashboard', 'Overview'], ['pickup', 'Pick-up board'], ['invitations', 'Invitations'], ['approvals', 'Approvals'], ['support', 'Support tickets'], ['weekly', 'Weekly grades'], ['matrix', 'Matrix'], ['points', 'Points'], ['followup', 'Follow-up'], ['academic', 'Academic setup'], ['planning', 'Plan review'], ['people', 'People'], ['restores', 'Restores'], ['notifications', 'Notifications']],
-  PRINCIPAL: [['school', 'My school'], ['pickup', 'Pick-up board'], ['approvals', 'Approvals'], ['weekly', 'Weekly grades'], ['matrix', 'Matrix'], ['points', 'Points'], ['recognition', 'Recognition'], ['issues', 'Issues'], ['files', 'Files'], ['planning', 'Lesson plans'], ['support', 'Support tickets'], ['restores', 'Restores'], ['notifications', 'Notifications']],
-  SCHOOL_IT: [['noticesAdmin', 'Notices'], ['support', 'Support tickets'], ['invitations', 'Invitations'], ['approvals', 'Approvals'], ['rules', 'Rules'], ['people', 'People'], ['connection', 'Connection'], ['restores', 'Restores'], ['incidents', 'Incidents'], ['activity', 'Activity log'], ['notifications', 'Notifications']],
-  LEADERSHIP: [['overview', 'Overview'], ['incidents', 'Incidents'], ['rules', 'Rules'], ['connection', 'Connection'], ['activity', 'Activity log'], ['notifications', 'Notifications']]
+  TEACHER: [['today', 'Today'],
+    ['#', 'Teaching'], ['attendance', 'Attendance'], ['homework', 'Homework'], ['quizzes', 'Assessments'], ['marks', 'Marks'], ['planning', 'Weekly plans'], ['materials', 'Study materials'], ['classNotices', 'Class notices'],
+    ['#', 'Students and families'], ['chat', 'Messages'], ['points', 'Points'], ['matrix', 'Matrix'], ['pickup', 'Pick-up board'],
+    ['#', 'My files'], ['mine', 'My issues'], ['files', 'My files'],
+    ['#', 'School'], ['notices', 'Notices'], ['approvals', 'Approvals'], ['support', 'Support tickets'], ['notifications', 'Notifications']],
+  PARENT: [['children', 'My children'], ['homework', 'Homework'], ['chat', 'Chat with teachers'], ['pickup', 'Pick-up'], ['notices', 'Notices'], ['notifications', 'Notifications']],
+  STUDENT: [['mydash', 'My day'], ['homework', 'Homework'], ['quizzes', 'Assessments'], ['results', 'My results'], ['mymaterials', 'Study materials'], ['chat', 'Chat with teachers'], ['notices', 'Notices'], ['notifications', 'Notifications']],
+  COORDINATOR: [['dashboard', 'Overview'],
+    ['#', 'Academics'], ['weekly', 'Weekly grades'], ['planning', 'Weekly plan review'], ['matrix', 'Matrix'], ['points', 'Points'],
+    ['#', 'School'], ['pickup', 'Pick-up board'],
+    ['#', 'Files'], ['followup', 'Follow-up'], ['restores', 'Restores'],
+    ['#', 'Requests'], ['approvals', 'Approvals'], ['investigations', 'Investigations'], ['support', 'Support tickets'], ['notifications', 'Notifications']],
+  PRINCIPAL: [['school', 'My school'], ['metrics', 'School metrics'],
+    ['#', 'Academics'], ['weekly', 'Weekly grades'], ['matrix', 'Matrix'], ['planning', 'Weekly plans'], ['points', 'Points'], ['recognition', 'Recognition'],
+    ['#', 'Staff'], ['performance', 'Teacher performance'],
+    ['#', 'School'], ['achievements', 'Achievements'], ['pickup', 'Pick-up board'], ['approvals', 'Approvals'], ['support', 'Support tickets'],
+    ['#', 'Files'], ['issues', 'Issues'], ['files', 'Files'], ['restores', 'Restores'], ['notifications', 'Notifications']],
+  PRINCIPAL_ASSISTANT: [['metrics', 'School metrics'],
+    ['#', 'Academics'], ['weekly', 'Weekly grades'], ['matrix', 'Matrix'], ['planning', 'Weekly plans'], ['points', 'Points'], ['recognition', 'Recognition'],
+    ['#', 'School'], ['achievements', 'Achievements'], ['people', 'People'], ['invitations', 'Invitations'], ['pickup', 'Pick-up board'], ['notices', 'Notices'],
+    ['#', 'Requests'], ['approvals', 'Approvals'], ['investigations', 'Investigations'], ['support', 'Support tickets'], ['notifications', 'Notifications']],
+  SCHOOL_IT: [['academic', 'Academic setup'], ['noticesAdmin', 'Notices'], ['support', 'Support tickets'], ['invitations', 'Invitations'], ['approvals', 'Approvals'], ['rules', 'Rules'], ['people', 'People'], ['connection', 'Connection'], ['restores', 'Restores'], ['incidents', 'Incidents'], ['activity', 'Activity log'], ['notifications', 'Notifications']],
+  LEADERSHIP: [['overview', 'Overview'], ['schools', 'Schools & achievements'], ['incidents', 'Incidents'], ['support', 'Support tickets'], ['rules', 'Rules'], ['connection', 'Connection'], ['activity', 'Activity log'], ['notifications', 'Notifications']]
 };
 
 const lazy = (key, path, map) => async () => {
@@ -104,7 +128,7 @@ const loadFiles = () => {
   return lazy('files', S.me.role === 'TEACHER' ? '/api/files/mine' : '/api/files', f => [f.id, f])();
 };
 const loadRules = lazy('rules', '/api/rules', r => [r.id, r]);
-const loadPeople = () => ['SCHOOL_IT', 'COORDINATOR', 'PRINCIPAL'].includes(S.me.role) ? lazy('people', '/api/people', p => [p.id, p])() : Promise.resolve(S.people = S.people || {});
+const loadPeople = () => ['SCHOOL_IT', 'COORDINATOR', 'PRINCIPAL', 'PRINCIPAL_ASSISTANT'].includes(S.me.role) ? lazy('people', '/api/people', p => [p.id, p])() : Promise.resolve(S.people = S.people || {});
 const loadSites = lazy('sites', '/api/sites', s => [s.id, s]);
 const loadSubjects = lazy('subjects', '/api/subjects');
 const loadDocTypes = lazy('docTypes', '/api/doc-types');
@@ -138,7 +162,7 @@ const isCoord = () => !!S.me && (S.me.role === 'COORDINATOR' || S.me.role === 'S
 const cxHeading = h => { h = String(h || ''); return /term|timetable|lesson/i.test(h) ? SPI.calendar : /subject/i.test(h) ? SPI.book : /document|file/i.test(h) ? CO_P.file : /student|class|teach|people|section/i.test(h) ? SPI.users : /request|review/i.test(h) ? CO_P.check : null; };
 const cxPath = h => cxHeading(h) || ({ followup: CO_P.clock, academic: SPI.calendar, planning: LIC.clip, people: SPI.users, restores: 'M3 12a9 9 0 109-9M3 4v5h5', notifications: LIC.bell, issues: LIC.warn, issue: LIC.warn, files: CO_P.file, file: CO_P.file, review: CO_P.check, prefs: SPI.gear, noticesAdmin: SPI.megaphone, rules: LIC.shield, sites: LIC.school, connection: LIC.plug, incidents: LIC.warn, activity: SPI.pulse, pickup: SPI.users }[S.route] || CO_P.file);
 const isPortal = () => !!S.me && (S.me.role === 'STUDENT' || S.me.role === 'PARENT');
-const PAGE_ICON = { mydash: 'calendar', children: 'users', results: 'list', mymaterials: 'folder', notices: 'megaphone', notifications: 'bell', prefs: 'gear', pickup: 'users' };
+const PAGE_ICON = { mydash: 'calendar', children: 'users', results: 'list', mymaterials: 'folder', notices: 'megaphone', notifications: 'bell', prefs: 'gear', pickup: 'users', homework: 'calendar', quizzes: 'star', chat: 'users' };
 const empty = t => isCoord() ? html`<div class="cx-empty">${t}</div>` : isPortal() ? html`<div class="sp-empty"><span class="sp-ic sp-ic-soft">${sIc(PAGE_ICON[S.route] || 'book')}</span>${t}</div>` : html`<div class="empty">${t}</div>`;
 const card = (heading, sub, body, extra) => isCoord()
   ? html`<section class="cx-card"><div class="cx-ch"><span class="cx-ci">${coIcon(cxPath(heading))}</span><div><h2>${heading}</h2>${sub ? html`<small>${sub}</small>` : ''}</div>${extra ? html`<div class="cx-ex">${extra}</div>` : ''}</div>${body}</section>`
@@ -162,7 +186,9 @@ const page = (heading, sub, body, actions, kpis) => isCoord()
     <div class="lo-body">${kpis && kpis.length ? html`<section class="lo-kpis">${kpis.map(k => lkpi(...k))}</section>` : ''}<div class="stack-gap">${body}</div></div></div>`
   : html`<div class="page-top"><div class="page-head"><h1 class="page-title">${heading}</h1>${sub ? html`<p class="page-sub">${sub}</p>` : ''}</div><div class="row">${actions || ''}</div></div><div class="stack-gap">${body}</div>`;
 const KPI_IC = { brand: 'warn', amber: 'clock', green: 'check', slate: 'list' };
-const kpi = (label, value, tone) => isCoord() ? html`<div class="cx-k cx-k-${tone || 'brand'}"><span>${lico(LIC[KPI_IC[tone] || 'shield'])}</span><b>${value}</b><small>${label}</small></div>` : html`<div class="card kpi"><span class="kpi-ic t-${tone || 'brand'}">${lico(LIC[KPI_IC[tone] || 'shield'])}</span><span class="kpi-label">${label}</span><span class="kpi-value">${value}</span></div>`;
+/** A KPI tile. With {@code go} it is a link: pressing it opens the page with the detail and lights up that page in the sidebar. */
+const kpiWrap = (go, inner) => go ? html`<a class="kpi-link" href="${go}" data-kpi="1">${inner}</a>` : inner;
+const kpi = (label, value, tone, go) => kpiWrap(go, isCoord() ? html`<div class="cx-k cx-k-${tone || 'brand'}"><span>${lico(LIC[KPI_IC[tone] || 'shield'])}</span><b>${value}</b><small>${label}</small></div>` : html`<div class="card kpi"><span class="kpi-ic t-${tone || 'brand'}">${lico(LIC[KPI_IC[tone] || 'shield'])}</span><span class="kpi-label">${label}</span><span class="kpi-value">${value}</span></div>`);
 const field = (label, input) => html`<div class="field"><label>${label}</label>${input}</div>`;
 const options = (list, sel, label) => list.map(o => html`<option value="${o}" ${o === sel ? raw('selected') : ''}>${label ? label(o) : title(o)}</option>`);
 const seg = (name, items, current) => html`<div class="seg">${items.map(([v, t]) => html`<button type="button" class="seg-btn ${v === current ? 'seg-on' : ''}" data-act="filter" data-name="${name}" data-value="${v}">${t}</button>`)}</div>`;
@@ -253,9 +279,9 @@ SCREENS.dashboard = async (arg, q) => {
       <div class="co-btns"><a class="co-btn" href="${dl('/api/exports/issues.csv')}">Download CSV</a><a class="co-btn co-btn-fill" href="#/review">Review queue →${review.length ? ' (' + review.length + ')' : ''}</a></div></header>
 
     <section class="co-row">
-      <div class="co-k co-k-open"><div class="co-k-top"><span>OPEN ISSUES</span><i>${nOpen ? 'Needs review' : 'All clear'}</i></div><div class="co-k-main"><b>${nOpen}</b><span>files waiting for a decision across ${siteLabel}</span></div></div>
-      <div class="co-k co-k-follow">${wm(CO_P.clock)}<div class="co-k-top"><span>FOLLOW-UP</span><i>${nFollow ? 'Needs you' : 'All clear'}</i></div><b class="co-k-n">${nFollow}</b><div class="co-k-sub">${nFollow ? 'Owners waiting on you' : 'No owners waiting on you'}</div></div>
-      <div class="co-k co-k-fixed">${wm(CO_P.check)}<div class="co-k-top"><span>FIXED</span><i>Resolved</i></div><b class="co-k-n">${nFixed}</b><div class="co-k-ring"><div><svg viewBox="0 0 36 36" aria-hidden="true"><circle cx="18" cy="18" r="15.9155" fill="none" stroke="rgba(255,255,255,.22)" stroke-width="4"/><circle cx="18" cy="18" r="15.9155" fill="none" stroke="#fff" stroke-width="4" stroke-linecap="round" stroke-dasharray="${rate} 100"/></svg><b>${rate}%</b></div><span>of ${totalIssues} issues fixed</span></div></div>
+      <a class="co-k co-k-open kpi-a" href="#/followup" data-kpi="1"><div class="co-k-top"><span>OPEN ISSUES</span><i>${nOpen ? 'Needs review' : 'All clear'}</i></div><div class="co-k-main"><b>${nOpen}</b><span>files waiting for a decision across ${siteLabel}</span></div></a>
+      <a class="co-k co-k-follow kpi-a" href="#/followup" data-kpi="1">${wm(CO_P.clock)}<div class="co-k-top"><span>FOLLOW-UP</span><i>${nFollow ? 'Needs you' : 'All clear'}</i></div><b class="co-k-n">${nFollow}</b><div class="co-k-sub">${nFollow ? 'Owners waiting on you' : 'No owners waiting on you'}</div></a>
+      <a class="co-k co-k-fixed kpi-a" href="#/followup" data-kpi="1">${wm(CO_P.check)}<div class="co-k-top"><span>FIXED</span><i>Resolved</i></div><b class="co-k-n">${nFixed}</b><div class="co-k-ring"><div><svg viewBox="0 0 36 36" aria-hidden="true"><circle cx="18" cy="18" r="15.9155" fill="none" stroke="rgba(255,255,255,.22)" stroke-width="4"/><circle cx="18" cy="18" r="15.9155" fill="none" stroke="#fff" stroke-width="4" stroke-linecap="round" stroke-dasharray="${rate} 100"/></svg><b>${rate}%</b></div><span>${I18N.lang === 'ar' ? 'من ' + count(totalIssues, 'issue') + ' تم إصلاحها' : 'of ' + count(totalIssues, 'issue') + ' fixed'}</span></div></a>
     </section>
 
     <section class="co-row">
@@ -266,12 +292,12 @@ SCREENS.dashboard = async (arg, q) => {
         ${types.length ? types.map(([id, r]) => html`<div class="co-type"><div><span>${ruleName(id)}</span><span><i class="${r.urgent ? 'u' : 'n'}">${r.urgent ? 'Urgent' : 'Normal'}</i><b>${r.n}</b></span></div><div class="co-bar"><div class="${r.urgent ? 'u' : 'n'}" style="width:${(r.n / tmax * 100).toFixed(1)}%"></div></div></div>`) : html`<div class="co-none">No open issues.</div>`}</div>
       <div class="co-c co-c-day">${coHead('trend', 'Opened by day', 'New issues found')}
         ${days.length ? html`<div class="co-days"><div class="co-dy"><span>${dmax}</span><span>${dmax / 2}</span><span>0</span></div><div class="co-dplot"><div class="co-dgrid"><i></i><i></i><i></i></div>${days.map(([k, d], idx) => html`<div class="co-dbar"><b>${d.n}</b><div class="${idx === days.length - 1 && days.length > 1 ? 'hot' : ''}" style="height:${(d.n / dmax * 92).toFixed(1)}%"></div></div>`)}</div></div>
-        <div class="co-dx">${days.map(([k]) => html`<span>${k}</span>`)}</div>` : html`<div class="co-none">No open issues.</div>`}</div>
+        <div class="co-dx">${days.map(([k, d]) => html`<span>${fmtDayShort(new Date(d.t))}</span>`)}</div>` : html`<div class="co-none">No open issues.</div>`}</div>
     </section>
 
     <section class="co-line"><div class="co-line-h"><div class="co-line-t"><span>${coIcon(CO_P.trend)}</span><div><h2>Open vs fixed over time</h2><div>Last 7 days</div></div></div>
       <div class="co-chips"><span class="o"><i></i>Open now <b>${nOpen}</b></span><span class="f"><i></i>Fixed <b>${nFixed}</b></span></div></div>
-      <svg viewBox="0 0 700 220" role="img" aria-label="Line chart of open and fixed issues over the last 7 days">${[0, 1, 2, 3, 4].map(g => html`<line x1="40" x2="684" y1="${194 - g * 45}" y2="${194 - g * 45}" stroke="${g ? '#e4e1db' : '#c9c6c0'}"/><text x="32" y="${198 - g * 45}" text-anchor="end" font-size="12" fill="#4a4a50">${g * step}</text>`)}${series.map((s, k) => html`<text x="${X(k)}" y="214" text-anchor="middle" font-size="12" fill="#4a4a50">${String(s.d.getMonth() + 1).padStart(2, '0')}/${String(s.d.getDate()).padStart(2, '0')}</text>`)}${line('open', '#6b1730')}${line('fixed', '#14633b')}</svg></section>
+      <svg viewBox="0 0 700 220" role="img" aria-label="Line chart of open and fixed issues over the last 7 days">${[0, 1, 2, 3, 4].map(g => html`<line x1="40" x2="684" y1="${194 - g * 45}" y2="${194 - g * 45}" stroke="${g ? '#e4e1db' : '#c9c6c0'}"/><text x="32" y="${198 - g * 45}" text-anchor="end" font-size="12" fill="#4a4a50">${g * step}</text>`)}${series.map((s, k) => html`<text x="${X(k)}" y="214" text-anchor="middle" font-size="12" fill="#4a4a50">${fmtDayShort(s.d)}</text>`)}${line('open', '#6b1730')}${line('fixed', '#14633b')}</svg></section>
 
     <section class="co-bottom">
       <div class="co-files"><div class="co-files-h"><div class="co-files-t"><span>${coIcon(CO_P.file)}</span><div><h2>Files with issues</h2><div>Open files that need a decision</div></div></div><div class="co-tabs" role="tablist">${tabs}</div></div>
@@ -288,7 +314,7 @@ SCREENS.followup = async () => {
   const [issues, counts] = await Promise.all([get('/api/follow-up'), get('/api/follow-up/counts'), loadFiles()]);
   await nameMissing(issues, i => i.fileId);
   return page('Follow-up', 'Issues waiting for you: owners who disagree, asked for help, or have not acted.',
-    html`<div class="kpi-grid">${kpi('Open', counts.open)}${kpi('Urgent', counts.urgent, 'brand')}${kpi('Need follow-up', counts.needFollowUp, 'amber')}${kpi('Fixed', counts.fixed, 'green')}</div>
+    html`<div class="kpi-grid">${kpi('Open', counts.open, null, '#/dashboard?sev=All')}${kpi('Urgent', counts.urgent, 'brand', '#/dashboard?sev=Urgent')}${kpi('Need follow-up', counts.needFollowUp, 'amber', '#/followup')}${kpi('Fixed', counts.fixed, 'green', '#/dashboard')}</div>
     ${card('Needs you', null, issues.length ? issueTable(issues) : empty('Nothing needs you right now.'))}`,
     html`<button class="btn" data-act="markAllDone" data-confirm="Mark every follow-up as done?">Mark all done</button>`);
 };
@@ -328,7 +354,7 @@ SCREENS.files = async (arg, q) => {
   const files = Object.values(await loadFiles());
   const mine = S.me.role === 'TEACHER';
   return page(mine ? 'My files' : 'Files', mine ? 'Files you own, with what Hafez understood about each.' : 'Files you may see.',
-    card('Files', files.length + ' file' + (files.length === 1 ? '' : 's'), table(['Name', 'Folder', 'Drive', 'Sensitivity', 'Last checked'],
+    card('Files', count(files.length, 'file'), table(['Name', 'Folder', 'Drive', 'Sensitivity', 'Last checked'],
       files.map(f => ({ go: '#/file/' + f.id, cells: [f.name + (f.trashed ? ' (deleted)' : ''), f.folderPath || '', title(f.driveType), sensBadge(f.sensitivity), fmt(f.lastCheckedAt)] })))));
 };
 
@@ -395,11 +421,11 @@ SCREENS.planning = async () => {
     ${field('Subject', html`<select name="subjectId">${subjects.map(s => html`<option value="${s.id}">${s.name}</option>`)}</select>`)}
     ${field('Grade', html`<input name="grade" required placeholder="e.g. 7B">`)}
     ${field('Week starting (Monday)', html`<input type="date" name="weekStart" value="${monday()}" required>`)}
-    ${field('Plan type', html`<input name="planType" required placeholder="e.g. WEEKLY">`)}
+    ${field('Plan type', html`<select name="planType"><option value="Weekly plan">Weekly plan</option><option value="Lesson plan">Lesson plan</option><option value="Unit plan">Unit plan</option></select>`)}
     ${field('Link to the plan in Drive', html`<input type="url" name="driveLink" required placeholder="https://drive.google.com/…">`)}
     <button class="btn btn-primary">Submit</button></form>`) : '';
   const totals = role === 'PRINCIPAL' ? card('Week totals', null, html`<form data-form="totals" class="row">${field('Week starting', html`<input type="date" name="week" value="${monday()}">`)}<button class="btn">Show</button></form><div id="totals"></div>`) : '';
-  return page('Lesson plans', role === 'TEACHER' ? 'Your weekly plans and their review status.' : 'Plans submitted for review.',
+  return page('Weekly plans', role === 'TEACHER' ? 'Submit your plan for each week; your coordinator reviews it.' : 'Every teacher\'s weekly plan and its review status.',
     html`${submit}${card('Submissions', null, table(['Teacher', 'Subject', 'Grade', 'Week', 'Type', 'Plan', 'Status', ''], rows))}${totals}`);
 };
 
@@ -427,7 +453,8 @@ const LO_ART = `<svg class="lo-art" viewBox="0 0 900 300" preserveAspectRatio="x
 <g><path d="M432 266Q500 246 560 266V290Q500 272 432 292Z" fill="url(#lpg)"/><path d="M688 266Q620 246 560 266V290Q620 272 688 292Z" fill="url(#lpg)"/><path d="M560 266V290" stroke="#a8365c" stroke-width="2"/><path d="M432 292Q500 272 560 290Q620 272 688 292V298Q620 280 560 298Q500 280 432 298Z" fill="#6b1730"/><g stroke="#c9a79f" stroke-width="1.2" opacity=".9"><path d="M446 272Q500 258 548 272M446 279Q500 265 548 279M574 272Q620 258 674 272M574 279Q620 265 674 279"/></g></g>
 <g transform="translate(588 20) rotate(-10)"><path d="M18 34V52Q50 66 82 52V34L50 46Z" fill="#17171a" stroke="#e7a3b6" stroke-width="1.5"/><polygon points="0,26 50,6 100,26 50,46" fill="#17171a" stroke="#e7a3b6" stroke-width="2"/><path d="M50 26L90 30V56" stroke="#f4c27a" stroke-width="2" fill="none"/><circle cx="90" cy="60" r="4" fill="#f4c27a"/></g>
 <g fill="#f4e3d7"><path d="M560 120l3 8 8 3-8 3-3 8-3-8-8-3 8-3z"/><path d="M690 80l2 6 6 2-6 2-2 6-2-6-6-2 6-2z"/><path d="M470 70l2 5 5 2-5 2-2 5-2-5-5-2 5-2z"/></g></svg>`;
-SCREENS.overview = async () => {
+SCREENS.overview = async (arg, q) => {
+  const range = rangeOf(q);
   const [o, incidents, urgentIssues] = await Promise.all([get('/api/dashboard/overview'), get('/api/dashboard/incidents').catch(() => []), get('/api/dashboard/urgent-issues').catch(() => [])]);
   const sites = Object.values(await loadSites());
   const siteOf = id => (S.sites[id] || {}).name || '';
@@ -438,17 +465,17 @@ SCREENS.overview = async () => {
 
   const tile = (label, value, tone, note, go) => html`<${go ? raw('a') : raw('div')} class="card kpi" ${go ? raw(`href="${esc(go)}" style="text-decoration:none;color:inherit"`) : ''}><span class="kpi-ic t-${tone}"></span><span class="kpi-label">${label}</span><span class="kpi-value">${value}</span>${note ? html`<span class="kpi-foot"><b>${note}</b></span>` : ''}</${go ? raw('a') : raw('div')}>`;
 
-  const firstCheck = waiting.length ? card('Run the first check', 'No check has finished for these schools yet. Numbers appear after it.',
-    table(['School', 'Domain', ''], waiting.map(s => ({ cells: [s.name, s.domain, html`<button class="btn btn-primary btn-sm" data-act="connCheck" data-id="${s.id}">Run the first check</button>`] })))) : '';
+  const firstCheck = waiting.length ? card('Waiting for the first check', 'No check has finished for these schools yet. Numbers appear after EAA IT or School IT runs it.',
+    table(['School', 'Domain'], waiting.map(s => ({ cells: [s.name, s.domain] })))) : '';
 
   const noSchools = unscored.length ? card(o.schools.length ? 'Schools not counted in these numbers' : 'No school is scored yet',
     'The totals below add up only the counted schools. A school that holds files but is not counted leaves the KPIs at zero.',
-    html`${table(['School', 'Counted', ''], unscored.map(s => ({ cells: [s.name, 'No', html`<button class="btn btn-sm btn-primary" data-act="toggleScored" data-id="${s.id}" data-value="true">Include in the KPIs</button>`] })))}`) : '';
+    html`${table(['School', 'Counted'], unscored.map(s => ({ cells: [s.name, 'No'] })))}`) : '';
 
   const urgentCount = urgentIssues.length + urgentNow.length;
-  const urgentCard = card('Urgent right now', urgentCount ? urgentIssues.length + ' open urgent issue' + (urgentIssues.length === 1 ? '' : 's') + ' · ' + urgentNow.length + ' open incident' + (urgentNow.length === 1 ? '' : 's') : 'Nothing urgent is open.',
+  const urgentCard = card('Urgent right now', urgentCount ? count(urgentIssues.length, 'issue') + ' ' + trText('open and urgent') + ' · ' + count(urgentNow.length, 'incident') + ' ' + trText('open') : 'Nothing urgent is open.',
     html`${urgentIssues.length ? html`<h3>Urgent issues</h3><p class="muted">Which school and which rule. File names stay with the school.</p>${table(['School', 'Rule', 'Status', 'Open since'], urgentIssues.map(i => ({ cells: [i.siteName, (i.ruleCode ? i.ruleCode + ' · ' : '') + i.ruleName, title(i.status), fmt(i.openedAt)] })))}` : ''}
-    ${urgentNow.length ? html`<h3>Incidents</h3>${table(['Incident', 'School', 'What happened', 'Detected', ''], urgentNow.map(i => ({ cells: [badge('b-bad', title(i.type)), siteOf(i.siteId) || '', i.description, fmt(i.detectedAt), html`<button class="btn btn-sm" data-act="resolveIncident" data-id="${i.id}">Resolve</button>`] })))}` : ''}
+    ${urgentNow.length ? html`<h3>Incidents</h3>${table(['Incident', 'School', 'What happened', 'Detected', ''], urgentNow.map(i => ({ cells: [badge('b-bad', title(i.type)), siteOf(i.siteId) || '', i.description, fmt(i.detectedAt), ''] })))}` : ''}
     ${urgentCount ? '' : empty('No urgent issues or incidents.')}`,
     html`<a class="card-link" href="#/incidents">All incidents</a>`);
 
@@ -479,7 +506,7 @@ SCREENS.overview = async () => {
   const kpi2 = (label, value, unit, tone, ic, sub, sp, go) => html`<${go ? raw('a') : raw('div')} class="lo-kpi lo-${tone}" ${go ? raw(`href="${esc(go)}"`) : ''}><span class="lo-kpi-ic">${ico(ic)}</span><div class="lo-kpi-body"><div class="lo-kpi-label">${label}</div><div class="lo-kpi-val"><b>${value}</b>${unit ? html`<span>${unit}</span>` : ''}</div><div class="lo-kpi-sub">${sub}</div></div>${sp || ''}</${go ? raw('a') : raw('div')}>`;
 
   const pendingRules = Object.values(S.rules || {}).filter(r => r.pending);
-  const decide = pendingRules.length ? html`<section class="lo-card" aria-label="Needs your decision"><div class="lo-card-head"><h2>Needs your decision</h2><span class="lo-pill">${pendingRules.length}</span><small>Rule changes waiting for approval</small></div>
+  const decide = false && pendingRules.length ? html`<section class="lo-card" aria-label="Needs your decision"><div class="lo-card-head"><h2>Needs your decision</h2><span class="lo-pill">${pendingRules.length}</span><small>Rule changes waiting for approval</small></div>
     <div class="lo-decisions">${pendingRules.map(r => html`<div class="lo-decision"><div class="lo-dtype">Rule change</div><div class="lo-drule">${r.code} · ${(r.pending || {}).name || ''}</div><div class="lo-dwhat">${inLang((r.pending || {}).whyItMatters, (r.pending || {}).whyItMattersAr) || 'A new version of this rule is waiting to be approved.'}</div>
       <div class="row" style="margin-top:12px"><a class="btn btn-sm" href="#/rules">Review</a><button class="btn btn-sm btn-primary" data-act="approveRule" data-id="${r.id}" data-version="${r.pending.id}">Approve</button></div></div>`)}</div></section>` : '';
 
@@ -493,13 +520,13 @@ SCREENS.overview = async () => {
 
   const schoolCards = schools.length ? html`<div class="lo-schools">${schools.map(s => { const [k, label] = band(s.rating); return html`<a class="lo-school lo-s-${k}" href="#/site/${s.siteId}"><b class="lo-sname">${s.siteName}</b><div class="lo-sscore"><b>${Math.round(s.score)}</b></div>
       <div class="lo-meter"><i style="width:${Math.max(0, Math.min(100, s.score))}%"></i></div><span class="lo-band">${label}</span>
-      <div class="lo-sfoot"><span class="${s.openUrgent ? 'lo-red' : ''}">▲ ${s.openUrgent} urgent</span><span>${s.filesChecked} files</span></div></a>`; })}</div>` : empty('No scored school yet.');
+      <div class="lo-sfoot"><span class="${s.openUrgent ? 'lo-red' : ''}">▲ ${s.openUrgent} urgent</span><span>${count(s.filesChecked, 'file')}</span></div></a>`; })}</div>` : empty('No scored school yet.');
 
   const actions = [['#/rules', 'Review rules' + (pendingRules.length ? ' (' + pendingRules.length + ')' : ''), IC.list], ['#/incidents', 'Incidents' + (urgentNow.length ? ' (' + urgentNow.length + ')' : ''), IC.warn], ['#/activity', 'Activity log', IC.clock]];
   if (S.me.canDownloadWeeklyReport) actions.splice(1, 0, [dl('/api/dashboard/weekly-report.pdf'), 'Weekly report (PDF)', IC.dl]);
 
   // ---- network trend from each school's snapshots (sums the schools by date)
-  const trends = await Promise.all(schools.map(s => get(`/api/dashboard/sites/${s.siteId}/score?days=30`).then(r => r.trend || []).catch(() => [])));
+  const trends = await Promise.all(schools.map(s => get(`/api/dashboard/sites/${s.siteId}/score?days=${range}`).then(r => r.trend || []).catch(() => [])));
   const byDate = {};
   trends.forEach(t => t.forEach(p => { const d = byDate[p.date] = byDate[p.date] || { open: 0, urgent: 0, normal: 0, files: 0 }; d.open += p.openNormal + p.openUrgent; d.urgent += p.openUrgent; d.normal += p.openNormal; d.files += p.filesChecked; }));
   const dates = Object.keys(byDate).sort();
@@ -539,15 +566,13 @@ SCREENS.overview = async () => {
   };
   const tFirst = pick.length ? byDate[pick[0]].open : 0, tLast = pick.length ? byDate[pick[pick.length - 1]].open : 0;
   const trendVerdict = html`<p class="lo-explain"><b>${tLast < tFirst ? 'Improving: ' : tLast > tFirst ? 'Getting worse: ' : 'No change: '}</b>${tLast === tFirst ? 'the same number of issues as at the start.' : 'issues went from ' + tFirst + ' to ' + tLast + ' over this period.'}</p>`;
-  const trendCard = pick.length >= 2 ? html`<div class="lo-card lo-trend"><div class="lo-card-head"><div><h2>Are problems going down?</h2><small>Each bar is one day: how many issues were open across all schools. Shorter bars are better.</small></div></div>
-      ${trendVerdict}${chart('open', 'ink', 'Open issues', 150)}
-      <div class="lo-xlab"><span style="width:38px"></span><div>${pick.map(d => html`<span>${new Date(d).toLocaleDateString(uiLocale(), { month: 'short', day: 'numeric' })}</span>`)}</div></div></div>`
-    : html`<div class="lo-card lo-trend"><div class="lo-card-head"><div><h2>Issues trend</h2><small>Open issues across the scored schools</small></div></div>${empty('The chart appears once a few days of history have been recorded.')}</div>`;
+  const trendCard = html`<div class="lo-card lo-trend"><div class="lo-card-head"><div><h2>Is file health improving?</h2><small>The network's file-health score, 0 to 100 (higher is better). Daily for a month, weekly averages for longer.</small></div>${rangeSeg('overview', range)}</div>
+      ${healthChart(dates.map((d, i) => ({ date: d, score: healthSeries[i] })), range)}</div>`;
 
   const ageOf = t => { const h = Math.max(0, (Date.now() - new Date(t).getTime()) / 3600000); return h < 24 ? Math.max(1, Math.round(h)) + 'h' : Math.round(h / 24) + 'd'; };
   const recent = urgentIssues.length ? html`<div class="lo-table"><div class="lo-tr lo-th"><span>School</span><span>Rule</span><span>Severity</span><span>Status</span><span class="lo-end">Age</span></div>
       ${urgentIssues.slice(0, 8).map(i => html`<a class="lo-tr" href="#/site/${i.siteId}"><b>${i.siteName}</b><span>${i.ruleCode ? i.ruleCode + ' · ' : ''}${i.ruleName}</span><span><em class="lo-sev">Urgent</em></span><span>${title(i.status)}</span><span class="lo-end lo-muted">${ageOf(i.openedAt)}</span></a>`)}</div>` : empty('No urgent issues are open.');
-  const incList = urgentNow.length ? urgentNow.slice(0, 5).map(i => html`<div class="lo-inc"><div class="lo-inc-top"><b>${siteOf(i.siteId) || title(i.type)}</b><span>${ageOf(i.detectedAt)}</span></div><div>${i.description}</div><div class="lo-inc-foot"><em class="lo-sev">${title(i.type)}</em><button class="btn btn-sm" data-act="resolveIncident" data-id="${i.id}">Resolve</button></div></div>`) : empty('No open incidents.');
+  const incList = urgentNow.length ? urgentNow.slice(0, 5).map(i => html`<div class="lo-inc"><div class="lo-inc-top"><b>${siteOf(i.siteId) || title(i.type)}</b><span>${ageOf(i.detectedAt)}</span></div><div>${i.description}</div><div class="lo-inc-foot"><em class="lo-sev">${title(i.type)}</em></div></div>`) : empty('No open incidents.');
 
   // ---- open incidents per day (last 14 days) as a solid-fill area chart
   const DAYS_N = 14, endOf = k => { const d = new Date(); d.setHours(23, 59, 59, 999); d.setDate(d.getDate() - (DAYS_N - 1 - k)); return d; };
@@ -555,7 +580,7 @@ SCREENS.overview = async () => {
   const incMax = niceMax(Math.max(...incSeries, 2));
   const IW = 300, IH = 120, ix = k => k * IW / (DAYS_N - 1), iy = v => IH - v / incMax * (IH - 8);
   const incLine = incSeries.map((v, k) => (k ? 'L' : 'M') + ix(k).toFixed(1) + ' ' + iy(v).toFixed(1)).join(' ');
-  const incChart = html`<div class="lo-area"><div class="lo-area-top"><div><b>${urgentNow.length}</b><span>open now</span></div><span class="lo-area-peak">peak ${Math.max(...incSeries)} · last ${DAYS_N} days</span></div>
+  const incChart = html`<div class="lo-area"><div class="lo-area-top"><div><b>${urgentNow.length}</b><span>open now</span></div><span class="lo-area-peak">${'peak'} ${Math.max(...incSeries)} · ${'last'} ${count(DAYS_N, 'day')}</span></div>
     <div class="lo-area-box"><div class="lo-y"><span>${incMax}</span><span>${incMax / 2}</span><span>0</span></div>
     <svg viewBox="0 0 ${IW} ${IH}" preserveAspectRatio="none" role="img" aria-label="Open incidents per day"><line x1="0" x2="${IW}" y1="4" y2="4" class="g"/><line x1="0" x2="${IW}" y1="${IH / 2}" y2="${IH / 2}" class="g"/><path d="${incLine} L${IW} ${IH} L0 ${IH} Z" fill="#C93A2E"/><path d="${incLine}" fill="none" stroke="#8E1B1B" stroke-width="2" vector-effect="non-scaling-stroke"/></svg></div>
     <div class="lo-area-x"><span>${endOf(0).toLocaleDateString(uiLocale(), { month: 'short', day: 'numeric' })}</span><span>Today</span></div></div>`;
@@ -568,19 +593,19 @@ SCREENS.overview = async () => {
     <div class="lo-body">
       ${firstCheck}${noSchools}
       <section class="lo-kpis">
-        ${kpi2('Overall health', netScore === null ? '—' : Math.round(netScore), netScore === null ? '' : '/100', netBand || 'slate', IC.shield, netScore === null ? 'Waiting for the first check' : html`<b>${netBand === 'good' ? 'Healthy' : netBand === 'watch' ? 'Keep an eye on it' : 'Needs attention'}</b><br>Average score across all schools. 100 means no file problems.`)}
-        ${kpi2('Urgent problems', o.urgentOpen, '', o.urgentOpen ? 'bad' : 'good', IC.warn, o.urgentOpen ? html`<b>Need action now</b><br>Serious problems, like sensitive files shared publicly.` : html`<b>All clear</b><br>No serious problems are open.`)}
-        ${kpi2('Other open issues', o.open - o.urgentOpen, '', 'slate', IC.clip, html`<b>Being tracked by schools</b><br>Smaller problems that staff are fixing. No action needed from you.`)}
+        ${kpi2('Overall health', netScore === null ? '—' : Math.round(netScore), netScore === null ? '' : '/100', netBand || 'slate', IC.shield, netScore === null ? 'Waiting for the first check' : html`<b>${netBand === 'good' ? 'Healthy' : netBand === 'watch' ? 'Keep an eye on it' : 'Needs attention'}</b><br>Average score across all schools. 100 means no file problems.`, null, '#/incidents')}
+        ${kpi2('Urgent problems', o.urgentOpen, '', o.urgentOpen ? 'bad' : 'good', IC.warn, o.urgentOpen ? html`<b>Need action now</b><br>Serious problems, like sensitive files shared publicly.` : html`<b>All clear</b><br>No serious problems are open.`, null, '#/incidents')}
+        ${kpi2('Other open issues', o.open - o.urgentOpen, '', 'slate', IC.clip, html`<b>Being tracked by schools</b><br>Smaller problems that staff are fixing. No action needed from you.`, null, '#/incidents')}
       </section>
       ${decide}
       <section class="lo-row">
         <div class="lo-card lo-c5"><div class="lo-card-head"><div><h2>School performance</h2><small>Each school's score out of 100, worst first. Higher is better: 85+ is good, 70–84 needs watching, below 70 needs attention.</small></div></div>${schoolCards}</div>
         ${trendCard}
-        <div class="lo-card lo-c3"><div class="lo-card-head"><h2>Open incidents</h2><span class="lo-pill lo-pill-red">${urgentNow.length}</span><a class="card-link" href="#/incidents">View all →</a></div><small class="lo-sub">Serious events, such as an exam leak or deleted files, that someone must resolve. The chart shows how many were open each day.</small>${incChart}${urgentNow.slice(0, 2).map(i => html`<div class="lo-inc"><div class="lo-inc-top"><b>${siteOf(i.siteId) || title(i.type)}</b><span>${ageOf(i.detectedAt)}</span></div><div class="lo-inc-foot"><em class="lo-sev">${title(i.type)}</em><button class="btn btn-sm" data-act="resolveIncident" data-id="${i.id}">Resolve</button></div></div>`)}</div>
+        <div class="lo-card lo-c3"><div class="lo-card-head"><h2>Open incidents</h2><span class="lo-pill lo-pill-red">${urgentNow.length}</span><a class="card-link" href="#/incidents">View all →</a></div><small class="lo-sub">Serious events, such as an exam leak or deleted files, that someone must resolve. The chart shows how many were open each day.</small>${incChart}${urgentNow.slice(0, 2).map(i => html`<div class="lo-inc"><div class="lo-inc-top"><b>${siteOf(i.siteId) || title(i.type)}</b><span>${ageOf(i.detectedAt)}</span></div><div class="lo-inc-foot"><em class="lo-sev">${title(i.type)}</em></div></div>`)}</div>
       </section>
       <section class="lo-row">
         <div class="lo-card lo-c5"><div class="lo-card-head"><div><h2>Urgent issues</h2><small>Serious rule breaks that are still open. You see the school and the rule only, never file names.</small></div><a class="card-link" href="#/incidents">All incidents →</a></div>${recent}</div>
-        <div class="lo-card lo-c3"><div class="lo-card-head"><div><h2>Network health</h2><small>How many schools are healthy, need watching, or need attention.</small></div></div>${donut}<div class="lo-delta">${o.fixedByStaff} issues fixed by staff · ${o.filesChecked} files checked</div></div>
+        <div class="lo-card lo-c3"><div class="lo-card-head"><div><h2>Network health</h2><small>How many schools are healthy, need watching, or need attention.</small></div></div>${donut}<div class="lo-delta">${count(o.fixedByStaff, 'issue')} ${'fixed by staff'} · ${count(o.filesChecked, 'file')} ${'checked'}</div></div>
         <div class="lo-quick lo-c3"><div class="lo-quick-head"><span>${ico(IC.bolt)}</span><h2>Quick actions</h2></div>${actions.map(([href, l, p]) => html`<a href="${href}"><span class="lo-qi">${ico(p)}</span><span class="lo-ql">${l}</span><span class="lo-qa">→</span></a>`)}</div>
       </section>
     </div></div>`;
@@ -590,7 +615,7 @@ SCREENS.site = async id => {
   const r = await get(`/api/dashboard/sites/${id}/score?days=30`);
   const s = r.score;
   return page(s.siteName, 'Last 30 days',
-    html`<div class="kpi-grid">${kpi('Health score', Math.round(s.score))}${kpi('Files checked', s.filesChecked, 'slate')}${kpi('Open', s.openNormal + s.openUrgent, 'amber')}${kpi('Urgent', s.openUrgent, 'brand')}${kpi('Fixed', s.fixed, 'green')}</div>
+    html`<div class="kpi-grid">${kpi('Health score', Math.round(s.score))}${kpi('Files checked', s.filesChecked, 'slate')}${kpi('Open', s.openNormal + s.openUrgent, 'amber', '#/incidents')}${kpi('Urgent', s.openUrgent, 'brand', '#/incidents')}${kpi('Fixed', s.fixed, 'green', '#/activity')}</div>
     ${card('Trend', null, sparkline(r.trend))}`, html`<a class="btn" href="javascript:history.back()">Back</a>`);
 };
 
@@ -599,7 +624,7 @@ const PD_SKYLINE = '<svg class="pd-sky" viewBox="0 0 900 300" preserveAspectRati
 const PD_TYPE_COLOURS = ['#b7791f', '#a11d12', '#6b1730', '#14633b', '#2563eb', '#77777e'];
 const pdInitials = n => String(n || '?').trim().split(/\s+/).slice(0, 2).map(w => w[0]).join('').toUpperCase();
 const pdOpenColour = n => n === 0 ? '#14633b' : n >= 4 ? '#a11d12' : '#b7791f';
-const pdShortDate = d => new Date(d).toLocaleDateString(uiLocale(), { month: 'numeric', day: 'numeric' });
+const pdShortDate = d => toDate(d).toLocaleDateString(uiLocale(), { month: 'short', day: 'numeric' });
 
 function pdGauge(value) {
   const v = value == null ? 0 : Math.max(0, Math.min(100, value)), good = value != null && value >= 70;
@@ -623,17 +648,19 @@ function pdTrend(points) {
     <g fill="#cfcfd6" font-size="11" text-anchor="middle">${pts.map((p, i) => html`<text x="${xs(i).toFixed(1)}" y="142">${pdShortDate(p.date)}</text>`)}</g></svg>`;
 }
 
-const pdKpi = (label, tag, value, note, pct, cls, icon) => html`<div class="pd-kpi ${cls}"><svg class="pd-kpi-mark" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="${icon}"/></svg>
+const pdKpi = (label, tag, value, note, pct, cls, icon, go) => html`<a class="pd-kpi kpi-a ${cls}" href="${go}" data-kpi="1"><svg class="pd-kpi-mark" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="${icon}"/></svg>
   <div class="pd-kpi-top"><span>${label}</span><span class="pd-kpi-tag">${tag}</span></div><b>${value}</b>
-  <div class="pd-kpi-foot"><div>${note}</div><div class="pd-bar"><div style="width:${Math.max(0, Math.min(100, pct))}%"></div></div></div></div>`;
+  <div class="pd-kpi-foot"><div>${note}</div><div class="pd-bar"><div style="width:${Math.max(0, Math.min(100, pct))}%"></div></div></div></a>`;
 
-const pdPerson = (p, open, colour) => html`<div class="pd-person"><span class="pd-av">${pdInitials(p.displayName)}</span><div class="pd-person-t"><b>${p.displayName}</b><span>${ROLE_LABEL[p.role] || title(p.role)}${personSite(p) ? ' · ' + personSite(p) : ''}</span></div><span class="pd-open"><b style="color:${colour}">${open}</b><div>open</div></span></div>`;
+const pdFixedColour = rate => rate == null ? '#6b6b73' : rate >= 70 ? '#14633b' : rate >= 40 ? '#b7791f' : '#a11d12';
+const pdPerson = (p, n, colour, word) => html`<div class="pd-person"><span class="pd-av">${pdInitials(p.displayName)}</span><div class="pd-person-t"><b>${p.displayName}</b><span>${ROLE_LABEL[p.role] || title(p.role)}${personSite(p) ? ' · ' + personSite(p) : ''}</span></div><span class="pd-open"><b style="color:${colour}">${n}</b><div>${word || 'open'}</div></span></div>`;
 
-SCREENS.school = async () => {
-  const [counts, openIssues, urgent, rules] = await Promise.all([get('/api/follow-up/counts'), get('/api/issues?filter=ALL_OPEN'), get('/api/issues?filter=URGENT'),
-    loadRules(), loadFiles(), loadSites(), loadPeople()]);
+SCREENS.school = async (arg, q) => {
+  const range = rangeOf(q);
+  const [counts, openIssues, urgent, rules, allIssues] = await Promise.all([get('/api/follow-up/counts'), get('/api/issues?filter=ALL_OPEN'), get('/api/issues?filter=URGENT'),
+    loadRules(), get('/api/issues?filter=ALL').catch(() => []), loadFiles(), loadSites(), loadPeople()]);
   await nameMissing(urgent, i => i.fileId);
-  const score = await get(`/api/dashboard/sites/${S.me.siteId}/score?days=30`).catch(() => null);
+  const score = await get(`/api/dashboard/sites/${S.me.siteId}/score?days=${range}`).catch(() => null);
   const health = score ? Math.round(score.score.score) : null;
   const total = counts.open + counts.fixed, pct = n => total ? Math.round(n * 100 / total) : 0;
   const school = siteName(S.me.siteId) || 'My school';
@@ -643,9 +670,16 @@ SCREENS.school = async () => {
   openIssues.forEach(i => { if (i.ownerId) perOwner[i.ownerId] = (perOwner[i.ownerId] || 0) + 1; });
   const staff = Object.values(S.people || {}).filter(p => p.status !== 'LEFT' && p.siteId === S.me.siteId);
   const byRole = r => staff.filter(p => p.role === r).sort((a, b) => (perOwner[b.id] || 0) - (perOwner[a.id] || 0)).slice(0, 6);
-  const coords = byRole('COORDINATOR'), teachers = byRole('TEACHER');
-  const peopleList = (head, sub, icon, list, own) => html`<div class="pd-col"><div class="pd-col-h"><span class="pd-tile">${lico(icon)}</span><div><b>${head}</b><div>${sub}</div></div></div>
-    <div class="pd-people">${list.length ? list.map(p => pdPerson(p, perOwner[p.id] || 0, own ? '#6b1730' : pdOpenColour(perOwner[p.id] || 0))) : html`<div class="pd-none">Nobody yet.</div>`}</div></div>`;
+  const teachers = byRole('TEACHER');
+  // coordinators: issues fixed in their subject; more fixed (as a share of the subject's issues) is better
+  const subjectFixed = {}, subjectAll = {};
+  allIssues.forEach(i => { if (!i.subjectId) return; subjectAll[i.subjectId] = (subjectAll[i.subjectId] || 0) + 1; if (i.status === 'FIXED') subjectFixed[i.subjectId] = (subjectFixed[i.subjectId] || 0) + 1; });
+  const fixedOf = p => subjectFixed[p.subjectId] || 0, rateOf = p => subjectAll[p.subjectId] ? Math.round(fixedOf(p) * 100 / subjectAll[p.subjectId]) : null;
+  const coords = staff.filter(p => p.role === 'COORDINATOR').sort((a, b) => fixedOf(b) - fixedOf(a)).slice(0, 6);
+  const peopleList = (head, sub, icon, list, coord) => html`<div class="pd-col"><div class="pd-col-h"><span class="pd-tile">${lico(icon)}</span><div><b>${head}</b><div>${sub}</div></div></div>
+    <div class="pd-people">${list.length ? list.map(p => coord ? pdPerson(p, fixedOf(p), pdFixedColour(rateOf(p)), 'fixed') : pdPerson(p, perOwner[p.id] || 0, pdOpenColour(perOwner[p.id] || 0))) : html`<div class="pd-none">Nobody yet.</div>`}</div>
+    <p class="pd-key">${coord ? html`<b>Fixed</b>: issues fixed in their subject. <i class="g"></i>70% or more of the subject's issues fixed <i class="o"></i>40–69% <i class="r"></i>under 40%`
+      : html`<b>Open</b>: files with an issue they still need to fix. <i class="g"></i>none <i class="o"></i>1–3 <i class="r"></i>4 or more`}</p></div>`;
 
   // open issues grouped by the rule that raised them
   const byRule = {};
@@ -660,24 +694,24 @@ SCREENS.school = async () => {
   return html`<div class="pd">
   <section class="pd-hero">${raw(PD_SKYLINE)}<div class="pd-hero-t"><div class="pd-eyebrow"><span></span>MY SCHOOL</div><h1>${school}</h1><p>Where your school stands today.</p>
     ${S.me.canDownloadWeeklyReport ? html`<a class="pd-dl" href="${dl('/api/dashboard/weekly-report.pdf')}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 4v11m0 0l-4-4m4 4l4-4M5 20h14"/></svg>Weekly report (PDF)</a>` : ''}</div>${pdGauge(health)}</section>
-  <section class="pd-kpis">${pdKpi('Open', 'Needs review', counts.open, 'Files waiting for a decision', pct(counts.open), 'pd-k-open', LIC.shield)}
-    ${pdKpi('Urgent', 'Act first', counts.urgent, counts.urgent ? counts.urgent + ' files need action first' : 'Nothing urgent', counts.open ? counts.urgent * 100 / counts.open : 0, 'pd-k-urgent', LIC.warn)}
-    ${pdKpi('Follow-up', counts.needFollowUp ? 'Waiting' : 'All clear', counts.needFollowUp, counts.needFollowUp ? 'Owners waiting on you' : 'No owners waiting on you', counts.open ? counts.needFollowUp * 100 / counts.open : 0, 'pd-k-follow', LIC.clock)}
-    ${pdKpi('Fixed', 'Resolved', counts.fixed, pct(counts.fixed) + '% of ' + total + ' issues fixed', pct(counts.fixed), 'pd-k-fixed', LIC.check)}</section>
+  <section class="pd-kpis">${pdKpi('Open', 'Needs review', counts.open, 'Files waiting for a decision', pct(counts.open), 'pd-k-open', LIC.shield, '#/issues?f=ALL_OPEN')}
+    ${pdKpi('Urgent', 'Act first', counts.urgent, counts.urgent ? counts.urgent + ' files need action first' : 'Nothing urgent', counts.open ? counts.urgent * 100 / counts.open : 0, 'pd-k-urgent', LIC.warn, '#/issues?f=URGENT')}
+    ${pdKpi('Follow-up', counts.needFollowUp ? 'Waiting' : 'All clear', counts.needFollowUp, counts.needFollowUp ? 'Owners waiting on you' : 'No owners waiting on you', counts.open ? counts.needFollowUp * 100 / counts.open : 0, 'pd-k-follow', LIC.clock, '#/issues?f=NEEDS_ME')}
+    ${pdKpi('Fixed', 'Resolved', counts.fixed, pct(counts.fixed) + '% of ' + total + ' issues fixed', pct(counts.fixed), 'pd-k-fixed', LIC.check, '#/issues?f=CLOSED')}</section>
   <section class="pd-cols"><div class="pd-left">
-    <div class="pd-card"><div class="pd-card-h"><div><span class="pd-tile pd-tile-red">${lico(LIC.warn)}</span><div><h2>Urgent issues</h2><small>${urgent.length} files need action first</small></div></div><a href="#/issues">All issues →</a></div>
+    <div class="pd-card"><div class="pd-card-h"><div><span class="pd-tile pd-tile-red">${lico(LIC.warn)}</span><div><h2>Urgent issues</h2><small>${count(urgent.length, 'file')} ${'need action first'}</small></div></div><a href="#/issues">All issues →</a></div>
       <div class="pd-urgents">${urgent.length ? urgent.map(urgentRow) : empty('No urgent issues.')}</div></div>
     ${coords.length || teachers.length ? html`<div class="pd-card"><div class="pd-card-h"><div><div><h2>Teachers and coordinators</h2><small>Who owns the open files</small></div></div></div>
-      <div class="pd-cols2">${peopleList('Coordinators', 'Review and approve fixes', 'M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2M9 11a4 4 0 100-8 4 4 0 000 8zM23 21v-2a4 4 0 00-3-3.9M16 3.1a4 4 0 010 7.8', coords, true)}${peopleList('Teachers', 'Own the files with issues', 'M2 9l10-5 10 5-10 5zM6 11v5c0 1.5 2.7 3 6 3s6-1.5 6-3v-5', teachers, false)}</div></div>` : ''}</div>
-  <div class="pd-right"><div class="pd-card pd-dark"><div class="pd-card-h"><div><div><h2>Trend</h2><small>Score 0 to 100</small></div></div><span class="pd-pill">${Math.min(7, trend.length)} days</span></div>${pdTrend(trend)}</div>
-    <div class="pd-card"><h2>Issues by type</h2><small class="pd-sub">${openIssues.length} open files</small>
+      <div class="pd-cols2">${peopleList('Coordinators', 'Issues fixed in their subject', 'M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2M9 11a4 4 0 100-8 4 4 0 000 8zM23 21v-2a4 4 0 00-3-3.9M16 3.1a4 4 0 010 7.8', coords, true)}${peopleList('Teachers', 'Files with an open issue', 'M2 9l10-5 10 5-10 5zM6 11v5c0 1.5 2.7 3 6 3s6-1.5 6-3v-5', teachers, false)}</div></div>` : ''}</div>
+  <div class="pd-right"><div class="pd-card pd-trendcard"><div class="pd-card-h"><div><div><h2>File health over time</h2><small>Score 0 to 100. Higher is better.</small></div></div></div>${rangeSeg('school', range)}${healthChart(trend, range, 420)}</div>
+    <div class="pd-card"><h2>Issues by type</h2><small class="pd-sub">${count(openIssues.length, 'file')} ${'open'}</small>
       ${types.length ? html`<div class="pd-seg">${types.map(t => html`<span style="flex:${t.n};background:${t.c}"></span>`)}</div>${types.map(t => html`<div class="pd-leg"><i style="background:${t.c}"></i><span>${t.l}</span><b>${t.n}</b></div>`)}` : empty('No open issues.')}</div></div></section></div>`;
 };
 
 SCREENS.incidents = async () => {
   const list = await get('/api/dashboard/incidents');
   const open = list.filter(i => !i.resolvedAt), month = list.filter(i => Date.now() - new Date(i.detectedAt) < 30 * 864e5);
-  const item = i => html`<article class="lp-item ${i.resolvedAt ? 'is-done' : 'is-open'}"><span class="lp-dot"></span><div class="lp-item-main"><div class="lp-item-top"><b>${title(i.type)}</b>${i.resolvedAt ? badge('b-good', 'Resolved') : badge('b-bad', 'Open')}</div><p>${i.description}</p><small>Detected ${fmt(i.detectedAt)}${i.resolvedAt ? ' · Resolved ' + fmt(i.resolvedAt) : ''}</small></div>${i.resolvedAt ? '' : html`<button class="btn btn-sm btn-primary" data-act="resolveIncident" data-id="${i.id}">Resolve</button>`}</article>`;
+  const item = i => html`<article class="lp-item ${i.resolvedAt ? 'is-done' : 'is-open'}"><span class="lp-dot"></span><div class="lp-item-main"><div class="lp-item-top"><b>${title(i.type)}</b>${i.resolvedAt ? badge('b-good', 'Resolved') : badge('b-bad', 'Open')}</div><p>${i.description}</p><small>Detected ${fmt(i.detectedAt)}${i.resolvedAt ? ' · Resolved ' + fmt(i.resolvedAt) : ''}</small></div>${i.resolvedAt || S.me.role === 'LEADERSHIP' ? '' : html`<button class="btn btn-sm btn-primary" data-act="resolveIncident" data-id="${i.id}">Resolve</button>`}</article>`;
   return page('Incidents', 'Major events: exam leaks, important or bulk deletions, lost connection, urgent issues left open.',
     card('All incidents', list.length + ' recorded', list.length ? html`<div class="lp-list">${[...open, ...list.filter(i => i.resolvedAt)].map(item)}</div>` : empty('No incidents recorded.')), '',
     [['Open now', open.length, '', open.length ? 'bad' : 'good', 'warn', open.length ? 'Need attention' : 'All clear'], ['Resolved', list.length - open.length, '', 'good', 'check', 'Closed out'], ['Last 30 days', month.length, '', 'brand', 'clock', 'Detected'], ['All time', list.length, '', 'slate', 'clip', 'Recorded']]);
@@ -694,7 +728,7 @@ SCREENS.rules = async () => {
     return { cells: [r.code, html`<b>${v.name}</b><div class="muted">${inLang(v.whyItMatters, v.whyItMattersAr)}</div>`, title(v.checkType), sevBadge(v.severity), r.status === 'ACTIVE' ? badge('b-good', 'Active') : badge('b-neutral', title(r.status)), r.openIssues, acts(r)] };
   });
   const cards = html`<div class="lp-grid">${rules.map(r => { const v = r.effective || r.pending || {}; return html`<article class="lp-rule ${r.status === 'ACTIVE' ? '' : 'is-off'}"><div class="lp-rule-top"><span class="lp-code">${r.code}</span>${sevBadge(v.severity)}${r.status === 'ACTIVE' ? badge('b-good', 'Active') : badge('b-neutral', title(r.status))}${r.pending ? badge('b-watch', 'New version waiting') : ''}</div>
-      <h3>${v.name}</h3><p>${inLang(v.whyItMatters, v.whyItMattersAr)}</p><div class="lp-meta"><span>${title(v.checkType)}</span><span class="${r.openIssues ? 'lo-red' : ''}">${r.openIssues} open issue${r.openIssues === 1 ? '' : 's'}</span></div>${acts(r)}</article>`; })}</div>`;
+      <h3>${v.name}</h3><p>${inLang(v.whyItMatters, v.whyItMattersAr)}</p><div class="lp-meta"><span>${title(v.checkType)}</span><span class="${r.openIssues ? 'lo-red' : ''}">${count(r.openIssues, 'issue')} ${'open'}</span></div>${acts(r)}</article>`; })}</div>`;
   const kp = [['Active rules', rules.filter(r => r.status === 'ACTIVE').length, '', 'good', 'shield', 'Checked on every scan'], ['Paused or off', rules.filter(r => r.status !== 'ACTIVE').length, '', 'slate', 'pause', 'Not checking now'], ['Waiting for approval', rules.filter(r => r.pending).length, '', 'brand', 'list', 'New versions'], ['Open issues', rules.reduce((a, r) => a + (r.openIssues || 0), 0), '', 'bad', 'warn', 'Caused by these rules']];
   return page('Rules', 'What Hafez checks. Changing a rule creates a new version that is approved before it applies.',
     lead ? (rules.length ? cards : card('Rules', null, empty('No rules yet.'))) : card('Rules', rules.length + ' rules', table(['Code', 'Rule', 'Check', 'Severity', 'Status', 'Open issues', ''], rows)),
@@ -765,7 +799,7 @@ SCREENS.weekly = async (arg, q) => {
   const st = { DONE: ['b-good', 'Done'], IN_PROGRESS: ['b-watch', 'In progress'], NOT_STARTED: ['b-neutral', 'Not started'], OVERDUE: ['b-bad', 'Overdue'] };
   const late = rows.filter(r => r.status === 'OVERDUE').length;
   return page('Weekly grades', 'Who has submitted this week\'s grades. The school week runs Sunday to Thursday.',
-    html`<div class="row"><a class="btn btn-sm" href="#/weekly?week=${weekShift(cur, -7)}">← Previous week</a><b>${week || 'This week'}</b><a class="btn btn-sm" href="#/weekly?week=${weekShift(cur, 7)}">Next week →</a></div>
+    html`<div class="row"><a class="btn btn-sm" href="#/weekly?week=${weekShift(cur, -7)}">← Previous week</a><b>${week ? html`${trText('Week of')} ${fmtDate(week)}` : 'This week'}</b><a class="btn btn-sm" href="#/weekly?week=${weekShift(cur, 7)}">Next week →</a></div>
     ${card(late ? late + ' overdue' : 'Submissions', null, rows.length ? table(['School', 'Section', 'Subject', 'Teacher', 'Submitted', 'Status'], rows.map(r => ({ cells: [r.school, r.section, r.subject, r.teacher, r.submitted + ' / ' + r.assessments, badge(...st[r.status])] }))) : empty('No teaching assignments yet.'))}`);
 };
 
@@ -783,7 +817,7 @@ SCREENS.matrix = async (arg, q) => {
 };
 
 // ---- points and recognition
-const pointsCard = v => spCard('list', 'Points', html`<p style="font-size:28px;font-weight:700;margin:0 0 8px">${v.total}</p>${v.entries.length ? table(['Points', 'Reason', 'Date'], v.entries.map(e => ({ cells: ['+' + e.amount, e.reason + (e.by ? ' · ' + e.by : ''), e.on] }))) : empty('No points yet.')}`);
+const pointsCard = v => spCard('list', 'Points', html`<p style="font-size:28px;font-weight:700;margin:0 0 8px">${v.total}</p>${v.entries.length ? table(['Points', 'Reason', 'Date'], v.entries.map(e => ({ cells: ['+' + e.amount, e.reason + (e.by ? ' · ' + e.by : ''), fmtDate(e.on)] }))) : empty('No points yet.')}`);
 
 SCREENS.points = async (arg, q) => {
   const sections = await get('/api/academic/sections');
@@ -791,7 +825,7 @@ SCREENS.points = async (arg, q) => {
   const sid = q.get('s') || sections[0].id;
   const rows = await get('/api/points/sections/' + sid);
   const canAward = ['TEACHER', 'COORDINATOR'].includes(S.me.role);
-  return page('Points', S.me.role === 'PRINCIPAL' ? 'Class points. Teachers give recognition points; you can view them.' : 'Each present day earns one point automatically. Add recognition with a short reason.',
+  return page('Points', S.me.role === 'PRINCIPAL' ? 'Class points. Teachers give recognition points; you can view them.' : 'Students earn points for homework they finish, quizzes they take and their published exam results. Add recognition with a short reason.',
     html`<div class="row">${sectionPicker(sections, sid, 'points')}</div>
     ${canAward && rows.length ? card('Give points', null, html`<form data-form="award" class="row">
       <select class="input" name="studentId">${rows.map(r => html`<option value="${r.studentId}">${r.name}</option>`)}</select>
@@ -899,6 +933,8 @@ const ALERTS = {
   TICKET: ['Support tickets', 'New tickets, replies and status changes.'],
   SYSTEM: ['General updates', 'Welcome messages and published results.'],
   COLLECTION: ['Pick-up', 'A parent has arrived, or a child was released or not released.'],
+  MESSAGE: ['Chat messages', 'A new message from a teacher, a student or a parent.'],
+  CLASSWORK: ['Homework, quizzes and class notices', 'New homework, a new quiz or a notice from a teacher.'],
   SECURITY: ['Security and account events', 'Role changes, approval requests and locked accounts. Always on.']
 };
 const fileToBase64 = file => new Promise((resolve, reject) => { const r = new FileReader(); r.onload = () => resolve(String(r.result).split(',')[1] || ''); r.onerror = () => reject(new Error('The file could not be read.')); r.readAsDataURL(file); });
@@ -930,8 +966,8 @@ const TICKET_CAT = { TECHNICAL: 'Technical problem', ACCOUNTS: 'Accounts and acc
 const TICKET_URG = { LOW: 'Low', NORMAL: 'Normal', HIGH: 'High', URGENT: 'Urgent' };
 const ticketStatusBadge = s => badge(s === 'CLOSED' ? 'b-good' : s === 'IN_PROGRESS' ? 'b-watch' : 'b-bad', title(s));
 const urgBadge = u => badge(u === 'URGENT' ? 'b-urgent' : u === 'HIGH' ? 'b-bad' : 'b-normal', TICKET_URG[u] || title(u));
-const AUD_LABEL = { SCHOOL_IT: 'School IT', LEADERSHIP: 'Leadership' };
-const AUD_HINT = { SCHOOL_IT: 'Your school\'s IT team', LEADERSHIP: 'Head office team' };
+const AUD_LABEL = { SCHOOL_IT: 'School IT', LEADERSHIP: 'Leadership', EAA_IT: 'EAA IT' };
+const AUD_HINT = { SCHOOL_IT: 'Your school\'s IT team', LEADERSHIP: 'Head office team', EAA_IT: 'Head office IT team' };
 const URG_HINT = { LOW: 'Can wait', NORMAL: 'This week', HIGH: 'Soon', URGENT: 'Blocking work' };
 const tkCard = (t, network, role) => html`<article class="tk-card tk-u-${t.urgency} ${t.status === 'CLOSED' ? 'tk-closed' : ''}" tabindex="0" role="link" data-go="#/ticket/${t.id}">
   <div><h3>${t.title}</h3><div class="tk-meta"><span class="pk-chip">${TICKET_CAT[t.category] || t.category}</span>${urgBadge(t.urgency)}${role === 'PRINCIPAL' ? html`<span class="pk-chip">${AUD_LABEL[t.audience] || t.audience}</span>` : ''}${network ? html`<span class="pk-chip">${t.school}</span>` : ''}</div></div>
@@ -940,7 +976,7 @@ const tkCard = (t, network, role) => html`<article class="tk-card tk-u-${t.urgen
 SCREENS.support = async (arg, q) => {
   const list = await get('/api/support/tickets');
   const role = S.me.role, network = isNetworkRole();
-  const canOpen = ['TEACHER', 'COORDINATOR', 'ATTENDANCE_OFFICER', 'PRINCIPAL'].includes(role);
+  const canOpen = ['TEACHER', 'COORDINATOR', 'PRINCIPAL_ASSISTANT', 'ATTENDANCE_OFFICER', 'PRINCIPAL', 'LEADERSHIP'].includes(role);
   const status = q.get('status') || 'ALL';
   const shown = status === 'ALL' ? list : list.filter(t => t.status === status);
   const count = s => list.filter(t => t.status === s).length;
@@ -950,11 +986,11 @@ SCREENS.support = async (arg, q) => {
     if (t.status === 'OPEN') r.open++; else if (t.status === 'IN_PROGRESS') r.progress++; else r.closed++;
     if (t.status !== 'CLOSED' && t.urgency === 'URGENT') r.urgent++;
   });
-  const targets = role === 'PRINCIPAL' ? ['SCHOOL_IT', 'LEADERSHIP'] : ['SCHOOL_IT'];
-  const newForm = canOpen ? card('New ticket', role === 'PRINCIPAL' ? 'Write to your School IT, or to Leadership at head office. Replies and status changes appear here and in your notifications.' : 'Ask your School IT for help. Replies and status changes appear here and in your notifications.', html`<form data-form="ticket" class="tk-form tk">
+  const targets = role === 'PRINCIPAL' ? ['LEADERSHIP'] : role === 'LEADERSHIP' ? ['EAA_IT'] : ['SCHOOL_IT'];
+  const newForm = canOpen ? card('New ticket', role === 'LEADERSHIP' ? 'Leadership has read-only access. Ask EAA IT for any change. Replies and status changes appear here and in your notifications.' : role === 'PRINCIPAL' ? 'Write to Leadership at head office. Replies and status changes appear here and in your notifications.' : 'Ask your School IT for help. Replies and status changes appear here and in your notifications.', html`<form data-form="ticket" class="tk-form tk">
       ${targets.length > 1
         ? html`<span class="lbl">Send to</span><div class="tk-pick">${targets.map((a, i) => html`<label><input type="radio" name="audience" value="${a}" ${i === 0 ? raw('checked') : ''}><b>${AUD_LABEL[a]}</b><small>${AUD_HINT[a]}</small></label>`)}</div>`
-        : html`<input type="hidden" name="audience" value="SCHOOL_IT">`}
+        : html`<input type="hidden" name="audience" value="${targets[0]}">`}
       <span class="lbl">How urgent is it?</span>
       <div class="tk-pick tk-urg">${Object.keys(TICKET_URG).map(u => html`<label><input type="radio" name="urgency" value="${u}" ${u === 'NORMAL' ? raw('checked') : ''}><b>${TICKET_URG[u]}</b><small>${URG_HINT[u]}</small></label>`)}</div>
       <span class="lbl">What is it about?</span>
@@ -969,9 +1005,10 @@ SCREENS.support = async (arg, q) => {
   const schools = !network ? '' : card('By school', 'Open work across the network.', Object.keys(bySchool).length
     ? table(['School', 'Open', 'In progress', 'Closed', 'Urgent and unresolved'], Object.keys(bySchool).sort().map(n => ({ cells: [n, bySchool[n].open, bySchool[n].progress, bySchool[n].closed, bySchool[n].urgent ? badge('b-urgent', bySchool[n].urgent) : 0] })))
     : empty('No tickets yet.'));
-  const sub = network ? 'Tickets that principals wrote to Leadership. Open one to assign, reply or close it.'
+  const sub = role === 'LEADERSHIP' ? 'Your requests to EAA IT, and the tickets principals wrote to head office (read-only).'
+    : network ? 'Tickets from Leadership, and from principals to head office. Open one to assign, reply or close it.'
     : role === 'SCHOOL_IT' ? 'Tickets from staff at your school. Open one to assign, reply or close it.'
-    : role === 'PRINCIPAL' ? 'Every ticket at your school, and the ones you wrote to Leadership.'
+    : role === 'PRINCIPAL' ? 'Your tickets to Leadership at head office.'
     : 'Your requests to School IT.';
   return page('Support tickets', sub,
     html`${newForm}${schools}${card('Tickets', null, html`${seg('status', [['ALL', 'All'], ['OPEN', 'Open'], ['IN_PROGRESS', 'In progress'], ['CLOSED', 'Closed']], status)}<div style="margin-top:14px">${shown.length ? html`<div class="tk-list tk">${shown.map(t => tkCard(t, network, role))}</div>` : html`<div class="pk-empty">No tickets here yet.</div>`}</div>`)}`,
@@ -1025,20 +1062,23 @@ const pkSteps = st => {
     return html`<li class="${cls}"><i>${cls === 'done' ? '✓' : cls === 'bad' ? '✕' : n}</i>${label}</li>`;
   })}</ol>`;
 };
+const pkToday = c => c.current && c.current.status === 'RELEASED' && c.current.decidedAt && new Date(c.current.decidedAt).toDateString() === new Date().toDateString();
 const pkCurrent = c => {
   const r = c.current;
+  if (pkToday(c)) return html`<div class="pk-now pk-now-done"><div class="pk-now-top"><span class="pk-av pk-av-sm">${pkInit(c.student)}</span><b>${c.student}</b><span class="pk-chip pk-chip-ok">✓ ${'Picked up'}</span></div>
+    <small>${r.collector} (${REL_LABEL[r.relationship] || r.relationship}) · ${pkTime(r.decidedAt)}</small><div class="pk-note pk-note-ok">${'You confirmed the pick-up and accepted responsibility for your child.'}</div></div>`;
   return html`<div class="pk-now"><div class="pk-now-top"><span class="pk-av pk-av-sm">${pkInit(c.student)}</span><b>${c.student}</b>${r ? pkBadge(r.status) : ''}</div>
     ${r ? html`${pkSteps(r.status)}<small>${r.collector} (${REL_LABEL[r.relationship] || r.relationship}) · ${pkTime(r.arrivedAt)}</small>
       ${r.status === 'DECLINED' && r.declineReason ? html`<div class="pk-note">${r.declineReason}</div>` : ''}
       ${r.status === 'RELEASED' ? html`<div class="pk-note" style="background:#E7F7EF;color:#0B7A4F"><span>Released</span> · ${pkTime(r.decidedAt)}</div>` : ''}
       ${r.status === 'ARRIVED' || r.status === 'VERIFYING' ? html`<div><button class="pk-btn pk-btn-sm" data-act="pickupCancel" data-id="${r.id}">Withdraw</button></div>` : ''}`
-    : html`<p class="pk-idle">You have not told the school you are here.</p>`}</div>`;
+    : html`<p class="pk-idle">Not picked up yet today.</p>`}</div>`;
 };
 SCREENS.pickup = async () => S.me.role === 'PARENT' ? parentPickup() : staffPickup();
 
 const pkPerson = k => html`<div class="pk-person"><span class="pk-av pk-av-sm">${pkInit(k.name)}</span><div><b>${k.name}</b><small>${REL_LABEL[k.relationship] || k.relationship} · ID ends ••${k.idLast4}${k.phone ? ' · ' + k.phone : ''}</small></div>
   <button class="pk-btn pk-btn-sm pk-btn-no" data-act="removeCollector" data-id="${k.id}" data-confirm="Remove this collector? They will no longer be released the child.">Remove</button></div>`;
-const PK_SUB = 'Approve who may collect your child and tell the school when you arrive.';
+const PK_SUB = 'Approve who may collect your child. Press Pick up when you collect them: it is confirmed at once and the school sees it.';
 async function parentPickup() {
   const kids = await get('/api/pickup/mine');
   const live = list => html`<div class="pk-live">${list.map(pkCurrent)}</div>`;
@@ -1047,14 +1087,14 @@ async function parentPickup() {
   return page('Pick-up', PK_SUB, html`
     ${card('Right now', 'The school sees this at once. It updates by itself.', html`<div id="pickupMine" class="pk">${live(kids)}</div>`)}
     ${kids.map(c => {
-      const open = c.current && (c.current.status === 'ARRIVED' || c.current.status === 'VERIFYING');
-      return card(c.student + (c.section ? ' · ' + c.section : ''), 'Choose who is collecting, then press the button when you arrive.', html`<div class="pk">
-      <form data-form="arrive" data-student="${c.studentId}">
+      const open = c.current && (c.current.status === 'ARRIVED' || c.current.status === 'VERIFYING'), done = pkToday(c);
+      return card(c.student + (c.section ? ' · ' + c.section : ''), 'Choose who is collecting, then press Pick up.', html`<div class="pk">
+      <form data-form="arrive" data-student="${c.studentId}" data-name="${c.student}">
         <p class="pk-sub">Who is collecting?</p>
         <div class="pk-who"><label><input type="radio" name="collectorId" value="" checked><span class="pk-av pk-av-sm">${pkInit(S.me.displayName)}</span><span><b>Me</b><small>${S.me.displayName}</small></span></label>
           ${c.collectors.map(k => html`<label><input type="radio" name="collectorId" value="${k.id}"><span class="pk-av pk-av-sm">${pkInit(k.name)}</span><span><b>${k.name}</b><small>${REL_LABEL[k.relationship] || k.relationship}</small></span></label>`)}</div>
-        ${open ? html`<p class="pk-note" style="margin-bottom:10px">You have already told the school you have arrived for this child.</p>` : ''}
-        <button class="pk-btn pk-btn-go pk-btn-block" ${open ? raw('disabled') : ''}>I've arrived</button></form>
+        ${done ? html`<p class="pk-note pk-note-ok" style="margin-bottom:10px">✓ ${'Picked up today at'} ${pkTime(c.current.decidedAt)}.</p>` : open ? html`<p class="pk-note" style="margin-bottom:10px">You have already told the school you have arrived for this child.</p>` : ''}
+        <button class="pk-btn pk-btn-go pk-btn-block pk-btn-pick" ${open || done ? raw('disabled') : ''}>${done ? '✓ Picked up' : 'Pick up'}</button></form>
       <p class="pk-sub">Approved collectors</p>
       ${c.collectors.length ? html`<div class="pk-grid">${c.collectors.map(pkPerson)}</div>` : html`<div class="pk-empty">No approved collectors yet. You can always collect your child yourself.</div>`}
       <details class="pk-add"><summary>Add a collector</summary>
@@ -1064,7 +1104,7 @@ async function parentPickup() {
           ${field('ID number (only the last four are kept)', html`<input class="input" name="idNumber" required minlength="4" maxlength="30" autocomplete="off">`)}
           ${field('Phone (optional)', html`<input class="input" name="phone" maxlength="30" inputmode="tel">`)}
           <button class="pk-btn pk-btn-go">Add collector</button></form></details>
-      ${c.recent.length ? html`<p class="pk-sub">Recent releases</p><ul class="pk-hist">${c.recent.map(r => html`<li><span class="pk-chip pk-chip-ok">Released</span><span>${r.collector} (${REL_LABEL[r.relationship] || r.relationship})</span><span>${r.releasedBy}<br>${fmt(r.releasedAt)}</span></li>`)}</ul>` : ''}</div>`);
+      ${c.recent.length ? html`<p class="pk-sub">Recent pick-ups</p><ul class="pk-hist">${c.recent.map(r => html`<li><span class="pk-chip pk-chip-ok">Picked up</span><span>${r.collector} (${REL_LABEL[r.relationship] || r.relationship})</span><span>${r.releasedBy}<br>${fmt(r.releasedAt)}</span></li>`)}</ul>` : ''}</div>`);
     })}`);
 }
 
@@ -1077,18 +1117,22 @@ const pkQueueCard = (r, canAct, step) => html`<article class="pk-q ${step === 'r
     ${r.idLast4 ? html`<span>ID ends <span class="id">••${r.idLast4}</span></span>` : html`<span class="muted">Parent: check the ID at the gate.</span>`}</div>
   ${step === 'release' && r.verifiedBy ? html`<small class="muted">ID checked by ${r.verifiedBy}</small>` : ''}
   ${pkAct(r, canAct, step)}</article>`;
-const pickupBoardHtml = b => html`
-  <div class="pk-stats"><div class="pk-stat pk-stat-wn"><b>${b.arrivals.length}</b><small>Waiting</small></div><div class="pk-stat pk-stat-bd"><b>${b.pending.length}</b><small>Ready to release</small></div><div class="pk-stat pk-stat-ok"><b>${b.completed.length}</b><small>Completed today</small></div></div>
-  ${card('Arrivals', 'Parents who have arrived and are waiting.', b.arrivals.length ? html`<div class="pk pk-grid">${b.arrivals.map(r => pkQueueCard(r, b.canAct, 'verify'))}</div>` : html`<div class="pk-empty">Nobody has arrived.</div>`)}
-  ${card('Pending pickups', 'ID checked against the approved list. Release when the child is handed over.', b.pending.length ? html`<div class="pk pk-grid">${b.pending.map(r => pkQueueCard(r, b.canAct, 'release'))}</div>` : html`<div class="pk-empty">Nothing is being checked.</div>`)}
-  ${card('Completed today', null, b.completed.length ? html`<div class="pk pk-done">${b.completed.map(r => html`<div><span class="pk-av pk-av-sm">${pkInit(r.student)}</span><b>${r.student}</b><span class="muted">${r.collector} (${REL_LABEL[r.relationship] || r.relationship})</span>${pkBadge(r.status)}<span class="when">${r.decidedBy || '—'} · ${pkTime(r.decidedAt)}</span></div>`)}</div>` : html`<div class="pk-empty">Nothing released yet today.</div>`)}`;
+const pickupBoardHtml = b => {
+  const done = b.completed.filter(r => r.status === 'RELEASED'), waiting = b.arrivals.concat(b.pending);
+  return html`<div class="pk-stats"><div class="pk-stat pk-stat-ok"><b>${done.length}</b><small>Picked up today</small></div>${waiting.length ? html`<div class="pk-stat pk-stat-wn"><b>${waiting.length}</b><small>Older requests waiting</small></div>` : ''}</div>
+  ${card('Picked up today', 'Parents confirm the pick-up themselves and accept responsibility. Newest first; it updates by itself.', done.length
+    ? html`<div class="pk-green">${done.map(r => html`<article class="pk-gcard"><span class="pk-gcheck" aria-hidden="true">✓</span><div><b>${r.student}</b><small>${r.section}</small>
+        <span>${'Collected by'} ${r.collector} (${REL_LABEL[r.relationship] || r.relationship})</span></div><time>${pkTime(r.decidedAt)}</time></article>`)}</div>`
+    : html`<div class="pk-empty">Nobody has been picked up yet today.</div>`)}
+  ${waiting.length ? card('Older requests', 'From before parents confirmed pick-ups themselves.', html`<div class="pk pk-grid">${b.arrivals.map(r => pkQueueCard(r, b.canAct, 'verify'))}${b.pending.map(r => pkQueueCard(r, b.canAct, 'release'))}</div>`) : ''}`;
+};
 async function staffPickup() {
   const [board, log] = await Promise.all([get('/api/pickup/board'), get('/api/pickup/log')]);
   pickupPoll('pickupBoard', () => get('/api/pickup/board'), pickupBoardHtml);
-  return page('Pick-up board', S.me.role === 'PRINCIPAL' || S.me.role === 'SCHOOL_IT' ? 'Live view, read only. It refreshes every few seconds.' : 'Live: it refreshes every few seconds. Check the collector\'s ID, then release the child.',
+  return page('Pick-up board', 'Live: when a parent presses Pick up, the child shows here in green at once. No approval is needed.',
     html`<div id="pickupBoard" class="stack-gap">${pickupBoardHtml(board)}</div>
-    ${card('Release log', 'Chain of custody: every release is kept permanently and cannot be changed. The last 30 days are shown.', log.length
-      ? table(['Student', 'Class', 'Collected by', 'Released by', 'Date and time'], log.map(r => ({ cells: [r.student, r.section, r.collector + ' (' + (REL_LABEL[r.relationship] || r.relationship) + ')', r.releasedBy, fmt(r.releasedAt)] })))
+    ${card('Pick-up log', 'Every pick-up is kept permanently and cannot be changed, with the parent who confirmed it. The last 30 days are shown.', log.length
+      ? table(['Student', 'Class', 'Collected by', 'Confirmed by', 'Date and time'], log.map(r => ({ cells: [r.student, r.section, r.collector + ' (' + (REL_LABEL[r.relationship] || r.relationship) + ')', r.releasedBy, fmt(r.releasedAt)] })))
       : empty('No releases in the last 30 days.'))}`);
 }
 
@@ -1105,14 +1149,14 @@ function weekGrid(lessons, who) {
 }
 
 const sectionLabel = s => s.grade + s.name;
-const sectionPicker = (sections, current, route) => html`<label>Section <select class="input" data-act="pickSection" data-route="${route}">${sections.map(s => html`<option value="${s.id}" ${s.id === current ? raw('selected') : ''}>${sectionLabel(s)} (${s.students} student${s.students === 1 ? '' : 's'})</option>`)}</select></label>`;
+const sectionPicker = (sections, current, route) => html`<label>Section <select class="input" data-act="pickSection" data-route="${route}">${sections.map(s => html`<option value="${s.id}" ${s.id === current ? raw('selected') : ''}>${sectionLabel(s)} (${count(s.students, 'student')})</option>`)}</select></label>`;
 
 // ---- teacher portal
 SCREENS.today = async () => {
   const [t, notes] = await Promise.all([get('/api/portal/teacher'), get('/api/notices').catch(() => [])]);
   const taken = new Set(t.attendanceTaken);
   const next = t.schoolDay ? [] : (await get('/api/academic/timetable').catch(() => [])).filter(l => l.day === 0);   // a day off: show Sunday's lessons
-  return page('Today', (t.schoolDay ? DAYS[new Date(t.date + 'T00:00:00').getDay()] || '' : 'Not a school day') + ' · ' + t.date,
+  return page('Today', (t.schoolDay ? DAYS[new Date(t.date + 'T00:00:00').getDay()] || '' : 'Not a school day') + ' · ' + fmtDate(t.date),
     html`${!t.schoolDay && next.length ? card('Next school day: Sunday', 'Today is a day off. Here is what your week starts with.', table(['Period', 'Section', 'Subject', 'Room'], next.sort((a, b) => a.period - b.period).map(l => ({ cells: [l.period, l.section, l.subject, l.room || ''] })))) : card("Today's lessons", 'From the timetable.', t.lessons.length ? table(['Period', 'Section', 'Subject', 'Room', 'Attendance'], t.lessons.map(l => ({ cells: [l.period, l.section, l.subject, l.room || '', taken.has(l.sectionId) ? badge('b-good', 'Taken') : badge('b-watch', 'Not taken yet')] }))) : empty(t.schoolDay ? 'No lessons today.' : 'Attendance and lessons run Sunday to Thursday.'))}
     ${notes.length ? card('Notices', 'From school administration.', html`<ul class="timeline">${notes.map(noticeBlock)}</ul>`, html`<a href="#/notices">View all →</a>`) : ''}
     ${card('My sections', null, t.sections.length ? table(['Section', 'Students', 'Attendance today', ''], t.sections.map(x => ({ cells: [sectionLabel(x), x.students, taken.has(x.id) ? badge('b-good', 'Taken') : badge('b-watch', 'Not taken'), html`<a href="#/attendance?s=${x.id}">${openWord()}</a>`] }))) : empty('You are not assigned to a section yet. The coordinator assigns teachers in Academic setup.'))}`);
@@ -1128,8 +1172,8 @@ SCREENS.attendance = async (arg, q) => {
   const opt = (r, v, label) => html`<label style="margin-inline-end:12px"><input type="radio" name="st_${r.studentId}" value="${v}" ${r.status === v ? raw('checked') : ''}> ${label}</label>`;
   if (!canRecord) {
     return page('Attendance', 'Attendance is recorded by the school\'s attendance officer. You can read it here.',
-      html`<div class="row">${sectionPicker(sections, sid, 'attendance')} <b>${t.date}</b></div>
-      ${card('Class list', roster.length + ' student' + (roster.length === 1 ? '' : 's'), roster.length ? table(['Student', 'Status'], roster.map(r => ({ cells: [r.name, badge(r.status === 'PRESENT' ? 'b-good' : r.status === 'ABSENT' ? 'b-bad' : 'b-watch', title(r.status))] }))) : empty('No students are enrolled in this section yet.'))}`);
+      html`<div class="row">${sectionPicker(sections, sid, 'attendance')} <b>${fmtDate(t.date)}</b></div>
+      ${card('Class list', count(roster.length, 'student'), roster.length ? table(['Student', 'Status'], roster.map(r => ({ cells: [r.name, badge(r.status === 'PRESENT' ? 'b-good' : r.status === 'ABSENT' ? 'b-bad' : 'b-watch', title(r.status))] }))) : empty('No students are enrolled in this section yet.'))}`);
   }
   const rosters = await Promise.all(sections.map(x => x.id === sid ? roster : get('/api/attendance/sections/' + x.id)));
   const tally = rows => ({ n: rows.length, p: rows.filter(r => r.status === 'PRESENT').length, a: rows.filter(r => r.status === 'ABSENT').length, l: rows.filter(r => r.status === 'LEAVE').length });
@@ -1138,13 +1182,13 @@ SCREENS.attendance = async (arg, q) => {
   const cur = sections.find(x => x.id === sid);
   const attSeg = r => html`<div class="at-seg" role="radiogroup" aria-label="${r.name}">${[['PRESENT', 'Present', 'p'], ['ABSENT', 'Absent', 'a'], ['LEAVE', 'Leave', 'l']].map(([v, label, c]) => html`<label class="at-${c}"><input type="radio" name="st_${r.studentId}" value="${v}" ${r.status === v ? raw('checked') : ''}><span>${label}</span></label>`)}</div>`;
   const tl = tally(roster);
-  return page('Attendance', 'Record today. Everyone starts as present; change only the absences and leave. Each present day earns the student a point.',
+  return page('Attendance', 'Record today. Everyone starts as present; change only the absences and leave.',
     html`<div class="at">
     ${dayOk ? '' : html`<div class="pk-note" style="background:#FEF3DC;color:#8A5A00">Today is a day off. Attendance is recorded Sunday to Thursday, so you can read the lists but not save.</div>`}
     <div class="pk-stats at-stats4"><div class="pk-stat"><b>${all.n}</b><small>Students</small></div><div class="pk-stat pk-stat-ok"><b>${all.p}</b><small>Present</small></div><div class="pk-stat pk-stat-bd"><b>${all.a}</b><small>Absent</small></div><div class="pk-stat pk-stat-wn"><b>${all.l}</b><small>On leave</small></div></div>
-    <div class="at-classes">${sections.map((x, i) => { const c = tally(rosters[i]); return html`<a class="at-class ${x.id === sid ? 'on' : ''}" href="#/attendance?s=${x.id}"><b>${sectionLabel(x)}</b><span>${c.n} students</span>${c.a ? html`<em class="bad">${c.a} absent</em>` : html`<em>All present</em>`}</a>`; })}</div>
+    <div class="at-classes">${sections.map((x, i) => { const c = tally(rosters[i]); return html`<a class="at-class ${x.id === sid ? 'on' : ''}" href="#/attendance?s=${x.id}"><b>${sectionLabel(x)}</b><span>${count(c.n, 'student')}</span>${c.a ? html`<em class="bad">${c.a} absent</em>` : html`<em>All present</em>`}</a>`; })}</div>
     </div>
-    ${card('Class ' + (cur ? sectionLabel(cur) : '') + ' · ' + t.date, roster.length + ' student' + (roster.length === 1 ? '' : 's'), roster.length ? html`<form data-form="attendance" data-section="${sid}" data-date="${t.date}" class="at">
+    ${card('Class ' + (cur ? sectionLabel(cur) : '') + ' · ' + fmtDate(t.date), count(roster.length, 'student'), roster.length ? html`<form data-form="attendance" data-section="${sid}" data-date="${t.date}" class="at">
       <div class="at-bar"><span id="atTally" class="pk-chip pk-chip-ok">${tl.p} ${trText('present')} · ${tl.a} ${trText('absent')} · ${tl.l} ${trText('leave')}</span><button type="button" class="pk-btn pk-btn-sm" data-act="attAllPresent">Mark all present</button></div>
       <div class="at-list">${roster.map(r => html`<div class="at-row"><span class="pk-av pk-av-sm">${pkInit(r.name)}</span><b>${r.name}</b>${attSeg(r)}</div>`)}</div>
       <div class="tk-send"><button class="pk-btn pk-btn-go" ${dayOk ? '' : raw('disabled')}>Save attendance</button></div></form>` : empty('No students are enrolled in this section yet.'))}
@@ -1162,7 +1206,7 @@ SCREENS.marks = async (arg) => {
     // only the sections and subjects this teacher actually teaches, so every choice in the form is allowed
     const mine = (await Promise.all(sections.map(async s => (await get(`/api/academic/sections/${s.id}/assignments`).catch(() => []))
       .filter(a => a.teacherId === S.me.id).map(a => ({ value: s.id + '|' + a.subjectId, label: sectionLabel(s) + ' · ' + a.subject }))))).flat();
-    const form = !mine.length ? empty('You are not assigned to a section and subject yet.') : !terms.length ? empty('No term exists yet. The coordinator creates the terms under Academic setup.') : html`<form data-form="assessment" class="row">
+    const form = !mine.length ? empty('You are not assigned to a section and subject yet.') : !terms.length ? empty('No term exists yet. School IT creates the terms under Academic setup.') : html`<form data-form="assessment" class="row">
       <select class="input" name="pair">${mine.map(m => html`<option value="${m.value}">${m.label}</option>`)}</select>
       <select class="input" name="term">${terms.map(t => html`<option value="${t.number}">${t.name}</option>`)}</select>
       <input class="input" name="name" placeholder="Name, e.g. Quiz 1" required><input class="input" type="number" name="maxMark" min="1" max="1000" step="0.01" placeholder="Out of" required><button class="btn btn-primary">Add assessment</button></form>`;
@@ -1200,9 +1244,9 @@ SCREENS.materials = async () => {
 
 SCREENS.notices = async () => {
   const list = await get('/api/notices');
-  if (isPortal()) return page('Notices', 'What your school wants you to know.', list.length
-    ? html`<div class="sp-notices sp-notices-lg">${list.map(n => html`<div><span class="sp-ic sp-ic-note">${sIc('megaphone')}</span><div><b>${say(n.titleEn, n.titleAr)}</b><small>${fmtDate(n.startsAt)} to ${fmtDate(n.endsAt)} · ${n.audience === 'ALL' ? 'Everyone' : title(n.audience)}</small><p>${say(n.bodyEn, n.bodyAr)}</p></div></div>`)}</div>`
-    : card('Current notices', null, empty('No notices right now.')));
+  if (isPortal()) return page('Notices', 'What your school and your teachers want you to know.', html`${classNoticeBanners(list)}${list.length
+    ? html`<div class="sp-notices sp-notices-lg">${list.map(n => html`<div><span class="sp-ic sp-ic-note">${sIc('megaphone')}</span><div><b>${say(n.titleEn, n.titleAr)}</b><small>${fmtDate(n.startsAt)} to ${fmtDate(n.endsAt)} · ${noticeWho(n)}</small><p>${say(n.bodyEn, n.bodyAr)}</p></div></div>`)}</div>`
+    : card('Current notices', null, empty('No notices right now.'))}`);
   return page('Notices', null, card('Current notices', null, list.length ? html`<ul class="timeline">${list.map(noticeBlock)}</ul>` : empty('No notices right now.')));
 };
 
@@ -1211,14 +1255,14 @@ SCREENS.mydash = async () => {
   const st = await get('/api/enrol/status');
   if (!st.section) return waitingPage(st);
   const [d, pv] = await Promise.all([get('/api/portal/student'), get('/api/points/mine').catch(() => null)]);
-  return portalHome(d, { name: st.name, mine: true, sub: `Section ${sectionLabel(d.section)} · ${d.date} · Student ID ${st.studentCode}`,
-    below: pv ? { top: '', bottom: pointsCard(pv) } : undefined });
+  return portalHome(d, { name: st.name, mine: true, sub: `Section ${sectionLabel(d.section)} · ${fmtDate(d.date)} · Student ID ${st.studentCode}`,
+    below: pv ? { top: pointsProgress(pv), bottom: pointsCard(pv) } : undefined });
 };
 
 async function classRequestCard(studentId, pending) {
-  if (pending) return card('Waiting for a class', null, html`<p>The request for <b>${pending}</b> is waiting for the coordinator to confirm.</p>`);
+  if (pending) return card('Waiting for a class', null, html`<p>The request for <b>${pending}</b> is waiting for School IT to confirm.</p>`);
   const classes = await get('/api/enrol/classes');
-  return card('Choose a class', 'Ask for a place in a class. The coordinator confirms it.', classes.length
+  return card('Choose a class', 'Ask for a place in a class. School IT confirms it.', classes.length
     ? html`<form data-form="enrolRequest" data-student="${studentId || ''}" class="row"><select class="input" name="sectionId">${classes.map(c => html`<option value="${c.id}">${c.label}</option>`)}</select><button class="btn btn-primary">Request this class</button></form>`
     : empty('The school has not created a class yet.'));
 }
@@ -1255,7 +1299,7 @@ const SP_SKY = `<svg class="sp-sky" viewBox="0 0 900 300" preserveAspectRatio="x
 <g><rect x="790" y="250" width="100" height="50" fill="#e7a3b6" opacity=".45"/><path d="M808 250Q840 218 872 250Z" fill="#c24a6e" opacity=".5"/><rect x="838" y="204" width="2" height="26" fill="#c24a6e" opacity=".6"/><path d="M840 204L856 210L840 216Z" fill="#8f2447" opacity=".7"/></g></svg>`;
 
 function examBanner(notices) {
-  const n = (notices || []).find(x => /exam/i.test(x.titleEn || ''));
+  const n = (notices || []).find(x => !x.sectionId && /exam/i.test(x.titleEn || ''));
   if (!n) return '';
   const now = Date.now(), s = new Date(n.startsAt).getTime(), e = new Date(n.endsAt).getTime();
   if (now > e) return '';
@@ -1306,7 +1350,7 @@ function spWeek(lessons) {
 
 function recentActivity(d) {
   const items = [];
-  if (d.results.length) items.push(['#6b1730', d.results.length === 1 ? 'Result published' : d.results.length + ' results published', d.results.length + ' published result' + (d.results.length === 1 ? '' : 's')]);
+  if (d.results.length) items.push(['#6b1730', I18N.lang === 'ar' ? 'نُشرت ' + count(d.results.length, 'result') : d.results.length === 1 ? 'Result published' : d.results.length + ' results published', count(d.results.length, 'result')]);
   d.notices.slice(0, 2).forEach(n => items.push(['#2563eb', 'New notice: ' + inLang(n.titleEn, n.titleAr), fmtDate(n.startsAt)]));
   if (d.attendance.recent.length) { const r = d.attendance.recent[0]; items.push([r.status === 'PRESENT' ? '#14633b' : r.status === 'ABSENT' ? '#a11d12' : '#b7791f', 'Marked ' + title(r.status), fmtDate(r.date)]); }
   if (d.materials.length) { const m = d.materials[0]; items.push(['#b7791f', 'Study material: ' + m.title, m.subject + ' · ' + m.teacher]); }
@@ -1317,8 +1361,11 @@ const SP_TONES = {
   good: ['#14633b', '#e3f3ea', 'rgba(20,99,59,.35)'], bad: ['#a11d12', '#fde8e6', 'rgba(161,29,18,.35)'],
   watch: ['#b7791f', '#fbefd0', 'rgba(183,121,31,.35)'], brand: ['#6b1730', '#f6e4ea', 'rgba(107,23,48,.35)']
 };
-const spKpi = (tone, ic, v, label, link) => { const [c, tile, glow] = SP_TONES[tone]; return html`<div class="sp-kpi" style="background:linear-gradient(170deg,${tile} 0%,#fff 60%)"><span class="sp-ic sp-ic-kpi" style="background:${c};box-shadow:0 8px 16px ${glow}">${sIc(ic)}</span><b>${v}</b><span class="sp-kpi-l">${label}</span>${link || ''}
-  <svg class="sp-spark" viewBox="0 0 100 40" preserveAspectRatio="none" aria-hidden="true"><polygon points="0,40 0,30 25,26 50,32 75,16 100,22 100,40" fill="${c}" fill-opacity=".14"/><polyline points="0,30 25,26 50,32 75,16 100,22" fill="none" stroke="${c}" stroke-width="2" stroke-linejoin="round" vector-effect="non-scaling-stroke"/></svg></div>`; };
+/** go: '#/route' opens that page; 'scroll:id' brings that card into view on this page and makes it glow. */
+const spKpi = (tone, ic, v, label, link, go) => { const [c, tile, glow] = SP_TONES[tone]; const tag = go && !go.startsWith('scroll:') ? 'a' : 'div';
+  const target = go ? (go.startsWith('scroll:') ? raw(`role="button" tabindex="0" data-act="kpiScroll" data-target="${esc(go.slice(7))}"`) : raw(`href="${esc(go)}" data-kpi="1"`)) : '';
+  return html`<${raw(tag)} class="sp-kpi ${go ? 'kpi-a' : ''}" ${target} style="background:linear-gradient(170deg,${tile} 0%,#fff 60%)"><span class="sp-ic sp-ic-kpi" style="background:${c};box-shadow:0 8px 16px ${glow}">${sIc(ic)}</span><b>${v}</b><span class="sp-kpi-l">${label}</span>${link || ''}
+  <svg class="sp-spark" viewBox="0 0 100 40" preserveAspectRatio="none" aria-hidden="true"><polygon points="0,40 0,30 25,26 50,32 75,16 100,22 100,40" fill="${c}" fill-opacity=".14"/><polyline points="0,30 25,26 50,32 75,16 100,22" fill="none" stroke="${c}" stroke-width="2" stroke-linejoin="round" vector-effect="non-scaling-stroke"/></svg></${raw(tag)}>`; };
 
 /** o: { name, sub, mine, below: { top, bottom } } */
 function portalHome(d, o) {
@@ -1333,17 +1380,17 @@ function portalHome(d, o) {
   const last = a.recent[0];
   const days = a.present + a.absent + a.leave, rate = n => days ? Math.round(n / days * 100) + '%' : '—'; // documented = leave (excused), undocumented = absent
   return html`<div class="sp-grid-main"><div class="sp-col">
-    ${examBanner(d.notices)}
+    ${examBanner(d.notices)}${classNoticeBanners(d.notices)}
     <section class="sp-hero"><i class="sp-hero-glow"></i><i class="sp-hero-orb"></i>${raw(SP_SKY)}<img class="sp-hero-art" src="app/student-hero.png" alt="Student studying on a laptop"><div class="sp-hero-text"><div class="sp-welcome">Welcome back,</div><h1>${o.name}</h1><p>${o.sub}</p>${heroBtn}</div></section>
     ${o.below && o.below.top || ''}
-    <section class="sp-kpis">${spKpi('brand', 'pulse', rate(a.absent + a.leave), 'Absence rate · ' + (a.absent + a.leave) + ' of ' + days + ' days')}${spKpi('good', 'check', rate(a.leave), 'Documented absence · ' + a.leave + ' of ' + days + ' days')}${spKpi('bad', 'x', rate(a.absent), 'Undocumented absence · ' + a.absent + ' of ' + days + ' days')}${spKpi('brand', 'star', avg === null ? '—' : avg + '%', 'Average grade · all assessments', mine ? html`<a class="sp-kpi-a" href="#/results">View results →</a>` : '')}</section>
+    <section class="sp-kpis">${spKpi('brand', 'pulse', rate(a.absent + a.leave), trText('Absence rate') + ' · ' + ofDays(a.absent + a.leave, days), '', 'scroll:sp-attendance')}${spKpi('good', 'check', rate(a.leave), trText('Documented absence') + ' · ' + ofDays(a.leave, days), '', 'scroll:sp-attendance')}${spKpi('bad', 'x', rate(a.absent), trText('Undocumented absence') + ' · ' + ofDays(a.absent, days), '', 'scroll:sp-attendance')}${spKpi('brand', 'star', avg === null ? '—' : avg + '%', 'Average grade · all assessments', mine ? html`<span class="sp-kpi-a">View results →</span>` : '', mine ? '#/results' : 'scroll:sp-results')}</section>
     <div class="sp-row">
       ${spCard('trend', mine ? 'My progress' : 'Progress', progressChart(d.results), mine ? html`<a class="sp-link" href="#/results">Full report →</a>` : '', null, 'sp-f2', 'Average grade by assessment')}
-      ${spCard('circle', 'Attendance', html`${attendanceDonut(a)}${last ? html`<div class="sp-last"><span>${fmtDate(last.date)}</span>${badge(last.status === 'PRESENT' ? 'b-good' : last.status === 'ABSENT' ? 'b-bad' : 'b-watch', title(last.status))}</div>` : ''}`, '', null, 'sp-f1 sp-att', 'Last days')}
+      ${spCard('circle', 'Attendance', html`${attendanceDonut(a)}${last ? html`<div class="sp-last"><span>${fmtDate(last.date)}</span>${badge(last.status === 'PRESENT' ? 'b-good' : last.status === 'ABSENT' ? 'b-bad' : 'b-watch', title(last.status))}</div>` : ''}`, '', 'sp-attendance', 'sp-f1 sp-att', 'Last days')}
     </div>
     <div class="sp-row">
       ${spCard('moon', d.today.length || d.schoolDay ? "Today's lessons" : 'Next school day: Sunday', (d.today.length ? d.today : d.schoolDay ? [] : d.week.filter(l => l.day === 0).sort((a, b) => a.period - b.period)).length ? gTable('70px 1.2fr 1.2fr 80px', ['Period', 'Subject', 'Teacher', 'Room'], (d.today.length ? d.today : d.week.filter(l => l.day === 0).sort((a, b) => a.period - b.period)).map(l => [l.period, l.subject, l.teacher, l.room || ''])) : html`<div class="sp-empty"><span class="sp-ic sp-ic-soft">${sIc('moon')}</span>${d.schoolDay ? 'No lessons today.' : 'Not a school day. Lessons run Sunday to Thursday.'}</div>`, '', null, 'sp-f3')}
-      ${spCard('megaphone', 'Notices', d.notices.length ? html`<div class="sp-notices">${d.notices.map(n => html`<div><span class="sp-ic sp-ic-note">${sIc('megaphone')}</span><div><b>${say(n.titleEn, n.titleAr)}</b><small>${fmtDate(n.startsAt)} to ${fmtDate(n.endsAt)} · ${n.audience === 'ALL' ? 'Everyone' : title(n.audience)}</small><p>${say(n.bodyEn, n.bodyAr)}</p></div></div>`)}</div>` : empty('No notices right now.'), html`<a class="sp-link" href="#/notices">View all →</a>`, null, 'sp-f3')}
+      ${spCard('megaphone', 'Notices', d.notices.length ? html`<div class="sp-notices">${d.notices.map(n => html`<div><span class="sp-ic sp-ic-note">${sIc('megaphone')}</span><div><b>${say(n.titleEn, n.titleAr)}</b><small>${fmtDate(n.startsAt)} to ${fmtDate(n.endsAt)} · ${noticeWho(n)}</small><p>${say(n.bodyEn, n.bodyAr)}</p></div></div>`)}</div>` : empty('No notices right now.'), html`<a class="sp-link" href="#/notices">View all →</a>`, null, 'sp-f3')}
     </div>
     <div class="sp-row">${spCard('book', 'Study materials', d.materials.length ? gTable('1.2fr 1fr 1.3fr 60px', ['Title', 'Subject', 'Teacher', ''], d.materials.map(m => [html`<b>${m.title}</b>`, m.subject, m.teacher, html`<a href="${m.link}" target="_blank" rel="noopener noreferrer">${openWord()}</a>`])) : empty('No materials yet.'), '', null, 'sp-f3')}</div>
     ${spCard('calendar', mine ? 'My timetable' : 'Timetable', html`<div class="sp-scroll">${spWeek(d.week)}</div>`, '', 'sp-timetable')}
@@ -1369,7 +1416,7 @@ SCREENS.children = async (arg) => {
   const [d, pv] = await Promise.all([get(`/api/parent/children/${id}`), get(`/api/points/child/${id}`).catch(() => null)]);
   const terms = [...new Set(d.results.map(r => r.term))];
   const results = terms.length ? html`${terms.map(t => spCard('list', 'Results · term ' + t, resultTable(d.results.filter(r => r.term === t))))}` : spCard('list', 'Results', empty('No results have been published yet.'));
-  return portalHome(d, { name: S.me.displayName, mine: false, sub: `Following ${kid.name} · Section ${kid.section} · ${d.date}`,
+  return portalHome(d, { name: S.me.displayName, mine: false, sub: `Following ${kid.name} · Section ${kid.section} · ${fmtDate(d.date)}`,
     below: { top: switcher, bottom: html`<div id="sp-results" class="sp-stack">${results}</div>${pv ? pointsCard(pv) : ''}${addChild}` } });
 };
 
@@ -1379,7 +1426,7 @@ SCREENS.results = async () => {
   const rows = await get('/api/marks/mine');
   const terms = [...new Set(rows.map(r => r.term))];
   return page('My results', 'Your own results, shown after your school publishes them.',
-    html`${resultSummary(rows)}${terms.length ? terms.map(t => spCard('list', 'Term ' + t, resultTable(rows.filter(r => r.term === t)), '', null, '', rows.filter(r => r.term === t).length + ' assessment' + (rows.filter(r => r.term === t).length === 1 ? '' : 's'))) : card('Results', null, empty('No results have been published yet.'))}`);
+    html`${resultSummary(rows)}${terms.length ? terms.map((t, i) => spCard('list', 'Term ' + t, resultTable(rows.filter(r => r.term === t)), '', 'res-term-' + i, '', count(rows.filter(r => r.term === t).length, 'assessment'))) : card('Results', null, empty('No results have been published yet.'))}`);
 };
 
 /** Results as modern rows: subject, assessment, mark and a score bar. */
@@ -1394,7 +1441,7 @@ function resultSummary(rows) {
   const done = rows.filter(r => !r.absent && r.value != null).map(markPct);
   if (!done.length) return '';
   const avg = Math.round(done.reduce((x, y) => x + y, 0) / done.length);
-  return html`<section class="sp-kpis">${spKpi('brand', 'star', avg + '%', 'Average grade')}${spKpi('good', 'check', Math.max(...done) + '%', 'Best result')}${spKpi('watch', 'list', done.length, 'Assessments marked')}${spKpi('bad', 'trend', [...new Set(rows.map(r => r.subject))].length, 'Subjects')}</section>`;
+  return html`<section class="sp-kpis">${spKpi('brand', 'star', avg + '%', 'Average grade', '', 'scroll:res-term-0')}${spKpi('good', 'check', Math.max(...done) + '%', 'Best result', '', 'scroll:res-term-0')}${spKpi('watch', 'list', done.length, 'Assessments marked', '', 'scroll:res-term-0')}${spKpi('bad', 'trend', [...new Set(rows.map(r => r.subject))].length, 'Subjects', '', 'scroll:res-term-0')}</section>`;
 }
 
 SCREENS.mymaterials = async () => {
@@ -1450,6 +1497,257 @@ SCREENS.noticesAdmin = async () => {
     ${card('All notices', null, table(['Title', 'Shown to', 'From', 'To', 'State', ''], list.map(n => ({ cells: [inLang(n.titleEn, n.titleAr), title(n.audience), fmt(n.startsAt), fmt(n.endsAt), state(n), html`<button class="btn btn-sm btn-danger" data-act="removeNotice" data-id="${n.id}" data-confirm="Remove this notice?">Remove</button>`] }))))}`);
 };
 
+// =============================================================== classroom: homework, quizzes (Assessments), chat, class notices
+const isTeacherRole = () => !!S.me && ['TEACHER', 'COORDINATOR'].includes(S.me.role);
+/** The sections and subjects this teacher teaches, so every choice in a form is allowed. */
+async function myPairs() {
+  const sections = await get('/api/academic/sections');
+  return (await Promise.all(sections.map(async s => (await get(`/api/academic/sections/${s.id}/assignments`).catch(() => []))
+    .filter(a => a.teacherId === S.me.id).map(a => ({ value: s.id + '|' + a.subjectId, label: sectionLabel(s) + ' · ' + a.subject, sectionId: s.id, section: sectionLabel(s) }))))).flat();
+}
+const weekStart = d => { const x = toDate(d || new Date()); x.setDate(x.getDate() - x.getDay()); return isoLocal(x); };   // the school week starts on Sunday
+const addDays = (d, n) => { const x = toDate(d); x.setDate(x.getDate() + n); return isoLocal(x); };
+const nextSchoolDay = () => { const x = new Date(); do { x.setDate(x.getDate() + 1); } while (x.getDay() > 4); return isoLocal(x); };
+const SUBJ_COLOURS = ['#8f2447', '#2563eb', '#14633b', '#b7791f', '#7c3aed', '#0e7490', '#c2410c', '#be185d'];
+const subjColour = name => { let h = 0; for (const c of String(name || '')) h = (h * 31 + c.charCodeAt(0)) >>> 0; return SUBJ_COLOURS[h % SUBJ_COLOURS.length]; };
+
+// ---- homework: one column per school day, each piece of homework under the day it is due
+SCREENS.homework = async (arg, q) => {
+  const teacher = isTeacherRole();
+  if (S.me.role === 'STUDENT') { const st = await get('/api/enrol/status'); if (!st.section) return waitingPage(st); }
+  const today = isoLocal(new Date());
+  const from = weekStart(q.get('w') || today), to = addDays(from, 6);
+  const [list, pairs] = await Promise.all([get(`/api/homework?from=${from}&to=${to}`), teacher ? myPairs() : Promise.resolve([])]);
+  const days = [0, 1, 2, 3, 4].map(i => addDays(from, i));
+  [5, 6].forEach(i => { const d = addDays(from, i); if (list.some(h => h.dueOn === d)) days.push(d); });
+  const subjects = [...new Set(list.map(h => h.subject))].sort();
+  const item = h => html`<article class="hw-item ${h.done ? 'hw-isdone' : ''}" style="--c:${subjColour(h.subject)}"><div class="hw-item-top"><span class="hw-subj">${h.subject}</span>${teacher ? html`<span class="hw-tag">${'Class'} ${h.section}</span>` : ''}${h.children && h.children.length ? html`<span class="hw-tag">${h.children.join(', ')}</span>` : ''}</div>
+    <b>${raw(esc(h.title))}</b>${h.details ? html`<p>${raw(esc(h.details))}</p>` : ''}<small>${teacher ? html`${'Set on'} ${fmtDate(h.createdAt)}` : h.teacher}</small>
+    ${S.me.role === 'STUDENT' ? html`<button type="button" class="hw-done ${h.done ? 'on' : ''}" data-act="homeworkDone" data-id="${h.id}" data-done="${h.done ? '1' : ''}" aria-pressed="${h.done}">${h.done ? '✓ Done' : 'Mark as done · +5 points'}</button>`
+      : S.me.role === 'PARENT' ? (h.done ? html`<span class="hw-donetag">✓ Done</span>` : '')
+      : teacher ? html`<span class="hw-count"><b>${h.doneCount}</b> / ${h.classSize} ${'done'}</span>` : ''}
+    ${h.mine ? html`<button type="button" class="hw-del" data-act="removeHomework" data-id="${h.id}" data-confirm="Remove this homework?" aria-label="Remove homework">×</button>` : ''}</article>`;
+  const dayCol = d => {
+    const items = list.filter(h => h.dueOn === d);
+    return html`<section class="hw-day ${d === today ? 'hw-today' : ''} ${d < today ? 'hw-past' : ''}"><header><span>${toDate(d).toLocaleDateString(uiLocale(), { weekday: 'long' })}</span><b>${fmtDayShort(d)}</b>${d === today ? html`<em>Today</em>` : ''}<i title="Homework due">${items.length}</i></header>
+      <div class="hw-items">${items.length ? items.map(item) : html`<div class="hw-none">No homework due</div>`}</div></section>`;
+  };
+  const weekNav = html`<div class="hw-nav"><a class="btn btn-sm" href="#/homework?w=${addDays(from, -7)}">← Previous week</a><b>${fmtDayShort(from)} – ${fmtDate(addDays(from, 4))}</b><a class="btn btn-sm" href="#/homework?w=${addDays(from, 7)}">Next week →</a>${from !== weekStart(today) ? html`<a class="btn btn-sm btn-quiet" href="#/homework">This week</a>` : ''}</div>`;
+  const summary = html`<div class="hw-sum"><span class="hw-total"><b>${count(list.length, 'homework')}</b> ${'this week'}</span>${subjects.map(s => html`<span class="hw-chip" style="--c:${subjColour(s)}">${s} · ${list.filter(h => h.subject === s).length}</span>`)}</div>`;
+  const form = !teacher ? '' : card('Set homework', 'The class and their parents see it on their daily schedule, under the day it is due.', pairs.length ? html`<form data-form="homework" class="hw-form">
+      ${field('Class and subject', html`<select name="pair">${pairs.map(m => html`<option value="${m.value}">${m.label}</option>`)}</select>`)}
+      ${field('Due on', html`<input type="date" name="dueOn" value="${nextSchoolDay()}" required>`)}
+      ${field('Title', html`<input name="title" maxlength="200" required placeholder="e.g. Exercise 4, page 32">`)}
+      ${field('Details (optional)', html`<textarea name="details" rows="2" maxlength="4000" placeholder="What to do, what to bring"></textarea>`)}
+      <button class="btn btn-primary">Set homework</button></form>` : empty('You are not assigned to a section and subject yet.'));
+  return page('Homework', teacher ? 'What you have set, day by day, by the date it is due.' : S.me.role === 'PARENT' ? "Your children's homework for every subject, day by day." : 'Your homework for every subject, day by day, by the date it is due.',
+    html`${form}${card('Daily schedule', 'Sunday to Thursday', html`${weekNav}${summary}<div class="hw-week">${days.map(dayCol)}</div>`)}`);
+};
+
+// ---- quizzes ("Assessments"): the teacher builds them, the student takes them and is marked at once
+const pctOf = (s, t) => t ? Math.round(s * 100 / t) : 0;
+const quizGrade = p => p >= 90 ? ['Excellent', 'good'] : p >= 75 ? ['Very good', 'good'] : p >= 60 ? ['Good', 'watch'] : p >= 50 ? ['Pass', 'watch'] : ['Keep practising', 'bad'];
+function quizQuestionBlock() {
+  const k = (S.qzSeq = (S.qzSeq || 0) + 1);
+  return html`<div class="qz-q" data-k="${k}" data-kind="CHOICE"><div class="qz-q-head"><b class="qz-num">Question</b>
+      <select class="input qz-kind" name="k${k}" aria-label="Type of question"><option value="CHOICE">Multiple choice</option><option value="TRUEFALSE">True or false</option><option value="SHORT">Short answer</option></select>
+      <button type="button" class="btn btn-sm btn-quiet" data-act="removeQuestion">Remove</button></div>
+    ${field('Question', html`<textarea name="p${k}" rows="2" maxlength="1000" required></textarea>`)}
+    <div class="qz-opts qz-for-choice">${[0, 1, 2, 3].map(j => html`<label class="qz-opt"><input type="radio" name="c${k}" value="${j}" ${j === 0 ? raw('checked') : ''} title="Correct answer"><input class="input" name="o${k}_${j}" maxlength="300" placeholder="${j < 2 ? 'Answer' : 'Answer (optional)'}" ${j < 2 ? raw('required') : ''}></label>`)}
+      <small class="muted">Tick the circle next to the correct answer.</small></div>
+    <div class="qz-tf qz-for-tf"><label class="qz-choice"><input type="radio" name="t${k}" value="0" checked><span>True</span></label><label class="qz-choice"><input type="radio" name="t${k}" value="1"><span>False</span></label><small class="muted">Tick the correct one.</small></div>
+    <div class="qz-for-short">${field('Accepted answers, one per line', html`<textarea name="a${k}" rows="2" maxlength="1000" placeholder="e.g. Doha"></textarea>`)}<small class="muted">Capitals, extra spaces and a full stop at the end do not matter.</small></div>
+    ${field('Explanation of the correct answer', html`<textarea name="e${k}" rows="2" maxlength="2000" placeholder="Shown to the student after they send the quiz"></textarea>`)}</div>`;
+}
+function renumberQuestions() { document.querySelectorAll('#qzQuestions .qz-num').forEach((b, i) => { b.textContent = trText('Question') + ' ' + (i + 1); }); }
+function readQuestions(form) {
+  return [...form.querySelectorAll('.qz-q')].map(q => {
+    const k = q.dataset.k, kind = form.elements['k' + k].value, prompt = form.elements['p' + k].value.trim(), explanation = form.elements['e' + k].value.trim();
+    if (kind === 'SHORT') return { prompt, kind, options: [], correctIndex: -1, accepted: form.elements['a' + k].value, explanation };
+    if (kind === 'TRUEFALSE') return { prompt, kind, options: ['True', 'False'], correctIndex: Number((q.querySelector(`input[name="t${k}"]:checked`) || {}).value || 0), explanation };
+    const chosen = Number((q.querySelector(`input[name="c${k}"]:checked`) || {}).value), opts = [];
+    let correct = -1;
+    [0, 1, 2, 3].forEach(j => { const v = form.elements[`o${k}_${j}`].value.trim(); if (v) { if (j === chosen) correct = opts.length; opts.push(v); } });
+    return { prompt, kind, options: opts, correctIndex: correct, explanation };
+  });
+}
+
+SCREENS.quizzes = async (arg) => {
+  if (S.me.role === 'STUDENT') { const st = await get('/api/enrol/status'); if (!st.section) return waitingPage(st); }
+  if (arg) return quizPage(arg);
+  const list = await get('/api/quizzes');
+  if (isTeacherRole()) {
+    const pairs = await myPairs();
+    const form = pairs.length ? html`<form data-form="quiz" class="qz-form">
+      <div class="qz-grid">${field('Class and subject', html`<select name="pair">${pairs.map(m => html`<option value="${m.value}">${m.label}</option>`)}</select>`)}${field('Title', html`<input name="title" required maxlength="200" placeholder="e.g. Fractions check">`)}</div>
+      ${field('Source material', html`<textarea name="sourceMaterial" rows="3" maxlength="4000" placeholder="The chapter, pages or text the questions come from"></textarea>`)}
+      ${field('Link to the material (optional)', html`<input type="url" name="sourceLink" placeholder="https://…">`)}
+      <div id="qzQuestions">${quizQuestionBlock()}</div>
+      <div class="row qz-actions"><button type="button" class="btn" data-act="addQuestion">+ Add question</button><button class="btn btn-primary">Publish quiz</button></div></form>` : empty('You are not assigned to a section and subject yet.');
+    return page('Assessments', 'Build a quiz from your material. Students get their grade and the explanations as soon as they send it.',
+      html`${card('New quiz', 'Write each question, its answers, tick the correct one and explain why.', form)}
+      ${card('Your quizzes', null, table(['Quiz', 'Class', 'Subject', 'Questions', 'Taken by', 'Average', ''], list.map(z => ({ go: '#/quizzes/' + z.id,
+        cells: [html`<b>${z.title}</b>`, z.section, z.subject, z.questions, z.attempts, z.averagePercent == null ? '—' : z.averagePercent + '%', html`<button class="btn btn-sm btn-danger" data-act="removeQuiz" data-id="${z.id}" data-confirm="Remove this quiz and its results?">Remove</button>`] }))))}`);
+  }
+  const todo = list.filter(z => !z.taken), done = list.filter(z => z.taken);
+  const avg = done.length ? Math.round(done.reduce((a, z) => a + pctOf(z.score, z.total), 0) / done.length) : null;
+  const tile = z => { const p = pctOf(z.score, z.total), tone = quizGrade(p)[1];
+    return html`<a class="qz-card ${z.taken ? 'qz-done' : ''}" href="#/quizzes/${z.id}" style="--c:${subjColour(z.subject)}"><span class="qz-subj">${z.subject}</span><b>${raw(esc(z.title))}</b><small>${z.teacher} · ${count(z.questions, 'question')} · ${fmtDate(z.createdAt)}</small>${z.taken ? html`<span class="qz-score qz-${tone}">${z.score}/${z.total} · ${p}%</span>` : html`<span class="qz-go">Start quiz →</span>`}</a>`; };
+  return page('Assessments', 'Quizzes from your teachers. You get your grade and the explanations as soon as you send your answers.',
+    html`<section class="sp-kpis qz-kpis">${spKpi('brand', 'list', todo.length, 'Waiting for you', '', todo.length ? 'scroll:qz-todo' : '')}${spKpi('good', 'check', done.length, 'Completed', '', done.length ? 'scroll:qz-done' : '')}${spKpi('watch', 'star', avg == null ? '—' : avg + '%', 'Average score', '', done.length ? 'scroll:qz-done' : '')}</section>
+    ${spCard('star', 'To do', todo.length ? html`<div class="qz-cards">${todo.map(tile)}</div>` : empty('No quiz is waiting for you.'), '', 'qz-todo')}
+    ${spCard('check', 'Completed', done.length ? html`<div class="qz-cards">${done.map(tile)}</div>` : empty('Quizzes you finish appear here with your grade.'), '', 'qz-done')}`);
+};
+
+async function quizPage(id) {
+  const d = await get('/api/quizzes/' + id), z = d.quiz;
+  const sub = html`${z.subject} · ${z.section ? html`${'Class'} ${z.section} · ` : ''}${z.teacher} · ${count(z.questions, 'question')}`;
+  const source = d.sourceMaterial || d.sourceLink ? card('Source material', null, html`${d.sourceMaterial ? html`<p class="qz-src">${d.sourceMaterial}</p>` : ''}${d.sourceLink ? html`<a href="${d.sourceLink}" target="_blank" rel="noopener noreferrer">${openWord()} →</a>` : ''}`) : '';
+  const back = html`<a class="btn" href="#/quizzes">Back</a>`;
+  const student = !z.mine;
+  const review = html`<div class="qz-review">${d.questions.map(q => {
+    const right = q.right != null ? q.right : q.chosen === q.correctIndex, none = q.kind === 'SHORT' ? !(q.written || '').trim() : q.chosen == null || q.chosen < 0;
+    return html`<div class="qz-rq ${student ? (right ? 'ok' : 'no') : ''}"><div class="qz-rq-h"><span class="qz-n">${q.number}</span><b>${q.prompt}</b>${student ? html`<span class="qz-mark">${right ? '✓ Correct' : none ? 'No answer' : '✗ Not quite'}</span>` : ''}</div>
+      ${q.kind === 'SHORT' ? html`<ul>${student ? html`<li class="${right ? 'right' : 'wrong'}"><span>${q.written || '—'}</span><em>Your answer</em></li>` : ''}<li class="right"><span>${(q.accepted || '').split('\n').join(' · ')}</span><em>Accepted answers</em></li></ul>`
+        : html`<ul>${q.options.map((o, j) => html`<li class="${j === q.correctIndex ? 'right' : ''} ${student && j === q.chosen && j !== q.correctIndex ? 'wrong' : ''}"><span>${o}</span>${j === q.correctIndex ? html`<em>Correct answer</em>` : student && j === q.chosen ? html`<em>Your answer</em>` : ''}</li>`)}</ul>`}
+      ${q.explanation ? html`<div class="qz-why"><b>Explanation</b><p>${q.explanation}</p></div>` : ''}</div>`;
+  })}</div>`;
+  if (z.mine) {
+    const avg = d.attempts.length ? Math.round(d.attempts.reduce((a, r) => a + pctOf(r.score, r.total), 0) / d.attempts.length) : null;
+    return page(z.title, sub, html`${source}
+      ${card('Results', d.attempts.length ? (I18N.lang === 'ar' ? 'أدّاه ' + count(d.attempts.length, 'student') : count(d.attempts.length, 'student') + ' took it') + (avg == null ? '' : ' · average ' + avg + '%') : null,
+        d.attempts.length ? table(['Student', 'Score', 'Percent', 'Sent'], d.attempts.map(r => { const p = pctOf(r.score, r.total); return { cells: [r.student, r.score + ' / ' + r.total, badge('b-' + quizGrade(p)[1], p + '%'), fmt(r.submittedAt)] }; })) : empty('Nobody has taken it yet.'))}
+      ${card('Questions and answers', 'The correct answer is marked in green.', review)}`,
+      html`<button class="btn btn-danger" data-act="removeQuiz" data-id="${z.id}" data-confirm="Remove this quiz and its results?">Remove</button>${back}`);
+  }
+  if (!z.taken) {
+    return page(z.title, sub, html`${source}${spCard('star', 'Your answers', html`<form data-form="takeQuiz" data-id="${id}" data-questions="${d.questions.length}" class="qz-take">
+      ${d.questions.map((q, i) => html`<fieldset class="qz-tq"><legend><span class="qz-n">${q.number}</span><span>${q.prompt}</span></legend><div class="qz-choices">${q.kind === 'SHORT' ? html`<input class="input qz-written" name="w${i}" maxlength="300" autocomplete="off" placeholder="Your answer">` : q.options.map((o, j) => html`<label class="qz-choice"><input type="radio" name="a${i}" value="${j}"><span>${o}</span></label>`)}</div></fieldset>`)}
+      <div class="qz-sendbar"><span class="muted">You can send it once. Your grade appears straight away.</span><button class="btn btn-primary">Send my answers</button></div></form>`)}`, back);
+  }
+  const p = pctOf(z.score, z.total), [label, tone] = quizGrade(p), fresh = S.quizJustDone === id, C = 2 * Math.PI * 52;
+  S.quizJustDone = null;
+  const hero = html`<section class="qz-result qz-${tone} ${fresh ? 'qz-fresh' : ''}"><div class="qz-ring"><svg viewBox="0 0 120 120" aria-hidden="true"><circle cx="60" cy="60" r="52" class="bg"/><circle cx="60" cy="60" r="52" class="fg" style="--len:${C.toFixed(1)};--off:${(C * (1 - p / 100)).toFixed(1)}"/></svg><div><b data-count="${p}" data-suffix="%">${p}%</b><span>${z.score} / ${z.total}</span></div></div>
+    <div class="qz-result-t"><small>Your grade</small><h2>${label}</h2><p>${I18N.lang === 'ar' ? `أجبت إجابة صحيحة عن ${z.score} من ${z.total} أسئلة.` : `You answered ${z.score} of ${z.total} questions correctly.`} <span>Read the explanations below to see why each answer is right.</span></p></div></section>`;
+  return page(z.title, sub, html`${hero}${source}${spCard('check', 'Answers and explanations', review)}`, back);
+}
+
+// ---- chat with the teacher
+SCREENS.chat = async (arg) => {
+  const contacts = await get('/api/chat');
+  const id = arg && contacts.some(c => c.id === arg) ? arg : null;
+  S.chatWith = id;
+  const teacher = isTeacherRole();
+  const items = contacts.map(c => html`<a class="ch-contact ${c.id === id ? 'on' : ''}" href="#/chat/${c.id}" data-name="${(c.name + ' ' + c.about).toLowerCase()}"><span class="ch-av">${initialsOf(c.name)}</span><span class="ch-c-t"><b>${c.name}</b><small>${c.about}</small>${c.lastText ? html`<em>${raw(esc(c.lastText))}</em>` : ''}</span>${c.unread ? html`<span class="count">${c.unread}</span>` : c.lastAt ? html`<time>${fmtDayShort(c.lastAt)}</time>` : ''}</a>`);
+  const right = id ? html`<div class="ch-thread" id="chatThread" data-id="${id}"><p class="muted" style="padding:20px">Loading…</p></div>`
+    : html`<div class="ch-pick"><span class="sp-ic sp-ic-soft">${sIc('users')}</span><b>${contacts.length ? 'Choose someone to write to' : 'Nobody to write to yet'}</b><span>${teacher ? 'Your students and their parents are listed on the left.' : contacts.length ? 'Your teachers are listed with the subjects they teach.' : 'Your teachers appear here once you are in a class.'}</span></div>`;
+  return page(teacher ? 'Messages' : 'Chat with teachers', teacher ? 'Write to the students you teach and to their parents.' : S.me.role === 'PARENT' ? "Write to your children's teachers." : 'Ask your teachers a question.',
+    html`<div class="ch ${id ? 'ch-open' : ''}"><aside class="ch-list">${contacts.length > 6 ? html`<input class="input ch-filter" id="chFilter" type="search" placeholder="Find a person" autocomplete="off">` : ''}<div class="ch-items">${contacts.length ? items : empty('Nobody yet.')}</div></aside><section class="ch-main">${right}</section></div>`);
+};
+
+/** Draws the conversation. full: the whole panel (header, messages, box); otherwise only new messages, so typing is never lost. */
+async function drawThread(id, full) {
+  const box = document.getElementById('chatThread');
+  if (!box || box.dataset.id !== id) return;
+  const t = await get('/api/chat/' + id);
+  if (!document.getElementById('chatThread') || box.dataset.id !== id) return;
+  let lastDay = '';
+  const msgs = t.messages.length ? t.messages.map(m => {
+    const day = toDate(m.at).toDateString(), sep = day !== lastDay ? html`<div class="ch-day"><span>${fmtDay(m.at)}</span></div>` : '';
+    lastDay = day;
+    return html`${sep}<div class="ch-m ${m.mine ? 'me' : ''}"><p>${raw(esc(m.body))}</p><time>${toDate(m.at).toLocaleTimeString(uiLocale(), { hour: '2-digit', minute: '2-digit' })}</time></div>`;
+  }) : html`<div class="ch-first">${I18N.lang === 'ar' ? 'ابدأ المحادثة مع ' + t.with.name + '.' : 'Say hello to ' + t.with.name + '.'}</div>`;
+  const list = document.getElementById('chatMsgs');
+  if (full || !list) {
+    const w = t.with;
+    box.innerHTML = html`<header class="ch-head"><a class="ch-back" href="#/chat" aria-label="Back">←</a><span class="ch-av">${initialsOf(w.name)}</span><div><b>${w.name}</b><small>${ROLE_LABEL[w.role] || ''}${w.about ? ' · ' + w.about : ''}</small></div></header>
+      <div class="ch-msgs" id="chatMsgs" data-n="${t.messages.length}">${msgs}</div>
+      <form data-form="chat" data-id="${id}" class="ch-send"><textarea name="body" rows="2" maxlength="2000" placeholder="Write a message. Enter sends, Shift+Enter starts a new line." required></textarea><button class="btn btn-primary">Send</button></form>`.s;
+  } else if (Number(list.dataset.n) !== t.messages.length) {
+    list.innerHTML = html`${msgs}`.s; list.dataset.n = t.messages.length;
+  } else return;
+  const l = document.getElementById('chatMsgs'); if (l) l.scrollTop = l.scrollHeight;
+  const c = document.querySelector(`.ch-contact[href="#/chat/${id}"] .count`); if (c) c.remove();
+  refreshChat();
+}
+setInterval(() => { if (S.me && S.route === 'chat' && S.chatWith && !document.hidden) drawThread(S.chatWith, false).catch(() => { }); }, 8000);
+document.addEventListener('keydown', e => {
+  if (e.key === 'Enter' && !e.shiftKey && e.target.matches && e.target.matches('.ch-send textarea')) { e.preventDefault(); e.target.form.requestSubmit(); }
+});
+document.addEventListener('input', e => {
+  if (e.target.id !== 'chFilter') return;
+  const v = e.target.value.trim().toLowerCase();
+  document.querySelectorAll('.ch-contact').forEach(a => { a.hidden = !!v && !a.dataset.name.includes(v); });
+});
+
+// ---- class notices: a teacher writes to one class; it shows at the top of their students' and parents' home page
+const noticeWho = n => n.sectionId ? html`${n.author ? html`${raw(esc(n.author))} · ` : ''}${'Class'} ${n.section}` : n.audience === 'ALL' ? 'Everyone' : title(n.audience);
+function classNoticeBanners(notices) {
+  const list = (notices || []).filter(n => n.sectionId);
+  if (!list.length) return '';
+  return html`<div class="cn-banners">${list.map(n => html`<section class="cn-banner"><i class="cn-glow"></i><span class="sp-ic cn-ic">${sIc('megaphone')}</span><div class="cn-text"><small>${'Class notice'} · ${n.author ? html`${raw(esc(n.author))} · ` : ''}${'Class'} ${n.section}</small><b>${say(n.titleEn, n.titleAr)}</b><p>${say(n.bodyEn, n.bodyAr)}</p></div><span class="cn-until">${'Until'} ${fmtDate(n.endsAt)}</span></section>`)}</div>`;
+}
+SCREENS.classNotices = async () => {
+  const [mine, pairs] = await Promise.all([get('/api/notices/class'), myPairs()]);
+  const sections = [...new Map(pairs.map(p => [p.sectionId, p.section])).entries()];
+  const now = Date.now();
+  const state = n => new Date(n.endsAt) <= now ? badge('b-neutral', 'Ended') : badge('b-good', 'Showing');
+  const endDefault = addDays(isoLocal(new Date()), 7) + 'T15:00';
+  return page('Class notices', 'A notice for one of your classes appears at the top of the home page of its students and their parents, beside the exam banner.',
+    html`${card('New class notice', null, sections.length ? html`<form data-form="classNotice">
+      ${field('Class', html`<select name="sectionId">${sections.map(([sid, l]) => html`<option value="${sid}">${l}</option>`)}</select>`)}
+      ${field('Title', html`<input name="titleEn" required maxlength="200" placeholder="e.g. Bring your geometry set tomorrow">`)}
+      ${field('Message', html`<textarea name="bodyEn" required maxlength="4000"></textarea>`)}
+      <details class="cn-ar"><summary>Arabic version (optional)</summary>${field('Title (Arabic)', html`<input name="titleAr" dir="rtl" maxlength="200">`)}${field('Message (Arabic)', html`<textarea name="bodyAr" dir="rtl" maxlength="4000"></textarea>`)}</details>
+      ${field('Show until', html`<input type="datetime-local" name="endsAt" value="${endDefault}" required>`)}
+      <button class="btn btn-primary">Publish to the class</button></form>` : empty('You are not assigned to a class yet.'))}
+    ${card('Your class notices', null, table(['Title', 'Class', 'From', 'Until', 'State', ''], mine.map(n => ({ cells: [inLang(n.titleEn, n.titleAr), n.section, fmt(n.startsAt), fmt(n.endsAt), state(n), html`<button class="btn btn-sm btn-danger" data-act="removeClassNotice" data-id="${n.id}" data-confirm="Remove this notice?">Remove</button>`] }))))}`);
+};
+
+// ---- points progression on the student's home page: levels that never run out. Every LEVEL_POINTS points is a new
+//      level; the ring and the track show the way through the current level, then start again for the next one.
+const LEVEL_POINTS = 50;
+const LEVEL_COLOURS = ['#5f9a6e', '#b0702a', '#7d8899', '#c99a0e', '#1f8a9e', '#7c3aed', '#c2410c', '#be185d'];
+const levelOf = total => {
+  const level = Math.floor(total / LEVEL_POINTS) + 1, start = (level - 1) * LEVEL_POINTS, into = total - start;
+  return { level, start, end: start + LEVEL_POINTS, into, pct: Math.round(into * 100 / LEVEL_POINTS), colour: LEVEL_COLOURS[(level - 1) % LEVEL_COLOURS.length] };
+};
+function pointsProgress(v) {
+  const total = Math.max(0, v.total || 0), L = levelOf(total), left = L.end - total;
+  const weekAgo = Date.now() - 7 * 864e5, week = (v.entries || []).filter(e => toDate(e.on).getTime() >= weekAgo).reduce((a, e) => a + e.amount, 0);
+  // a level reached since the student last looked gets a small celebration
+  let up = false;
+  try { const k = 'hafez.level.' + S.me.id, seen = Number(localStorage.getItem(k) || 0); up = seen > 0 && L.level > seen; localStorage.setItem(k, String(L.level)); } catch { }
+  const C = 2 * Math.PI * 46;
+  const star = html`<svg viewBox="0 0 24 24" aria-hidden="true"><path d="${SPI.star}"/></svg>`;
+  const ticks = [1, 2, 3, 4].map(k => html`<span class="pp-stop ${L.into >= k * 10 ? 'on' : ''}" style="--x:${k * 20}%;--c:${L.colour}" title="${L.start + k * 10}"></span>`);
+  const ways = [['Homework done', '+' + 5], ['Quiz taken', '+2 to +10'], ['Exam result', 'up to +10']];
+  return html`<section class="pp ${up ? 'pp-up' : ''}" style="--lv:${L.colour}" aria-label="${'Points: ' + total + ', level ' + L.level}"><i class="pp-glow"></i>
+    ${up ? html`<div class="pp-burst" aria-hidden="true">${[...Array(14)].map((_, k) => html`<i style="--a:${k * 360 / 14}deg;--c:${LEVEL_COLOURS[k % LEVEL_COLOURS.length]}"></i>`)}</div>` : ''}
+    <div class="pp-ring"><svg viewBox="0 0 110 110" aria-hidden="true"><circle class="bg" cx="55" cy="55" r="46"/><circle class="fg" cx="55" cy="55" r="46" style="--len:${C.toFixed(1)};--off:${(C * (1 - L.pct / 100)).toFixed(1)}"/></svg>
+      <div><b data-count="${total}">${total}</b><span>points</span></div><i class="pp-spark s1"></i><i class="pp-spark s2"></i><i class="pp-spark s3"></i></div>
+    <div class="pp-main"><div class="pp-top"><span class="pp-badge">${star}<span>${'Level'} ${L.level}</span></span>${up ? html`<span class="pp-new">Level up!</span>` : ''}${week ? html`<span class="pp-week">+${week} ${'this week'}</span>` : ''}</div>
+      <h2>${I18N.lang === 'ar' ? `${count(left, 'point')} للوصول إلى المستوى ${L.level + 1}` : `${count(left, 'point')} to Level ${L.level + 1}`}</h2>
+      <p>Earn points by finishing your homework, taking quizzes and doing well in exams.</p>
+      <div class="pp-track"><div class="pp-fill" style="--w:${L.pct}%"></div>${ticks}<span class="pp-runner" style="--w:${L.pct}%">${star}</span></div>
+      <div class="pp-ends"><span><b>${'Level'} ${L.level}</b><small>${L.start}</small></span><span><b>${'Level'} ${L.level + 1}</b><small>${L.end}</small></span></div>
+      <div class="pp-ways">${ways.map(([w, n]) => html`<span><b>${n}</b> ${w}</span>`)}</div></div></section>`;
+}
+
+/** After a screen is drawn: count numbers up, number the quiz questions, load an open chat. */
+function afterRender() {
+  const still = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  document.querySelectorAll('[data-count]').forEach(el => {
+    const to = Number(el.dataset.count) || 0, suf = el.dataset.suffix || '';
+    if (still || !to) { el.textContent = to + suf; return; }
+    const t0 = performance.now(), dur = 1400;
+    const step = t => { const k = Math.min(1, (t - t0) / dur), e = 1 - Math.pow(1 - k, 3); el.textContent = Math.round(to * e) + suf; if (k < 1) requestAnimationFrame(step); };
+    el.textContent = '0' + suf; requestAnimationFrame(step);
+  });
+  if (document.getElementById('qzQuestions')) renumberQuestions();
+  if (S.route === 'chat' && S.chatWith) drawThread(S.chatWith, true).catch(fail);
+}
+
 // =============================================================== actions (buttons)
 async function refreshAfter(msg) { if (msg) toast(msg); await render(); }
 const ACT = {
@@ -1466,6 +1764,18 @@ const ACT = {
     if (S.me) await render(); else showLanding();
   },
   scrollTo: d => { const el = document.getElementById(d.target); if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' }); },
+  // test sign-in: pressing a person signs in as them, with their role
+  testPick: async d => { await post('/api/auth/test/pick', { id: d.id }); afterAuth(); },
+  kpiScroll: d => { const el = document.getElementById(d.target); if (!el) return; el.scrollIntoView({ behavior: 'smooth', block: 'center' }); el.classList.remove('kpi-glow'); void el.offsetWidth; el.classList.add('kpi-glow'); },
+  addQuestion: () => { const box = document.getElementById('qzQuestions'); if (box) { box.insertAdjacentHTML('beforeend', quizQuestionBlock().s); renumberQuestions(); } },
+  removeQuestion: (d, el) => { const q = el.closest('.qz-q'); if (q && document.querySelectorAll('#qzQuestions .qz-q').length > 1) { q.remove(); renumberQuestions(); } },
+  homeworkDone: async d => {
+    if (d.done) { await del(`/api/homework/${d.id}/done`); await refreshAfter('Marked as not done. Its points were taken back.'); }
+    else { await post(`/api/homework/${d.id}/done`); await refreshAfter('Well done! +5 points.'); }
+  },
+  removeHomework: async d => { await del('/api/homework/' + d.id); await refreshAfter('Homework removed.'); },
+  removeQuiz: async d => { await del('/api/quizzes/' + d.id); location.hash = '#/quizzes'; await refreshAfter('Quiz removed.'); },
+  removeClassNotice: async d => { await del('/api/notices/' + d.id); await refreshAfter('Notice removed.'); },
   spSubject: (d, t) => {
     const card = t.closest('.sp-card');
     card.querySelectorAll('.sp-tabs button').forEach(b => b.classList.toggle('on', b === t));
@@ -1593,7 +1903,19 @@ const FORM = {
   term: async f => { await put('/api/academic/terms', { number: Number(f.number), name: f.name, startsOn: f.startsOn, endsOn: f.endsOn }); await refreshAfter('Term saved.'); },
   section: async f => { await post('/api/academic/sections', { grade: Number(f.grade), name: f.name }); await refreshAfter('Section added.'); },
   testSignin: async f => { await post('/api/auth/test/signin', { name: f.name }); afterAuth(); },
-  testPick: async d => { await post('/api/auth/test/pick', { id: d.id }); afterAuth(); },
+  homework: async f => { const [sectionId, subjectId] = f.pair.split('|'); await post('/api/homework', { sectionId, subjectId, title: f.title, details: f.details || '', dueOn: f.dueOn }); location.hash = '#/homework?w=' + weekStart(f.dueOn); await refreshAfter('Homework set. The class and their parents can see it.'); },
+  classNotice: async f => { await post('/api/notices/class', { sectionId: f.sectionId, titleEn: f.titleEn, titleAr: f.titleAr || null, bodyEn: f.bodyEn, bodyAr: f.bodyAr || null, startsAt: null, endsAt: new Date(f.endsAt).toISOString() }); await refreshAfter('Notice published. It shows at the top of the class\'s and their parents\' home page.'); },
+  quiz: async (f, d, form) => { const [sectionId, subjectId] = f.pair.split('|'); const r = await post('/api/quizzes', { sectionId, subjectId, title: f.title, sourceMaterial: f.sourceMaterial || '', sourceLink: f.sourceLink || null, questions: readQuestions(form) }); toast('Quiz published to the class.'); location.hash = '#/quizzes/' + r.quiz.id; },
+  takeQuiz: async (f, d, form) => {
+    const n = Number(d.questions), answers = [];
+    const written = [];
+    for (let i = 0; i < n; i++) { const c = form.querySelector(`input[name="a${i}"]:checked`), w = form.elements['w' + i]; answers.push(c ? Number(c.value) : -1); written.push(w ? w.value : ''); }
+    const missing = answers.filter((a, i) => a < 0 && !written[i].trim()).length;
+    if (missing && !confirm(I18N.lang === 'ar' ? `${count(missing, 'question')} بلا إجابة. هل تريد الإرسال؟` : (missing === 1 ? 'One question has no answer. Send anyway?' : missing + ' questions have no answer. Send anyway?'))) return;
+    await post(`/api/quizzes/${d.id}/submit`, { answers, written });
+    S.quizJustDone = d.id; await render();
+  },
+  chat: async (f, d, form) => { if (!f.body.trim()) return; await post('/api/chat/' + d.id, { body: f.body }); form.reset(); await drawThread(d.id, true); },
   login: async f => { await post('/api/auth/login', { email: f.email, password: f.password }); afterAuth(); },
   redeemStudent: async f => { await post('/api/auth/redeem/student', { code: f.code, password: f.password }); afterAuth(); },
   redeemParent: async f => { await post('/api/auth/redeem/parent', { code: f.code, name: f.name, email: f.email, password: f.password }); afterAuth(); },
@@ -1609,20 +1931,26 @@ const FORM = {
     S.me = await put('/api/me/preferences', { language: f.language, digestMode: f.digestMode, muted });
     setLang(f.language === 'AR' ? 'ar' : 'en'); await refreshAfter('Saved.');
   },
-  arrive: async (f, d) => { await post('/api/pickup/arrive', { studentId: d.student, collectorId: f.collectorId || null }); await refreshAfter('The school has been told you have arrived.'); },
+  arrive: async (f, d, form) => {
+    const who = form.querySelector('input[name=collectorId]:checked'), whoName = who && who.value ? who.closest('label').querySelector('b').textContent : S.me.displayName;
+    if (!(await pickupConfirm(d.name, whoName))) return;
+    await post('/api/pickup/arrive', { studentId: d.student, collectorId: f.collectorId || null, acknowledged: true });
+    await refreshAfter('Picked up. The school can see it now.');
+  },
   collector: async (f, d) => { await post(`/api/pickup/children/${d.student}/collectors`, { name: f.name, relationship: f.relationship, idNumber: f.idNumber, phone: f.phone }); await refreshAfter('Collector added.'); },
   profile: async f => { S.me = await put('/api/me/profile', { displayName: f.displayName, phone: f.phone }); await refreshAfter('Details saved.'); },
   ticket: async (f, d, form) => {
     const file = form.querySelector('[name=attachment]').files[0];
     if (file && file.size > 2 * 1024 * 1024) throw new Error('The attachment is too large (at most 2 MB).');
     const t = await post('/api/support/tickets', { audience: f.audience, title: f.title, description: f.description, category: f.category, urgency: f.urgency, attachmentName: file ? file.name : null, attachmentData: file ? await fileToBase64(file) : null });
-    toast(f.audience === 'LEADERSHIP' ? 'Ticket sent to Leadership at head office.' : 'Ticket sent to your School IT.'); location.hash = '#/ticket/' + t.id;
+    toast(f.audience === 'EAA_IT' ? 'Ticket sent to EAA IT.' : f.audience === 'LEADERSHIP' ? 'Ticket sent to Leadership at head office.' : 'Ticket sent to your School IT.'); location.hash = '#/ticket/' + t.id;
   },
   ticketReply: async (f, d) => { await post(`/api/support/tickets/${d.id}/replies`, { body: f.body }); await refreshAfter('Reply sent.'); },
   ticketAssign: async (f, d) => { await post(`/api/support/tickets/${d.id}/assign`, { assigneeId: f.assigneeId }); await refreshAfter('Assigned.'); }
 };
 
 document.addEventListener('click', async e => {
+  const kp = e.target.closest && e.target.closest('[data-kpi]'); if (kp && kp.getAttribute('href') !== location.hash) S.kpiFlash = true;
   const t = e.target.closest('[data-go],[data-act]');
   if (!t || t.tagName === 'SELECT' || t.tagName === 'OPTION') return;
   if (t.dataset.go) { location.hash = t.dataset.go; return; }
@@ -1703,12 +2031,13 @@ function portalTopbar(initials) {
 const langLabel = () => raw(I18N.lang === 'ar' ? 'English' : 'العربية'); // shown in the other language, never translated
 function shell(route, body) {
   const nav = NAV[S.me.role] || [];
+  route = ({ schoolReport: S.me.role === 'LEADERSHIP' ? 'schools' : 'metrics', investigations: S.me.role === 'PRINCIPAL' ? 'performance' : 'investigations' })[route] || route;
   const initials = (S.me.displayName || '?').split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase();
   const portal = S.me.role === 'STUDENT' || S.me.role === 'PARENT';
   return html`<div class="frame">
-    <aside class="sidebar"><div class="brand"><div class="brand-row"><span class="brand-mark"></span><span class="brand-name">Hafez</span></div><div class="brand-sub"><span class="brand-ar" lang="ar" dir="rtl">حافظ</span></div><div class="brand-tag">School file register</div></div>
+    <aside class="sidebar"><div class="brand brand-eaa"><a href="#/${home()}" class="brand-logo-link" aria-label="Home"><img class="brand-logo" src="app/eaa-logo.png" alt="Assalam School · Education Above All"></a><div class="brand-row"><span class="brand-name">Hafez</span><span class="brand-ar" lang="ar" dir="rtl">حافظ</span></div></div>
       <div class="who">${avatar(initials)}<div><b>${S.me.displayName}</b>${ROLE_LABEL[S.me.role]}${personSite(S.me) ? ' · ' + personSite(S.me) : ''}</div></div>
-      <nav class="nav">${nav.map(([r, label]) => html`<a class="nav-item ${route === r ? 'nav-on' : ''}" href="#/${r}" style="text-decoration:none">${raw(ICON)}<span>${label}</span>${r === 'notifications' && S.unread ? html`<span class="count">${S.unread}</span>` : ''}</a>`)}
+      <nav class="nav">${nav.map(([r, label]) => r === '#' ? html`<div class="nav-group">${label}</div>` : html`<a class="nav-item ${route === r ? 'nav-on' : ''} ${route === r && S.kpiFlash ? 'nav-flash' : ''}" href="#/${r}" style="text-decoration:none">${raw(ICON)}<span>${label}</span>${r === 'notifications' && S.unread ? html`<span class="count">${S.unread}</span>` : ''}${r === 'chat' && S.chatUnread ? html`<span class="count">${S.chatUnread}</span>` : ''}</a>`)}
         <div class="nav-sep"></div><a class="nav-item ${route === 'prefs' ? 'nav-on' : ''}" href="#/prefs" style="text-decoration:none">${raw(ICON)}<span>My preferences</span></a>
         <button class="nav-item nav-lang" data-act="setLang">${raw(ICON)}<span>${langLabel()}</span></button>
         <button class="nav-item" data-act="signout">${raw(ICON)}<span>Sign out</span></button></nav>${loc(portal ? SIDE_HELP : SIDE_SKY)}</aside>
@@ -1732,11 +2061,11 @@ function landingPage() {
   const mock = [['1,248', 'Total files', '#6b1730'], ['342', 'Active users', '#2563eb'], ['98%', 'Compliance', '#14633b'], ['2 min', 'Avg. fix time', '#b7791f']];
   const portals = [['student', 'Student', 'linear-gradient(135deg,#c24a6e,#8f2447)', LD_ICON.cap], ['parent', 'Parent', 'linear-gradient(135deg,#e7a3b6,#a8365c)', LD_ICON.users]];
   return html`<div class="ld" id="ld-top">
-  <nav class="ld-nav"><button type="button" class="ld-logo" data-act="scrollTo" data-target="ld-top"><span></span><b>Hafez</b><i lang="ar">حافظ</i></button>
+  <nav class="ld-nav"><button type="button" class="ld-logo" data-act="scrollTo" data-target="ld-top"><img class="ld-logo-img" src="app/eaa-logo.png" alt=""><b>Hafez</b><i lang="ar">حافظ</i></button>
     <div class="ld-links">${ldGo('ld-features', 'Features')}${ldGo('ld-solution', 'Solution')}${ldGo('ld-signin', 'Sign in')}${ldGo('ld-signin', 'Contact')}</div>
     <button type="button" class="ld-lang" data-act="setLang">${langLabel()}</button>${ldGo('ld-signin', 'Access Hafez →', 'ld-pill')}</nav>
 
-  <section class="ld-hero"><i class="ld-blob b1"></i><i class="ld-blob b2"></i><div class="ld-photo"><img src="app/heritage-school.png" alt="Qatar school campus"></div>
+  <section class="ld-hero"><i class="ld-blob b1"></i><i class="ld-blob b2"></i><div class="ld-photo ld-photo-school" role="img" aria-label="Assalam School, Education Above All"><img class="ld-ph-school" src="app/assalam-school.jpg" alt=""><img class="ld-ph-logo" src="app/eaa-logo.png" alt=""></div>
     <div class="ld-chip ld-chip-a"><span>${ldIc(LIC.shield, 22)}</span><div><b>Read-only</b><div>Your files stay safe</div></div></div>
     <div class="ld-chip ld-chip-b"><span>✓</span><b>Issues fixed in minutes</b></div>
     <svg class="ld-dots" width="120" height="120" aria-hidden="true"><defs><pattern id="dt" width="16" height="16" patternUnits="userSpaceOnUse"><circle cx="2" cy="2" r="2" fill="#c24a6e"/></pattern></defs><rect width="120" height="120" fill="url(#dt)"/></svg>
@@ -1747,7 +2076,7 @@ function landingPage() {
   <section class="ld-feat" id="ld-features"><div>${features.map(([t, d, p]) => html`<div><span>${ldIc(p, 26, 1.8)}</span><div><b>${t}</b><div>${d}</div></div></div>`)}</div></section>
 
   <section class="ld-sol" id="ld-solution"><div class="ld-sol-t"><div class="ld-eyebrow"><span>The Hafez Solution</span><i></i></div><h2>Built for Schools, Designed for Impact</h2><p>Hafez helps your school manage important files with confidence, supporting a safer and more efficient learning environment.</p>${ldGo('ld-signin', 'Discover more →', 'ld-fill')}</div>
-    <div class="ld-win"><div class="ld-win-s"><div><i></i><b>Hafez</b></div><span class="on">Overview</span><span>Incidents</span><span>Rules</span><span>Schools</span><span>Reports</span></div>
+    <div class="ld-win"><div class="ld-win-s"><div><img class="ld-win-logo" src="app/eaa-logo.png" alt=""><b>Hafez</b></div><span class="on">Overview</span><span>Incidents</span><span>Rules</span><span>Schools</span><span>Reports</span></div>
       <div class="ld-win-m"><b>Overview</b><div class="ld-win-k">${mock.map(([v, l, c]) => html`<div><i style="background:${c}"></i><b>${v}</b><span>${l}</span></div>`)}</div>
         <div class="ld-win-a"><b>Recent activity</b><div><span><i style="color:#14633b">●</i> Policy updated by Admin</span><span>2m ago</span></div><div><span><i style="color:#2563eb">●</i> File access granted</span><span>5m ago</span></div></div></div></div></section>
 
@@ -1760,13 +2089,13 @@ function landingPage() {
       <div class="ld-portals">${portals.map(([v, t, g, p]) => html`<button type="button" class="ld-portal" data-act="landing" data-view="${v}" data-mode="login"><span style="background:${g}">${ldIc(p, 28, 1.8)}</span><div><small>PORTAL</small><b>${t}</b><div>Sign in or register</div></div><i aria-hidden="true">→</i></button>`)}</div></div>
     ${L.dev ? html`<p class="ld-dev">Test mode, no e-mail needed: <a href="/dev/login/student?next=/">student</a> · <a href="/dev/login/parent?next=/">parent</a> · <a href="/dev/login">all test roles</a></p>` : ''}</div></section>
 
-  <section class="ld-end"><div><img src="app/heritage-school.png" alt="" aria-hidden="true"><span></span><div><b>Together, we build brighter futures.</b><div>Through innovative solutions like Hafez, schools support quality education for every child.</div></div>${ldGo('ld-top', 'Our impact →', 'ld-fill')}</div></section>
-  <footer class="ld-foot"><span><b>Hafez</b> · School file register</span><span>Qatar · Phase 1</span></footer></div>`;
+  <section class="ld-end"><div><img src="app/assalam-school.jpg" alt="" aria-hidden="true"><span></span><div><b>Together, we build brighter futures.</b><div>Through innovative solutions like Hafez, schools support quality education for every child.</div></div>${ldGo('ld-top', 'Our impact →', 'ld-fill')}</div></section>
+  <footer class="ld-foot"><span><b>Hafez</b> · Assalam Schools · Education Above All</span><span>Qatar</span></footer></div>`;
 }
 
 function signIn(message, dev) {
   if (dev !== undefined) L.dev = !!dev;
-  const logo = html`<div class="brand-row" style="margin-bottom:18px"><span class="brand-mark"></span><span class="brand-name" style="color:var(--ink)">Hafez</span></div>`;
+  const logo = html`<div class="card-logo"><img src="app/eaa-logo.png" alt="Assalam School · Education Above All"><span class="brand-name" style="color:var(--ink)">Hafez</span></div>`;
   if (message) {
     return html`<div class="center-screen"><div class="center-card">${logo}
       <h1 style="margin:0 0 8px;font-size:22px">Your account is not set up yet</h1><p class="muted">${message}</p>
@@ -1775,12 +2104,14 @@ function signIn(message, dev) {
   if (L.view === 'home') return landingPage();
   if (L.view === 'testname') {
     const off = L.testPeople === null;
-    const who = (L.testPeople || []).map(x => html`<button type="button" class="btn btn-sm" data-act="testPick" data-id="${x.id}">${x.name} · ${ROLE_LABEL[x.role] || x.role}</button>`);
-    return html`<div class="center-screen"><div class="center-card landing" style="text-align:start"><button type="button" class="card-lang" data-act="setLang">${langLabel()}</button>${logo}
+    const order = ['STUDENT', 'PARENT', 'TEACHER', 'COORDINATOR', 'PRINCIPAL', 'PRINCIPAL_ASSISTANT', 'ATTENDANCE_OFFICER', 'SCHOOL_IT', 'LEADERSHIP', 'EAA_ADMIN'];
+    const people = (L.testPeople || []).slice().sort((a, b) => (order.indexOf(a.role) - order.indexOf(b.role)) || a.name.localeCompare(b.name));
+    const who = people.map(x => html`<button type="button" class="ts-person" data-act="testPick" data-id="${x.id}"><span class="ts-av">${initialsOf(x.name)}</span><span class="ts-txt"><b>${x.name}</b><small>${ROLE_LABEL[x.role] || x.role}</small></span><i aria-hidden="true">→</i></button>`);
+    return html`<div class="center-screen"><div class="center-card landing ts-card" style="text-align:start"><button type="button" class="card-lang" data-act="setLang">${langLabel()}</button>${logo}
       <h1 style="margin:0 0 8px;font-size:22px">Test sign-in</h1>
-      ${off ? html`<p class="muted" style="color:#8E1B1B">Test sign-in is switched off. Start the app with SIJILL_SIGNIN_TEST_MODE=true to use it.</p>` : html`<p class="muted">For testing only. Type a name, for example Huda, to sign in with that person's role. There is no password.</p>`}
-      <form data-form="testSignin">${field('Name', html`<input class="input" name="name" autocomplete="off" required>`)}<button class="btn btn-primary" style="width:100%">Sign in</button></form>
-      <p class="muted" style="margin:16px 0 8px">Or pick a person:</p><div class="row" style="gap:8px;flex-wrap:wrap">${who}</div>
+      ${off ? html`<p class="muted" style="color:#8E1B1B">Test sign-in is switched off. Start the app with SIJILL_SIGNIN_TEST_MODE=true to use it.</p>` : html`<p class="muted">For testing only. Press a person to sign in with their role. There is no password.</p>`}
+      ${who.length ? html`<div class="ts-grid">${who}</div>` : ''}
+      <details class="ts-type" ${who.length ? '' : raw('open')}><summary>Or type a name</summary><form data-form="testSignin">${field('Name', html`<input class="input" name="name" autocomplete="off" required>`)}<button class="btn btn-primary" style="width:100%">Sign in</button></form></details>
       <p style="margin:18px 0 0"><button class="btn btn-sm" data-act="landing" data-view="home">Back</button></p></div></div>`;
   }
   const student = L.view === 'student', reg = L.mode === 'invite';
@@ -1802,15 +2133,23 @@ function signIn(message, dev) {
 
 function problem(e) {
   const detail = e.status ? `The server answered ${e.status}: ${e.message}` : `The browser could not reach the server (${e.message}). If the app was restarting, try again.`;
-  return html`<div class="center-screen"><div class="center-card"><div class="brand-row" style="margin-bottom:18px"><span class="brand-mark"></span><span class="brand-name" style="color:var(--ink)">Hafez</span></div>
+  return html`<div class="center-screen"><div class="center-card"><div class="card-logo"><img src="app/eaa-logo.png" alt="Assalam School · Education Above All"><span class="brand-name" style="color:var(--ink)">Hafez</span></div>
     <h1 style="margin:0 0 8px;font-size:22px">Could not load your account</h1><p class="muted">${detail}</p>
     ${e.body && e.body.correlationId ? html`<p class="muted mono">Reference: ${e.body.correlationId}</p>` : ''}
     <div class="row"><button class="btn btn-primary" onclick="location.reload()">Try again</button><button class="btn" data-act="signout">Sign out</button></div></div></div>`;
 }
 
-async function refreshBell() { try { const r = await get('/api/notifications/unread-count'); if (r.unread !== S.unread) { S.unread = r.unread; const c = document.querySelector('.nav-item[href="#/notifications"]'); if (c) { const old = c.querySelector('.count'); if (old) old.remove(); if (S.unread) c.insertAdjacentHTML('beforeend', `<span class="count">${S.unread}</span>`); } } } catch { } }
+const CHAT_ROLES = ['STUDENT', 'PARENT', 'TEACHER', 'COORDINATOR'];
+async function refreshChat() {
+  if (!S.me || !CHAT_ROLES.includes(S.me.role)) return;
+  try {
+    const r = await get('/api/chat/unread');
+    if (r.unread !== S.chatUnread) { S.chatUnread = r.unread; const c = document.querySelector('.nav-item[href="#/chat"]'); if (c) { const old = c.querySelector('.count'); if (old) old.remove(); if (S.chatUnread) c.insertAdjacentHTML('beforeend', `<span class="count">${S.chatUnread}</span>`); } }
+  } catch { }
+}
+async function refreshBell() { refreshChat(); try { const r = await get('/api/notifications/unread-count'); if (r.unread !== S.unread) { S.unread = r.unread; const c = document.querySelector('.nav-item[href="#/notifications"]'); if (c) { const old = c.querySelector('.count'); if (old) old.remove(); if (S.unread) c.insertAdjacentHTML('beforeend', `<span class="count">${S.unread}</span>`); } } } catch { } }
 
-const home = () => ({ TEACHER: 'today', STUDENT: 'mydash', PARENT: 'children', COORDINATOR: 'dashboard', PRINCIPAL: 'school', SCHOOL_IT: 'noticesAdmin', LEADERSHIP: 'overview', EAA_ADMIN: 'incidents', ATTENDANCE_OFFICER: 'attendance' }[S.me.role]);
+const home = () => ({ TEACHER: 'today', STUDENT: 'mydash', PARENT: 'children', COORDINATOR: 'dashboard', PRINCIPAL: 'school', PRINCIPAL_ASSISTANT: 'metrics', SCHOOL_IT: 'noticesAdmin', LEADERSHIP: 'overview', EAA_ADMIN: 'incidents', ATTENDANCE_OFFICER: 'attendance' }[S.me.role]);
 
 async function render() {
   const app = document.getElementById('app');
@@ -1831,19 +2170,23 @@ async function render() {
   S.route = route;
   const studentRoutes = new Set([...(NAV.STUDENT || []).map(x => x[0]), 'prefs']);
   const screen = SCREENS[route];
-  if (S.me.role === 'PARENT' && !['children', 'pickup', 'notices', 'notifications', 'prefs'].includes(route)) { location.hash = '#/' + home(); return; }
+  if (S.me.role === 'PARENT' && !['children', 'homework', 'chat', 'pickup', 'notices', 'notifications', 'prefs'].includes(route)) { location.hash = '#/' + home(); return; }
   if (S.me.role === 'STUDENT' && !studentRoutes.has(route)) { location.hash = '#/' + home(); return; }
   if (!screen) { location.hash = '#/' + home(); return; }
   if ((HIDDEN_ROUTES[S.me.role] || []).includes(route)) { location.hash = '#/' + home(); return; }   // screens taken off this role's sidebar stay closed when typed in by hand
   await loadSites(); if (S.unread === 0) refreshBell();
+  const seq = S.renderSeq = (S.renderSeq || 0) + 1;   // a slower, earlier screen must not overwrite the one asked for last
   document.getElementById('app').innerHTML = shell(route, html`<p class="muted">Loading…</p>`).s;
   let body;
   try { body = await screen(arg, q); }
   catch (e) { if (e.status === 401) { S.me = null; return render(); } body = html`<div class="err">${e.message}</div>`; }
+  if (seq !== S.renderSeq) return;
   const flash = S.flash; S.flash = null;
   const banner = flash ? html`<div class="${flash.ok ? 'ok' : 'err'}" style="margin-bottom:16px">${flash.ok || flash.err}</div>` : '';
   document.getElementById('main').innerHTML = html`${banner}${body}`.s;
+  S.kpiFlash = false;
   window.scrollTo(0, 0);
+  afterRender();
 }
 
 window.addEventListener('hashchange', render);

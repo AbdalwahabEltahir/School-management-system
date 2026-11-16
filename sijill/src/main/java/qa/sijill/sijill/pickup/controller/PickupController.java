@@ -48,7 +48,7 @@ public class PickupController {
 
     @PostMapping("/arrive")
     public PickupDtos.RequestView arrive(CurrentUser user, @RequestBody PickupDtos.ArriveRequest request) {
-        return pickup.arrive(user, request.studentId(), request.collectorId());
+        return pickup.arrive(user, request.studentId(), request.collectorId(), request.acknowledged());
     }
 
     @PostMapping("/requests/{id}/cancel")

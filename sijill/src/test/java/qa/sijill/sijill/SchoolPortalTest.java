@@ -85,7 +85,7 @@ class SchoolPortalTest extends WorldTestSupport {
 
     private School school() {
         World w = world();
-        var coordinator = user(w.coordinator());
+        var coordinator = user(w.it());   // School IT sets up terms, classes, enrolment and teachers
         for (int n = 1; n <= 3; n++) {
             setup.saveTerm(coordinator, n, "Term " + n, TODAY.plusDays(90L * (n - 1) - 30), TODAY.plusDays(90L * n - 31));
         }
@@ -108,7 +108,7 @@ class SchoolPortalTest extends WorldTestSupport {
     @Test
     void aStudentIsInOneSectionAndEnrollingAgainMovesThem() {
         School s = school();
-        setup.enrol(user(s.w().coordinator()), s.c(), s.s1().getEmail());
+        setup.enrol(user(s.w().it()), s.c(), s.s1().getEmail());
 
         assertThat(setup.roster(user(s.w().it()), s.b())).extracting(AcademicDtos.StudentView::name).doesNotContain("Amal Student");
         assertThat(setup.roster(user(s.w().it()), s.c())).extracting(AcademicDtos.StudentView::name).contains("Amal Student");
@@ -117,16 +117,16 @@ class SchoolPortalTest extends WorldTestSupport {
     @Test
     void onlyAStudentCanBeEnrolledAndOnlyByAdmin() {
         School s = school();
-        assertThatThrownBy(() -> setup.enrol(user(s.w().coordinator()), s.b(), s.w().teacher().getEmail())).isInstanceOf(BadRequestException.class);
+        assertThatThrownBy(() -> setup.enrol(user(s.w().it()), s.b(), s.w().teacher().getEmail())).isInstanceOf(BadRequestException.class);
         assertThatThrownBy(() -> setup.enrol(user(s.w().teacher()), s.b(), s.s1().getEmail())).isInstanceOf(ForbiddenException.class);
         assertThatThrownBy(() -> setup.createSection(user(s.w().teacher()), 8, "A")).isInstanceOf(ForbiddenException.class);
-        assertThatThrownBy(() -> setup.createSection(user(s.w().coordinator()), 7, "B")).isInstanceOf(ConflictException.class).hasMessageContaining("already exists");
+        assertThatThrownBy(() -> setup.createSection(user(s.w().it()), 7, "B")).isInstanceOf(ConflictException.class).hasMessageContaining("already exists");
     }
 
     @Test
     void theTimetableRefusesASectionTeacherOrRoomBookedTwiceAndNamesTheClash() {
         School s = school();
-        var it = user(s.w().coordinator());
+        var it = user(s.w().it());
         setup.assign(it, s.c(), s.w().maths().getId(), s.w().teacher().getId()); // the same teacher also teaches 7C
         setup.addLesson(it, s.b(), s.w().maths().getId(), 0, 2, "Room 12");
 
@@ -158,7 +158,7 @@ class SchoolPortalTest extends WorldTestSupport {
     @Test
     void eachRoleSeesOnlyItsOwnTimetable() {
         School s = school();
-        var it = user(s.w().coordinator());
+        var it = user(s.w().it());
         setup.addLesson(it, s.b(), s.w().maths().getId(), 1, 1, null); // Monday, today is Tuesday
         setup.addLesson(it, s.b(), s.w().maths().getId(), 2, 1, null); // Tuesday = today
 
@@ -229,28 +229,35 @@ class SchoolPortalTest extends WorldTestSupport {
     }
 
     @Test
-    void presentEarnsAPointAutomaticallyAndTeachersAddRecognitionWithAReason() {
+    void pointsComeFromSchoolworkNotAttendanceAndTeachersAddRecognitionWithAReason() {
         School s = school();
         var teacher = user(s.w().teacher());
         var officer = officer(s);
         attendance.record(officer, s.b(), TODAY, Map.of(s.s2().getId(), AttendanceStatus.ABSENT), null);
-
-        assertThat(pointsService.mine(user(s.s1())).total()).isEqualTo(1);        // present: +1, with the reason
-        assertThat(pointsService.mine(user(s.s1())).entries()).singleElement().satisfies(e -> assertThat(e.reason()).isEqualTo("Present at school"));
-        assertThat(pointsService.mine(user(s.s2())).total()).isZero();              // absent: nothing
-        attendance.record(officer, s.b(), TODAY, Map.of(s.s2().getId(), AttendanceStatus.PRESENT), null);
-        assertThat(pointsService.mine(user(s.s2())).total()).isEqualTo(1);          // corrected to present
-        attendance.record(officer, s.b(), TODAY, Map.of(s.s2().getId(), AttendanceStatus.ABSENT), null);
-        assertThat(pointsService.mine(user(s.s2())).total()).isZero();              // and taken back
+        assertThat(pointsService.mine(user(s.s1())).total()).isZero();              // being present earns nothing now
+        assertThat(pointsService.mine(user(s.s1())).entries()).isEmpty();
 
         pointsService.award(teacher, s.s1().getId(), 5, "Helped a classmate");
-        assertThat(pointsService.mine(user(s.s1())).total()).isEqualTo(6);
-        assertThat(pointsService.classTotals(teacher, s.b())).first().satisfies(r -> assertThat(r.total()).isEqualTo(6));
+        assertThat(pointsService.mine(user(s.s1())).total()).isEqualTo(5);
+        assertThat(pointsService.classTotals(teacher, s.b())).first().satisfies(r -> assertThat(r.total()).isEqualTo(5));
         assertThatThrownBy(() -> pointsService.award(teacher, s.s1().getId(), 5, " ")).isInstanceOf(BadRequestException.class);
         assertThatThrownBy(() -> pointsService.award(teacher, s.s1().getId(), 50, "Too many")).isInstanceOf(BadRequestException.class);
         assertThatThrownBy(() -> pointsService.award(user(s.s1()), s.s2().getId(), 1, "Self")).isInstanceOf(ForbiddenException.class);
         assertThat(pointsService.recognition(user(s.w().principal()))).isNotEmpty();
         assertThatThrownBy(() -> pointsService.recognition(user(s.w().leader()))).isInstanceOf(ForbiddenException.class); // EAA IT does not see student points
+
+        // a published exam mark earns one point for every 10%; unpublishing takes the points back
+        UUID exam = assessment(s, "Midterm exam", 1, "40");
+        marks.enter(teacher, exam, allMarks(s, "34", "20", null));   // 85% and 50%; the third student was absent
+        marks.submit(teacher, exam);
+        assertThat(pointsService.mine(user(s.s1())).total()).isEqualTo(5);          // submitted is not yet published
+        marks.publishAssessment(teacher, exam);
+        assertThat(pointsService.mine(user(s.s1())).total()).isEqualTo(5 + 9);      // 85% rounds to 9
+        assertThat(pointsService.mine(user(s.s2())).total()).isEqualTo(5);
+        assertThat(pointsService.mine(user(s.s3())).total()).isZero();
+        assertThat(pointsService.mine(user(s.s1())).entries()).anySatisfy(e -> assertThat(e.reason()).isEqualTo("Midterm exam (85%)"));
+        marks.unpublishAssessment(teacher, exam, "Wrong paper");
+        assertThat(pointsService.mine(user(s.s1())).total()).isEqualTo(5);
     }
 
 
@@ -432,19 +439,19 @@ class SchoolPortalTest extends WorldTestSupport {
     }
 
     @Test
-    void onlyTheCoordinatorCreatesTermsClassesAndSectionsAndTeachersSetTheAssessments() {
+    void onlySchoolItCreatesTermsClassesAndSectionsAndTeachersSetTheAssessments() {
         School s = school();
         var it = user(s.w().it());
         var teacher = user(s.w().teacher());
         var coordinator = user(s.w().coordinator());
 
-        assertThatThrownBy(() -> setup.createSection(it, 8, "A")).isInstanceOf(ForbiddenException.class);
-        assertThatThrownBy(() -> setup.saveTerm(it, 1, "Term 1", TODAY, TODAY.plusDays(30))).isInstanceOf(ForbiddenException.class);
+        assertThatThrownBy(() -> setup.createSection(coordinator, 8, "A")).isInstanceOf(ForbiddenException.class);
+        assertThatThrownBy(() -> setup.saveTerm(coordinator, 1, "Term 1", TODAY, TODAY.plusDays(30))).isInstanceOf(ForbiddenException.class);
         assertThatThrownBy(() -> setup.createSection(teacher, 8, "A")).isInstanceOf(ForbiddenException.class);
         assertThatThrownBy(() -> setup.saveTerm(teacher, 1, "Term 1", TODAY, TODAY.plusDays(30))).isInstanceOf(ForbiddenException.class);
-        assertThatThrownBy(() -> setup.assign(it, s.b(), s.w().maths().getId(), s.w().teacher().getId())).isInstanceOf(ForbiddenException.class);
-        assertThatThrownBy(() -> setup.saveTerm(coordinator, 1, "Backwards", TODAY, TODAY.minusDays(1))).isInstanceOf(BadRequestException.class);
-        assertThat(setup.createSection(coordinator, 8, "A").grade()).isEqualTo(8);
+        assertThatThrownBy(() -> setup.assign(coordinator, s.b(), s.w().maths().getId(), s.w().teacher().getId())).isInstanceOf(ForbiddenException.class);
+        assertThatThrownBy(() -> setup.saveTerm(it, 1, "Backwards", TODAY, TODAY.minusDays(1))).isInstanceOf(BadRequestException.class);
+        assertThat(setup.createSection(it, 8, "A").grade()).isEqualTo(8);
         assertThat(setup.terms(teacher)).hasSize(3);
 
         // the teacher sets the assessment, but only for a term the coordinator has created
@@ -452,12 +459,12 @@ class SchoolPortalTest extends WorldTestSupport {
     }
 
     @Test
-    void subjectsAndDocumentTypesBelongToTheCoordinatorNotSchoolIt() {
+    void subjectsAndDocumentTypesAreSetUpBySchoolItNotTheCoordinator() {
         World w = world();
-        assertThatThrownBy(() -> settingsService.saveSubject(user(w.it()), null, "Physics", null)).isInstanceOf(ForbiddenException.class);
-        assertThatThrownBy(() -> settingsService.saveDocType(user(w.it()), "Lab report", qa.sijill.sijill.shared.model.Sensitivity.INTERNAL)).isInstanceOf(ForbiddenException.class);
-        assertThat(settingsService.saveSubject(user(w.coordinator()), null, "Physics", null).getName()).isEqualTo("Physics");
-        assertThat(settingsService.saveDocType(user(w.coordinator()), "Lab report", qa.sijill.sijill.shared.model.Sensitivity.INTERNAL).getName()).isEqualTo("Lab report");
+        assertThatThrownBy(() -> settingsService.saveSubject(user(w.coordinator()), null, "Physics", null)).isInstanceOf(ForbiddenException.class);
+        assertThatThrownBy(() -> settingsService.saveDocType(user(w.coordinator()), "Lab report", qa.sijill.sijill.shared.model.Sensitivity.INTERNAL)).isInstanceOf(ForbiddenException.class);
+        assertThat(settingsService.saveSubject(user(w.it()), null, "Physics", null).getName()).isEqualTo("Physics");
+        assertThat(settingsService.saveDocType(user(w.it()), "Lab report", qa.sijill.sijill.shared.model.Sensitivity.INTERNAL).getName()).isEqualTo("Lab report");
     }
 
     @Test
@@ -491,9 +498,9 @@ class SchoolPortalTest extends WorldTestSupport {
     }
 
     @Test
-    void anAssessmentNeedsATermThatTheCoordinatorCreated() {
+    void anAssessmentNeedsATermThatSchoolItCreated() {
         World w = world();
-        var coordinator = user(w.coordinator());
+        var coordinator = user(w.it());
         UUID b = setup.createSection(coordinator, 7, "B").id();
         setup.assign(coordinator, b, w.maths().getId(), w.teacher().getId());
         assertThatThrownBy(() -> marks.create(user(w.teacher()), b, w.maths().getId(), 1, "Quiz", BigDecimal.TEN))
@@ -569,7 +576,7 @@ class SchoolPortalTest extends WorldTestSupport {
         World other = world(); // a different organisation and school
 
         assertThatThrownBy(() -> setup.roster(user(other.it()), s.b())).isInstanceOf(NotFoundException.class);
-        assertThatThrownBy(() -> setup.enrol(user(other.coordinator()), s.b(), s.s1().getEmail())).isInstanceOf(NotFoundException.class);
+        assertThatThrownBy(() -> setup.enrol(user(other.it()), s.b(), s.s1().getEmail())).isInstanceOf(NotFoundException.class);
         assertThatThrownBy(() -> attendance.roster(user(other.it()), s.b(), TODAY)).isInstanceOf(NotFoundException.class);
         assertThat(setup.sections(user(other.it()))).isEmpty();
         assertThatThrownBy(() -> marks.create(user(other.it()), s.b(), other.maths().getId(), 1, "X", BigDecimal.TEN)).isInstanceOf(NotFoundException.class);

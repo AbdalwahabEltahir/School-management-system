@@ -65,7 +65,7 @@ public class AcademicSetupService {
 
     @Transactional
     public SectionView createSection(CurrentUser user, int grade, String name) {
-        access.requireCoordinator(user);
+        access.requireSetup(user);
         if (grade < 1 || grade > 12 || name == null || name.isBlank()) {
             throw new BadRequestException("Please give a grade from 1 to 12 and a section name.");
         }
@@ -92,7 +92,7 @@ public class AcademicSetupService {
         }
         List<Section> all = sections.findBySiteIdOrderByGradeAscNameAsc(user.siteId());
         List<Section> visible = switch (user.role()) {
-            case SCHOOL_IT, PRINCIPAL, COORDINATOR, ATTENDANCE_OFFICER -> all;
+            case SCHOOL_IT, PRINCIPAL, PRINCIPAL_ASSISTANT, COORDINATOR, ATTENDANCE_OFFICER -> all;
             case TEACHER -> all.stream().filter(s -> access.teaches(user, s.getId())).toList();
             case STUDENT -> {
                 UUID own = enrolments.findByStudentId(user.personId()).map(Enrolment::getSectionId).orElse(null);
@@ -111,7 +111,7 @@ public class AcademicSetupService {
     /** Creates or updates term 1, 2 or 3 of the school year. Only the coordinator does this (FR-016). */
     @Transactional
     public TermView saveTerm(CurrentUser user, int number, String name, LocalDate startsOn, LocalDate endsOn) {
-        access.requireCoordinator(user);
+        access.requireSetup(user);
         if (number < 1 || number > 3) {
             throw new BadRequestException("The term must be 1, 2 or 3.");
         }
@@ -151,7 +151,7 @@ public class AcademicSetupService {
     /** Puts a student in a section, moving them if they were in another one (BR-002). */
     @Transactional
     public StudentView enrol(CurrentUser user, UUID sectionId, String studentEmail) {
-        access.requireCoordinator(user);
+        access.requireSetup(user);
         Section section = access.section(user, sectionId);
         Person student = people.findByEmailIgnoreCase(studentEmail == null ? "" : studentEmail.trim())
                 .filter(p -> p.getSiteId().equals(user.siteId()))
@@ -187,7 +187,7 @@ public class AcademicSetupService {
     /** Sets the teacher of a subject for a section. Moving it to another teacher also moves its timetable lessons. */
     @Transactional
     public AssignmentView assign(CurrentUser user, UUID sectionId, UUID subjectId, UUID teacherId) {
-        access.requireCoordinator(user);
+        access.requireSetup(user);
         access.section(user, sectionId);
         Subject subject = subjects.findById(subjectId).filter(s -> s.getSiteId().equals(user.siteId()))
                 .orElseThrow(() -> new BadRequestException("Please choose one of your school's subjects."));
@@ -240,7 +240,7 @@ public class AcademicSetupService {
      */
     @Transactional
     public LessonView addLesson(CurrentUser user, UUID sectionId, UUID subjectId, int day, int period, String room) {
-        access.requireCoordinator(user);
+        access.requireSetup(user);
         Section section = access.section(user, sectionId);
         if (day < 0 || day >= DAYS.length) {
             throw new BadRequestException("School days are Sunday to Thursday.");
@@ -284,7 +284,7 @@ public class AcademicSetupService {
 
     @Transactional
     public void removeLesson(CurrentUser user, UUID lessonId) {
-        access.requireCoordinator(user);
+        access.requireSetup(user);
         TimetableEntry entry = timetable.findById(lessonId).filter(t -> t.getSiteId().equals(user.siteId()))
                 .orElseThrow(() -> new NotFoundException("The lesson"));
         timetable.delete(entry);
@@ -303,7 +303,7 @@ public class AcademicSetupService {
             entries = timetable.findBySectionIdOrderByDayOfWeekAscPeriodAsc(access.studentSection(user).getId());
         } else if (user.is(Role.TEACHER)) {
             entries = timetable.findByTeacherIdOrderByDayOfWeekAscPeriodAsc(user.personId());
-        } else if (user.isAny(Role.SCHOOL_IT, Role.PRINCIPAL, Role.COORDINATOR)) {
+        } else if (user.isAny(Role.SCHOOL_IT, Role.PRINCIPAL, Role.PRINCIPAL_ASSISTANT, Role.COORDINATOR)) {
             if (sectionId == null) {
                 throw new BadRequestException("Choose a section.");
             }

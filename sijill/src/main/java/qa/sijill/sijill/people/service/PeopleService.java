@@ -64,7 +64,7 @@ public class PeopleService {
 
     /** Order of precedence when a person is in several role groups: the most privileged wins. */
     private static final List<Role> ROLE_PRECEDENCE = List.of(
-            Role.EAA_ADMIN, Role.LEADERSHIP, Role.SCHOOL_IT, Role.PRINCIPAL, Role.COORDINATOR, Role.TEACHER);
+            Role.EAA_ADMIN, Role.LEADERSHIP, Role.SCHOOL_IT, Role.PRINCIPAL, Role.PRINCIPAL_ASSISTANT, Role.COORDINATOR, Role.TEACHER);
 
     private final PersonRepository people;
     private final ParentLinks parentLinks;
@@ -79,10 +79,10 @@ public class PeopleService {
 
     // ================================================================== reading
 
-    /** The People screen: School IT and coordinators see their own school's people; the principal reads them (no edits). */
+    /** The People screen: School IT and the principal assistant see their own school's people; the principal and coordinators read them. */
     @Transactional(readOnly = true)
     public List<Person> list(CurrentUser user) {
-        policy.requireRole(user, Role.SCHOOL_IT, Role.COORDINATOR, Role.PRINCIPAL);
+        policy.requireRole(user, Role.SCHOOL_IT, Role.PRINCIPAL_ASSISTANT, Role.COORDINATOR, Role.PRINCIPAL);
         return people.findBySiteIdOrderByDisplayName(user.siteId());
     }
 
@@ -121,13 +121,15 @@ public class PeopleService {
     /** The alert kinds a person of this role can receive, so the settings page lists only what applies to them. */
     public static List<String> alertKindsFor(Role role) {
         return switch (role) {
-            case STUDENT, ATTENDANCE_OFFICER -> List.of("NOTICE", "SYSTEM", "SECURITY");
-            case PARENT -> List.of("COLLECTION", "NOTICE", "SYSTEM", "SECURITY");
+            case STUDENT -> List.of("CLASSWORK", "MESSAGE", "NOTICE", "SYSTEM", "SECURITY");
+            case ATTENDANCE_OFFICER -> List.of("NOTICE", "SYSTEM", "SECURITY");
+            case PARENT -> List.of("COLLECTION", "CLASSWORK", "MESSAGE", "NOTICE", "SYSTEM", "SECURITY");
             case LEADERSHIP, EAA_ADMIN -> List.of("INCIDENT", "TICKET", "NOTICE", "SYSTEM", "SECURITY");
             case PRINCIPAL -> List.of("ISSUE", "INCIDENT", "GRADES", "TICKET", "NOTICE", "PLANNING", "SYSTEM", "SECURITY");
+            case PRINCIPAL_ASSISTANT -> List.of("GRADES", "COLLECTION", "TICKET", "NOTICE", "PLANNING", "SYSTEM", "SECURITY");
             case SCHOOL_IT -> List.of("ISSUE", "INCIDENT", "NOTICE", "SYSTEM", "SECURITY");
-            case COORDINATOR -> List.of("ISSUE", "REMINDER", "FOLLOW_UP", "GRADES", "COLLECTION", "NOTICE", "PLANNING", "SYSTEM", "SECURITY");
-            case TEACHER -> List.of("ISSUE", "REMINDER", "GRADES", "COLLECTION", "NOTICE", "PLANNING", "SYSTEM", "SECURITY");
+            case COORDINATOR -> List.of("ISSUE", "REMINDER", "FOLLOW_UP", "GRADES", "COLLECTION", "MESSAGE", "NOTICE", "PLANNING", "SYSTEM", "SECURITY");
+            case TEACHER -> List.of("ISSUE", "REMINDER", "GRADES", "COLLECTION", "MESSAGE", "NOTICE", "PLANNING", "SYSTEM", "SECURITY");
         };
     }
 
@@ -192,7 +194,7 @@ public class PeopleService {
     // ================================================================== School IT actions
 
     /** Roles School IT may give a new person. Leadership and School IT accounts are not created from this screen. */
-    private static final List<Role> ADDABLE = List.of(Role.TEACHER, Role.COORDINATOR, Role.PRINCIPAL, Role.ATTENDANCE_OFFICER, Role.STUDENT, Role.PARENT);
+    private static final List<Role> ADDABLE = List.of(Role.TEACHER, Role.COORDINATOR, Role.PRINCIPAL, Role.PRINCIPAL_ASSISTANT, Role.ATTENDANCE_OFFICER, Role.STUDENT, Role.PARENT);
 
     /**
      * Adds a person to the user's school so they can sign in with their Google account. Sign-in checks that the
@@ -525,6 +527,7 @@ public class PeopleService {
             case "TEACHER" -> "معلم";
             case "COORDINATOR" -> "منسق";
             case "PRINCIPAL" -> "مدير المدرسة";
+            case "PRINCIPAL_ASSISTANT" -> "وكيل المدرسة";
             case "SCHOOL_IT" -> "تقنية المعلومات بالمدرسة";
             case "LEADERSHIP" -> "القيادة";
             case "EAA_ADMIN" -> "تقنية المعلومات في الهيئة";

@@ -165,7 +165,7 @@ public class AttendanceService {
     @Transactional(readOnly = true)
     public List<StudentAttendance> summary(CurrentUser user, UUID sectionId, LocalDate from, LocalDate to) {
         access.requireView(user, sectionId);
-        if (!user.isAny(Role.SCHOOL_IT, Role.PRINCIPAL, Role.COORDINATOR, Role.ATTENDANCE_OFFICER) && !access.teaches(user, sectionId)) {
+        if (!user.isAny(Role.SCHOOL_IT, Role.PRINCIPAL, Role.PRINCIPAL_ASSISTANT, Role.COORDINATOR, Role.ATTENDANCE_OFFICER) && !access.teaches(user, sectionId)) {
             throw new ForbiddenException("Attendance summaries are not available for your role.");
         }
         if (from == null || to == null || to.isBefore(from)) {

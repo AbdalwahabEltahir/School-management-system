@@ -21,6 +21,10 @@ public class ParentLinks {
         return jdbc.queryForList("SELECT student_id FROM parent_links WHERE parent_id = ? ORDER BY created_at", UUID.class, parentId);
     }
 
+    public List<UUID> parentsOf(UUID studentId) {
+        return jdbc.queryForList("SELECT parent_id FROM parent_links WHERE student_id = ? ORDER BY created_at", UUID.class, studentId);
+    }
+
     public boolean isLinked(UUID parentId, UUID studentId) {
         Integer n = jdbc.queryForObject("SELECT count(*) FROM parent_links WHERE parent_id = ? AND student_id = ?", Integer.class, parentId, studentId);
         return n != null && n > 0;

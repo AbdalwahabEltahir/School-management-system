@@ -29,8 +29,9 @@ import qa.sijill.sijill.shared.model.Role;
 import qa.sijill.sijill.shared.security.CurrentUser;
 
 /**
- * Recognition points. One point is added automatically for every day a student is present (and taken back if the day
- * is corrected); a teacher can add 1 to 10 points with a short reason. Students see their total and the reasons, teachers
+ * Recognition points, earned for schoolwork (see {@link SchoolworkPoints}): homework done, quizzes taken and published
+ * exam marks. A teacher can add 1 to 10 points with a short reason. Attendance does not earn points (old attendance
+ * entries are kept but not counted). Students see their total and the reasons, teachers
  * see their class, school leadership sees the school-wide picture.
  */
 @Service
@@ -47,23 +48,14 @@ public class PointsService {
     private final AcademicAccess access;
     private final AuditPublisher audit;
 
-    /** Called by attendance: present earns one point for the day, any other status takes it back. */
+    /** Called by attendance. Attendance no longer earns points, so nothing is recorded. */
     @Transactional
     public void syncAttendance(UUID orgId, UUID siteId, UUID studentId, LocalDate day, boolean present) {
-        var existing = points.findByStudentIdAndAwardedOnAndSource(studentId, day, PointSource.ATTENDANCE);
-        if (present && existing.isEmpty()) {
-            PointEntry p = new PointEntry();
-            p.setOrgId(orgId);
-            p.setSiteId(siteId);
-            p.setStudentId(studentId);
-            p.setAmount(1);
-            p.setReason("Present at school");
-            p.setSource(PointSource.ATTENDANCE);
-            p.setAwardedOn(day);
-            points.save(p);
-        } else if (!present && existing.isPresent()) {
-            points.delete(existing.get());
-        }
+        // points come from schoolwork only
+    }
+
+    private static boolean counts(PointEntry p) {
+        return p.getSource() != PointSource.ATTENDANCE;
     }
 
     /** A teacher (or coordinator, principal) rewards a student of their school. */
@@ -117,7 +109,7 @@ public class PointsService {
     }
 
     private AcademicDtos.PointsView of(UUID studentId) {
-        List<PointEntry> all = points.findByStudentIdOrderByAwardedOnDescCreatedAtDesc(studentId);
+        List<PointEntry> all = points.findByStudentIdOrderByAwardedOnDescCreatedAtDesc(studentId).stream().filter(PointsService::counts).toList();
         Map<UUID, String> names = access.personNames(all.stream().map(PointEntry::getAwardedBy).filter(x -> x != null).toList());
         return new AcademicDtos.PointsView(all.stream().mapToInt(PointEntry::getAmount).sum(),
                 all.stream().limit(30).map(p -> row(p, p.getAwardedBy() == null ? null : names.get(p.getAwardedBy()))).toList());
@@ -130,7 +122,7 @@ public class PointsService {
     /** Class totals for a section: every student with their points. */
     @Transactional(readOnly = true)
     public List<AcademicDtos.ClassPoints> classTotals(CurrentUser user, UUID sectionId) {
-        if (!user.isAny(Role.TEACHER, Role.COORDINATOR, Role.PRINCIPAL, Role.SCHOOL_IT)) {
+        if (!user.isAny(Role.TEACHER, Role.COORDINATOR, Role.PRINCIPAL, Role.PRINCIPAL_ASSISTANT, Role.SCHOOL_IT)) {
             throw new ForbiddenException("Class points are for school staff.");
         }
         access.requireView(user, sectionId);
@@ -146,7 +138,7 @@ public class PointsService {
     /** School-wide recognition: each school's total, average per student and top students. */
     @Transactional(readOnly = true)
     public List<AcademicDtos.SchoolPoints> recognition(CurrentUser user) {
-        if (!user.isAny(Role.PRINCIPAL, Role.COORDINATOR, Role.SCHOOL_IT, Role.LEADERSHIP)) {
+        if (!user.isAny(Role.PRINCIPAL, Role.PRINCIPAL_ASSISTANT, Role.COORDINATOR, Role.SCHOOL_IT, Role.LEADERSHIP)) {
             throw new ForbiddenException("Recognition analytics are for school leadership.");
         }
         var schools = user.isNetwork()
@@ -168,7 +160,7 @@ public class PointsService {
 
     private Map<UUID, Integer> totalsBySite(UUID siteId) {
         Map<UUID, Integer> totals = new HashMap<>();
-        points.findBySiteId(siteId).forEach(p -> totals.merge(p.getStudentId(), p.getAmount(), Integer::sum));
+        points.findBySiteId(siteId).stream().filter(PointsService::counts).forEach(p -> totals.merge(p.getStudentId(), p.getAmount(), Integer::sum));
         return totals;
     }
 }

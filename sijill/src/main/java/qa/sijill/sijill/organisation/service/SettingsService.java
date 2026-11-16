@@ -100,10 +100,10 @@ public class SettingsService {
         return subjects.findBySiteIdOrderByName(user.siteId());
     }
 
-    /** Adds a subject, or changes its name/coordinator when {@code subjectId} is given. The coordinator only. */
+    /** Adds a subject, or changes its name/coordinator when {@code subjectId} is given. School IT, as part of the academic setup. */
     @Transactional
     public Subject saveSubject(CurrentUser user, UUID subjectId, String name, UUID coordinatorId) {
-        policy.requireRole(user, Role.COORDINATOR);
+        policy.requireRole(user, Role.SCHOOL_IT);
         Subject subject;
         if (subjectId == null) {
             if (name == null || name.isBlank()) {
@@ -141,7 +141,7 @@ public class SettingsService {
      */
     @Transactional
     public DocType saveDocType(CurrentUser user, String name, Sensitivity sensitivity) {
-        policy.requireRole(user, Role.COORDINATOR);
+        policy.requireRole(user, Role.SCHOOL_IT);
         if (name == null || name.isBlank() || sensitivity == null) {
             throw new BadRequestException("Please give the type a name and a sensitivity.");
         }

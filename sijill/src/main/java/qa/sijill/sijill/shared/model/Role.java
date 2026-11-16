@@ -12,6 +12,11 @@ public enum Role {
     COORDINATOR,
     /** Principal: read-only oversight of every notification, score and issue of her school. */
     PRINCIPAL,
+    /**
+     * Principal assistant: runs the school's day-to-day management for the principal (invitations, people, school
+     * metrics, achievements, weekly grades, the pick-up board, approvals), which the subject coordinators used to do.
+     */
+    PRINCIPAL_ASSISTANT,
     /** School IT admin (academic staff): connection, people, settings, school rules. */
     SCHOOL_IT,
     /** Network executive team: read-only view of totals, incidents, reports and tickets. Changes nothing. */

@@ -11,6 +11,10 @@ public enum NotificationKind {
     TICKET,
     /** Student pick-up: a parent has arrived, a child was released or not released. */
     COLLECTION,
+    /** A chat message between a teacher and a student or parent. */
+    MESSAGE,
+    /** New homework, quizzes and class notices from a teacher. */
+    CLASSWORK,
     /** Security and account events. Always delivered: a person cannot switch these off. */
     SECURITY;
 

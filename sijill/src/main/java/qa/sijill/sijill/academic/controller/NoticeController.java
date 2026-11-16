@@ -41,6 +41,16 @@ public class NoticeController {
         return notices.create(user, request);
     }
 
+    @GetMapping("/notices/class")
+    public List<AcademicDtos.NoticeView> mineForClasses(CurrentUser user) {
+        return notices.mineForClasses(user);
+    }
+
+    @PostMapping("/notices/class")
+    public AcademicDtos.NoticeView createForClass(CurrentUser user, @Valid @RequestBody AcademicDtos.ClassNoticeRequest request) {
+        return notices.createForClass(user, request);
+    }
+
     @DeleteMapping("/notices/{noticeId}")
     public void remove(CurrentUser user, @PathVariable UUID noticeId) {
         notices.remove(user, noticeId);

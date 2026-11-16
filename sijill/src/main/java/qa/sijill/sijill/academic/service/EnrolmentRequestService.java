@@ -111,7 +111,7 @@ public class EnrolmentRequestService {
     /** The coordinator's queue. */
     @Transactional(readOnly = true)
     public List<PendingRequest> pending(CurrentUser user) {
-        policy.requireRole(user, Role.COORDINATOR);
+        policy.requireRole(user, Role.SCHOOL_IT);
         var rows = jdbc.queryForList("SELECT id, student_id, section_id, requested_by FROM enrolment_requests WHERE site_id = ? AND status = 'PENDING' ORDER BY created_at", user.siteId());
         Map<UUID, Person> who = people.findAllById(rows.stream().flatMap(r -> java.util.stream.Stream.of((UUID) r.get("student_id"), (UUID) r.get("requested_by"))).collect(Collectors.toSet()))
                 .stream().collect(Collectors.toMap(Person::getId, p -> p));
@@ -126,7 +126,7 @@ public class EnrolmentRequestService {
 
     @Transactional
     public void decide(CurrentUser user, UUID requestId, boolean approve) {
-        policy.requireRole(user, Role.COORDINATOR);
+        policy.requireRole(user, Role.SCHOOL_IT);
         var rows = jdbc.queryForList("SELECT student_id, section_id FROM enrolment_requests WHERE id = ? AND site_id = ? AND status = 'PENDING'", requestId, user.siteId());
         if (rows.isEmpty()) {
             throw new NotFoundException("The request");
@@ -145,7 +145,7 @@ public class EnrolmentRequestService {
     /** The school's students who are not in any class yet, with their IDs, for the coordinator's enrol list. */
     @Transactional(readOnly = true)
     public List<UnenrolledStudent> unenrolled(CurrentUser user) {
-        policy.requireRole(user, Role.COORDINATOR);
+        policy.requireRole(user, Role.SCHOOL_IT);
         Set<UUID> enrolled = enrolments.findBySiteId(user.siteId()).stream().map(Enrolment::getStudentId).collect(Collectors.toSet());
         return people.findBySiteIdAndRole(user.siteId(), Role.STUDENT).stream()
                 .filter(p -> p.canSignIn() && !enrolled.contains(p.getId()))

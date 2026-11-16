@@ -348,7 +348,8 @@ public class DemoHistory {
     /** Tickets from the school's principal to Leadership, spread over the months: older ones closed, the newest still open. */
     @Transactional
     public void tickets(Site site, DemoSchools.Profile p, Person principal, List<Person> admins) {
-        if (admins.isEmpty() || p.tickets() == 0) {
+        // no tickets in Principal Huda's name: those were removed as stale (V20) and are not seeded again
+        if (admins.isEmpty() || p.tickets() == 0 || principal.getDisplayName().toLowerCase().startsWith("huda")) {
             return;
         }
         Random rnd = new Random(("tickets-" + p.letter()).hashCode());

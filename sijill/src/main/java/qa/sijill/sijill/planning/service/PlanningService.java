@@ -160,7 +160,7 @@ public class PlanningService {
             case COORDINATOR -> user.subjectId() == null
                     ? submissions.findBySiteIdOrderByWeekStartDesc(user.siteId())
                     : submissions.findBySiteIdAndSubjectIdOrderByWeekStartDesc(user.siteId(), user.subjectId());
-            case PRINCIPAL -> submissions.findBySiteIdOrderByWeekStartDesc(user.siteId());
+            case PRINCIPAL, PRINCIPAL_ASSISTANT -> submissions.findBySiteIdOrderByWeekStartDesc(user.siteId());
             case SCHOOL_IT, ATTENDANCE_OFFICER, LEADERSHIP, EAA_ADMIN, STUDENT, PARENT -> throw new ForbiddenException("Planning files are not available for your role.");
         };
     }
@@ -175,7 +175,7 @@ public class PlanningService {
     /** Totals for a week: the principal's view (FR-9.4). */
     @Transactional(readOnly = true)
     public Totals totals(CurrentUser user, LocalDate weekStart) {
-        policy.requireRole(user, Role.PRINCIPAL, Role.COORDINATOR);
+        policy.requireRole(user, Role.PRINCIPAL, Role.PRINCIPAL_ASSISTANT, Role.COORDINATOR);
         List<PlanningSubmission> week = submissions.findBySiteIdAndWeekStart(user.siteId(), weekStart);
         return new Totals(count(week, PlanningStatus.SUBMITTED), count(week, PlanningStatus.RETURNED),
                 count(week, PlanningStatus.APPROVED));
@@ -217,7 +217,7 @@ public class PlanningService {
         boolean visible = switch (user.role()) {
             case TEACHER -> plan.getTeacherId().equals(user.personId());
             case COORDINATOR -> policy.coordinatesSubject(user, plan.getSiteId(), plan.getSubjectId());
-            case PRINCIPAL -> policy.sameSite(user, plan.getSiteId());
+            case PRINCIPAL, PRINCIPAL_ASSISTANT -> policy.sameSite(user, plan.getSiteId());
             case SCHOOL_IT, ATTENDANCE_OFFICER, LEADERSHIP, EAA_ADMIN, STUDENT, PARENT -> false;
         };
         if (!visible) {

@@ -48,9 +48,14 @@ public class AcademicAccess {
         policy.requireRole(user, Role.SCHOOL_IT);
     }
 
-    /** The coordinator creates terms, classes and sections, enrols students, assigns teachers and builds the timetable. */
+    /** The coordinator sets a student's stage (Sijil / Hifz). */
     public void requireCoordinator(CurrentUser user) {
         policy.requireRole(user, Role.COORDINATOR);
+    }
+
+    /** School IT creates terms, classes and sections, enrols students, assigns teachers and builds the timetable. */
+    public void requireSetup(CurrentUser user) {
+        policy.requireRole(user, Role.SCHOOL_IT);
     }
 
     /** Today's date in the school's time zone. */
@@ -85,7 +90,7 @@ public class AcademicAccess {
     /** May this user see the section? Admin, principal and coordinator for their school, a teacher for theirs. */
     public Section requireView(CurrentUser user, UUID sectionId) {
         Section section = section(user, sectionId);
-        boolean ok = user.isAny(Role.SCHOOL_IT, Role.PRINCIPAL, Role.COORDINATOR, Role.ATTENDANCE_OFFICER) || teaches(user, sectionId)
+        boolean ok = user.isAny(Role.SCHOOL_IT, Role.PRINCIPAL, Role.PRINCIPAL_ASSISTANT, Role.COORDINATOR, Role.ATTENDANCE_OFFICER) || teaches(user, sectionId)
                 || (user.is(Role.STUDENT) && enrolments.findByStudentId(user.personId())
                         .map(e -> e.getSectionId().equals(sectionId)).orElse(false));
         if (!ok) {

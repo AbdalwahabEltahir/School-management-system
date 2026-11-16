@@ -16,7 +16,8 @@ public final class PickupDtos {
     /** A parent adds a collector. Only the last four characters of the ID number are kept. */
     public record CollectorRequest(String name, String relationship, String phone, String idNumber) {}
 
-    public record ArriveRequest(UUID studentId, UUID collectorId) {}
+    /** acknowledged: the parent ticked the statement that the school is no longer responsible once they press Pick up. */
+    public record ArriveRequest(UUID studentId, UUID collectorId, boolean acknowledged) {}
 
     public record DeclineRequest(String reason) {}
 
@@ -28,11 +29,12 @@ public final class PickupDtos {
 
     public record RequestView(UUID id, UUID studentId, String student, String section, String collector, String relationship,
                               String idLast4, String phone, String status, Instant arrivedAt, String verifiedBy, Instant verifiedAt,
-                              String decidedBy, Instant decidedAt, String declineReason) {
+                              String decidedBy, Instant decidedAt, String declineReason, Instant acknowledgedAt) {
         public static RequestView from(PickupRequest r) {
             return new RequestView(r.getId(), r.getStudentId(), r.getStudentName(), r.getSectionLabel(), r.getCollectorName(),
                     r.getCollectorRelationship().name(), r.getCollectorIdLast4(), r.getCollectorPhone(), r.getStatus().name(),
-                    r.getArrivedAt(), r.getVerifiedByName(), r.getVerifiedAt(), r.getDecidedByName(), r.getDecidedAt(), r.getDeclineReason());
+                    r.getArrivedAt(), r.getVerifiedByName(), r.getVerifiedAt(), r.getDecidedByName(), r.getDecidedAt(), r.getDeclineReason(),
+                    r.getParentAcknowledgedAt());
         }
     }
 

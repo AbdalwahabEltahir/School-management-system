@@ -38,11 +38,11 @@ file issues and support tickets. Every school improves over the months, from str
 
 | School | Domain | How it is doing |
 |---|---|---|
-| A: Al Noor Academy | alnoor-academy.edu.qa | strong |
-| B: Al Rayyan Model School | rayyan-model.edu.qa | good |
-| C: Doha Heritage School | doha-heritage.edu.qa | in the middle, improving |
-| D: Al Khor Preparatory School | alkhor-prep.edu.qa | struggling, recovering |
-| E: Al Wakrah Independent School | wakrah-independent.edu.qa | struggling, climbing fast |
+| A: 5th Assalam School (the live demo school) | alnoor-academy.edu.qa | strong |
+| B: 1st Assalam School | rayyan-model.edu.qa | good |
+| C: 2nd Assalam School | doha-heritage.edu.qa | in the middle, improving |
+| D: 3rd Assalam School | alkhor-prep.edu.qa | struggling, recovering |
+| E: 4th Assalam School | wakrah-independent.edu.qa | struggling, climbing fast |
 
 School A (built first, with the network team) has these accounts:
 

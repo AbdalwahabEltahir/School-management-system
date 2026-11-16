@@ -60,7 +60,7 @@ public class ActivityLogController {
     private ResponseEntity<String> csv(String filename, String content) {
         return ResponseEntity.ok()
                 .contentType(new MediaType("text", "csv", StandardCharsets.UTF_8))
-                .header(HttpHeaders.CONTENT_DISPOSITION, ContentDisposition.attachment().filename(filename).build().toString())
+                .header(HttpHeaders.CONTENT_DISPOSITION, ContentDisposition.attachment().filename(qa.sijill.sijill.shared.config.Brand.en().toLowerCase(java.util.Locale.ROOT) + "-" + filename).build().toString())
                 .body("﻿" + content); // BOM so spreadsheet apps open Arabic text correctly
     }
 }

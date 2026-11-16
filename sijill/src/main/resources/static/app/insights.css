@@ -1,0 +1,225 @@
+/* School metrics and reports, achievements, teacher performance, trend charts, sidebar groups, today's tasks. */
+
+/* ------------------------------------------------------------------ sidebar groups */
+.nav-group { margin: 14px 10px 4px; font-size: 10.5px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: rgba(255, 255, 255, .62) }
+.nav-group:first-child { margin-top: 4px }
+
+/* ------------------------------------------------------------------ measure tiles */
+.mx-tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px; margin-bottom: 14px }
+.mx-tile { --k: #6B6B73; --kb: #EBE9E4; --kt: #F7F5F2; height: 100%; display: flex; flex-direction: column; gap: 6px; padding: 16px; border-radius: 18px; border: 1px solid var(--kb); background: linear-gradient(170deg, #fff 30%, var(--kt)); color: #1C1C1F; transition: transform .15s, box-shadow .15s }
+.mx-good { --k: #14633B; --kb: #BFE0CC; --kt: #E6F4EC } .mx-watch { --k: #8A5A00; --kb: #EFD9AE; --kt: #FDF3DF } .mx-bad { --k: #A11D12; --kb: #F3C9C3; --kt: #FDECEA }
+a.kpi-link:hover .mx-tile { transform: translateY(-2px); box-shadow: 0 12px 24px rgba(23, 23, 26, .1) }
+.mx-tile-top { display: flex; justify-content: space-between; align-items: center; gap: 6px; font-weight: 600; font-size: 13.5px }
+.mx-tile-top i { font-style: normal; font-size: 11px; font-weight: 700; color: var(--k); background: #fff; border: 1px solid var(--kb); border-radius: 99px; padding: 1px 8px; white-space: nowrap }
+.mx-tile > b { font-size: 34px; line-height: 1.05; color: var(--k); letter-spacing: -.02em }
+.mx-ring { height: 7px; border-radius: 99px; background: color-mix(in srgb, var(--k) 12%, #fff); overflow: hidden }
+.mx-ring i { display: block; height: 100%; border-radius: 99px; background: var(--k); animation: fillTo 1.2s .1s cubic-bezier(.2, .8, .2, 1) both; width: 0 }
+.mx-ring i[style] { animation-name: none }
+.mx-tile small { color: #4A4A50; font-size: 12px }
+.mx-facts { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 16px }
+.mx-facts > span { background: #fff; border: 1px solid #EBE9E4; border-radius: 99px; padding: 5px 14px; font-size: 13px; color: #3A3A40 }
+.mx-overall-chip { font-weight: 600 } .mx-t-good { color: #14633B } .mx-t-watch { color: #8A5A00 } .mx-t-bad { color: #A11D12 }
+.mx-two { display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 18px; align-items: start }
+.mx-bar { display: flex; align-items: center; gap: 8px; min-width: 120px }
+.mx-bar span { flex: 1; height: 8px; border-radius: 99px; background: #F1EEEA; overflow: hidden } .mx-bar i { display: block; height: 100%; border-radius: 99px }
+.mx-bar b { min-width: 38px; text-align: end; font-size: 13px }
+.mx-good i { background: #1E8A55 } .mx-watch i { background: #C28A1E } .mx-bad i { background: #C93A2E } .mx-none i { background: #D8D3CD }
+.mx-bar.mx-good b { color: #14633B } .mx-bar.mx-watch b { color: #8A5A00 } .mx-bar.mx-bad b { color: #A11D12 } .mx-bar.mx-none b { color: #8A8A92 }
+.mx-overall { font-size: 15px }
+
+/* ------------------------------------------------------------------ outstanding schools */
+.os-podium { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px }
+.os-place { position: relative; overflow: hidden; display: flex; flex-direction: column; gap: 4px; padding: 18px 18px 16px; border-radius: 20px; color: #1C1C1F; text-decoration: none; border: 1px solid #EBE9E4; background: #fff; animation: popIn .6s cubic-bezier(.2, 1.4, .4, 1) both; transition: transform .15s, box-shadow .15s }
+.os-place:hover { transform: translateY(-3px); box-shadow: 0 14px 28px rgba(23, 23, 26, .12); text-decoration: none; color: #1C1C1F }
+.os-p1 { background: linear-gradient(160deg, #FFF8E1, #FFFDF5 60%); border-color: #EBD08A; animation-delay: .05s } .os-p2 { background: linear-gradient(160deg, #F1F3F6, #fff 60%); animation-delay: .15s } .os-p3 { background: linear-gradient(160deg, #FBEFE3, #fff 60%); animation-delay: .25s }
+.os-medal { font-size: 30px; line-height: 1; animation: medalBob 3s ease-in-out infinite } .os-p2 .os-medal { animation-delay: .4s } .os-p3 .os-medal { animation-delay: .8s }
+@keyframes medalBob { 50% { transform: translateY(-4px) rotate(-6deg) } }
+.os-place > b { font-size: 16px } .os-score { font-size: 34px; font-weight: 800; color: #8F2447; letter-spacing: -.02em }
+.os-place small { color: #4A4A50 } .os-place > i { font-style: normal; font-weight: 700; color: #8F2447; font-size: 13px; margin-top: 6px }
+.lo-outstanding { margin: 0 0 20px } .lo-outstanding .card { border-radius: 20px }
+
+/* ------------------------------------------------------------------ outstanding students podium */
+.ss-podium { display: flex; justify-content: center; align-items: flex-end; gap: 12px; padding: 8px 0 4px }
+.ss-place { position: relative; flex: 1 1 0; max-width: 190px; display: flex; flex-direction: column; align-items: center; gap: 3px; text-align: center; animation: riseUp .8s var(--d) cubic-bezier(.2, 1.3, .4, 1) both }
+@keyframes riseUp { from { transform: translateY(30px); opacity: 0 } to { transform: none; opacity: 1 } }
+.ss-medal { font-size: 26px; animation: medalBob 3s ease-in-out infinite }
+.ss-av { width: 52px; height: 52px; border-radius: 50%; display: grid; place-items: center; font-weight: 800; color: #fff; background: linear-gradient(135deg, #C24A6E, #8F2447); box-shadow: 0 8px 18px rgba(143, 36, 71, .3) }
+.ss-p1 .ss-av { width: 64px; height: 64px; font-size: 18px; background: linear-gradient(135deg, #E7B93E, #B8860B); box-shadow: 0 0 0 4px #FFF1C4, 0 10px 24px rgba(184, 134, 11, .4) }
+.ss-p2 .ss-av { background: linear-gradient(135deg, #A9B2C0, #6B7686) } .ss-p3 .ss-av { background: linear-gradient(135deg, #D89A62, #9C5B23) }
+.ss-place b { font-size: 14px } .ss-place small { color: #6B6B73; font-size: 12px }
+.ss-place em { font-style: normal; font-weight: 800; color: #8F2447; font-size: 18px }
+.ss-step { width: 100%; margin-top: 6px; border-radius: 12px 12px 0 0; display: grid; place-items: center; color: #fff; font-weight: 800; font-size: 20px; background: linear-gradient(180deg, #A8466B, #842F51) }
+.ss-p1 .ss-step { height: 74px; background: linear-gradient(180deg, #E7B93E, #B8860B) } .ss-p2 .ss-step { height: 52px; background: linear-gradient(180deg, #A9B2C0, #6B7686) } .ss-p3 .ss-step { height: 38px; background: linear-gradient(180deg, #D89A62, #9C5B23) }
+.ss-p1::after { content: ''; position: absolute; top: 18px; left: 50%; width: 110px; height: 110px; margin-left: -55px; border-radius: 50%; background: radial-gradient(circle, rgba(231, 185, 62, .35), transparent 70%); z-index: -1; animation: ppPulse 3s ease-in-out infinite }
+.ss-rest { margin: 14px 0 0; padding: 0 0 0 22px; display: grid; gap: 6px }
+.ss-rest li { padding: 6px 10px; background: #FBFAF8; border-radius: 10px } .ss-rest li b { margin-inline-end: 8px } .ss-rest li small { color: #6B6B73 } .ss-rest li em { float: inline-end; font-style: normal; font-weight: 700; color: #8F2447 }
+
+/* ------------------------------------------------------------------ achievements */
+.ac-hero { display: flex; gap: 24px; flex-wrap: wrap; align-items: center; padding: 22px 26px; margin-bottom: 18px; border-radius: 22px; color: #fff; background: linear-gradient(120deg, #6B1730, #A8466B 70%, #C99A0E); box-shadow: 0 16px 34px rgba(107, 23, 48, .25) }
+.ac-hero > div:first-child { display: flex; flex-direction: column } .ac-hero small { text-transform: uppercase; letter-spacing: .1em; font-size: 11.5px; opacity: .85 }
+.ac-hero > div:first-child b { font-size: 46px; line-height: 1 } .ac-hero > div:first-child span { opacity: .9 }
+.ac-hero-cats { flex: 1; display: flex; flex-wrap: wrap; gap: 8px } .ac-hero-cats span { background: rgba(255, 255, 255, .14); border: 1px solid rgba(255, 255, 255, .25); padding: 5px 12px; border-radius: 99px; font-size: 12.5px; opacity: .7 }
+.ac-hero-cats span.on { opacity: 1; background: rgba(255, 255, 255, .24) } .ac-hero-cats b { margin-inline-end: 6px }
+.ac-kinds { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px; margin: 8px 0 14px }
+.ac-kind { position: relative; display: flex; flex-direction: column; gap: 3px; padding: 12px 14px; border: 1.5px solid #EBE9E4; border-radius: 14px; cursor: pointer; background: #fff }
+.ac-kind input { position: absolute; opacity: 0 } .ac-kind:has(input:checked) { border-color: #8F2447; background: #FCEFF3; box-shadow: 0 6px 14px rgba(143, 36, 71, .12) }
+.ac-kind small { color: #6B6B73; font-size: 12px } .ac-kind em { font-style: normal; font-weight: 700; color: #8F2447; font-size: 12.5px }
+.ac-list { display: flex; flex-direction: column; gap: 10px }
+.ac-item { position: relative; display: flex; gap: 14px; padding: 12px 14px; border: 1px solid #EBE9E4; border-radius: 14px; background: #fff }
+.ac-pts { flex: none; width: 46px; height: 46px; border-radius: 12px; display: grid; place-items: center; font-weight: 800; color: #fff; background: linear-gradient(135deg, #C24A6E, #8F2447) }
+.ac-facilities .ac-pts { background: linear-gradient(135deg, #7C3AED, #4C1D95) } .ac-academic .ac-pts { background: linear-gradient(135deg, #2563EB, #1E3A8A) } .ac-competition .ac-pts { background: linear-gradient(135deg, #E7B93E, #B8860B) }
+.ac-community .ac-pts { background: linear-gradient(135deg, #0E7490, #134E4A) } .ac-staff .ac-pts { background: linear-gradient(135deg, #1E8A55, #14633B) } .ac-wellbeing .ac-pts { background: linear-gradient(135deg, #DB2777, #9D174D) }
+.ac-item small { color: #6B6B73 } .ac-item b { display: block; font-size: 15px } .ac-item p { margin: 4px 0 0; color: #3A3A40; font-size: 13.5px } .ac-impact { color: #14633B !important; font-weight: 600 }
+.ac-bars { display: flex; flex-direction: column; gap: 8px }
+.ac-bars div { display: grid; grid-template-columns: minmax(130px, 1fr) 2fr 30px; gap: 10px; align-items: center; font-size: 13px }
+.ac-bars i { height: 10px; border-radius: 99px; background: #F1EEEA; overflow: hidden } .ac-bars i b { display: block; height: 100%; border-radius: 99px; background: linear-gradient(90deg, #C24A6E, #8F2447); animation: fillTo 1s both; width: 0 }
+.ac-bars i b[style] { animation-name: none } .ac-bars em { font-style: normal; font-weight: 700; text-align: end }
+.ac-bars-sm { margin-bottom: 14px }
+
+/* ------------------------------------------------------------------ trend charts */
+.tr svg { width: 100%; height: auto; display: block }
+.tr-grid { stroke: #E9E6E1; stroke-width: 1 } .tr-y, .tr-x { font-size: 11px; fill: #6B6B73; font-family: inherit } .tr-y { text-anchor: end } .tr-x { text-anchor: middle }
+.tr-last { font-size: 12.5px; font-weight: 700; font-family: inherit }
+.tr-line { stroke-dasharray: 2000; stroke-dashoffset: 2000; animation: drawLine 1.6s ease-out forwards }
+@keyframes drawLine { to { stroke-dashoffset: 0 } }
+.tr-legend { display: flex; flex-wrap: wrap; gap: 14px; margin-top: 6px; font-size: 12.5px; color: #3A3A40 } .tr-legend i { display: inline-block; width: 12px; height: 4px; border-radius: 2px; margin-inline-end: 6px; vertical-align: middle }
+.tr-range { display: inline-flex; gap: 4px; padding: 3px; border-radius: 99px; background: #F4F2EF; border: 1px solid #EBE9E4; margin: 4px 0 8px }
+.tr-range a { padding: 4px 12px; border-radius: 99px; font-size: 12.5px; color: #4A4A50; text-decoration: none; font-weight: 600 } .tr-range a:hover { background: #fff; text-decoration: none }
+.tr-range a.on { background: #8F2447; color: #fff }
+.lo-card-head .tr-range { margin-inline-start: auto }
+.tr-verdict { margin: 4px 0 8px; font-size: 13.5px; color: #3A3A40 } .tr-up b { color: #14633B } .tr-down b { color: #A11D12 } .tr-flat b { color: #6B6B73 }
+.pd-trendcard { background: #fff }
+.pd-trendcard .tr-x, .pd-trendcard .tr-y { font-size: 13px }
+
+/* ------------------------------------------------------------------ head teacher: at a glance */
+.gl { margin: 18px 0; padding: 20px 22px; border-radius: 24px; background: #fff; border: 1px solid #EBE9E4; box-shadow: 0 10px 26px rgba(23, 23, 26, .06) }
+.gl-head { display: flex; align-items: flex-start; gap: 12px; margin-bottom: 14px } .gl-head h2 { margin: 0; font-size: 19px } .gl-head small { color: #6B6B73 } .gl-head .card-link { margin-inline-start: auto }
+.gl-row { display: flex; flex-wrap: wrap; gap: 8px }
+.gl-chip { padding: 6px 14px; border-radius: 99px; background: #F8ECF0; color: #6B1730; text-decoration: none; font-size: 13px; font-weight: 600 } .gl-chip:hover { text-decoration: none; background: #F2DCE4; color: #6B1730 }
+.gl-bad { background: #FDECEA; color: #A11D12 }
+
+/* ------------------------------------------------------------------ teacher performance */
+.pf-rule { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-bottom: 18px }
+.pf-rule > div { flex: 1 1 180px; display: grid; grid-template-columns: 44px 1fr; grid-template-rows: auto auto; column-gap: 12px; padding: 14px 16px; border-radius: 16px; background: #fff; border: 1px solid #EBE9E4 }
+.pf-rule > div b { grid-row: span 2; width: 44px; height: 44px; border-radius: 12px; display: grid; place-items: center; font-size: 20px; color: #fff; background: #C28A1E }
+.pf-rule > div:nth-of-type(2) b { background: #C2410C } .pf-rule > div:nth-of-type(3) b { background: #A11D12 }
+.pf-rule > div span { font-weight: 700 } .pf-rule > div small { color: #6B6B73; font-size: 12px } .pf-rule > i { font-style: normal; font-weight: 800; color: #8A8A92 }
+.pf-form { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 0 16px; align-items: end } .pf-form .field:nth-child(3) { grid-column: 1 / -1 } .pf-form > .btn { justify-self: start }
+.pf-dots { display: inline-flex; align-items: center; gap: 4px } .pf-dots i { width: 12px; height: 12px; border-radius: 50%; background: #EBE7E2; border: 1px solid #DAD5CE }
+.pf-i i.on { background: #C28A1E; border-color: #A87410 } .pf-w i.on { background: #C93A2E; border-color: #A11D12 } .pf-dots em { font-style: normal; font-size: 12px; color: #6B6B73; margin-inline-start: 4px }
+.pf-sum { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin-bottom: 18px } .pf-sum > div { display: flex; flex-direction: column; gap: 8px; padding: 16px; border-radius: 16px; background: #fff; border: 1px solid #EBE9E4 } .pf-sum small { color: #6B6B73 }
+.pf-tl { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px } .pf-tl li { padding: 10px 14px; border-radius: 12px; border: 1px solid #EBE9E4; border-inline-start: 4px solid #C28A1E; background: #fff }
+.pf-tl li.in-w { border-inline-start-color: #C93A2E } .pf-tl p { margin: 4px 0 } .pf-tl small { color: #6B6B73 }
+.pf-people { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px } .pf-people li { display: flex; align-items: center; gap: 10px } .pf-people small { color: #6B6B73; margin-inline-start: auto }
+.pf-notes { list-style: none; margin: 0 0 12px; padding: 0; display: flex; flex-direction: column; gap: 10px } .pf-notes li { padding: 10px 14px; border-radius: 12px; background: #FBFAF8 } .pf-notes small { color: #6B6B73; margin-inline-start: 8px } .pf-notes p { margin: 4px 0 0; white-space: pre-wrap }
+form[data-form=invNote] textarea, form[data-form=invClose] textarea { width: 100%; border: 1px solid #DAD6D0; border-radius: 12px; padding: 10px; font: inherit; margin-bottom: 8px }
+
+/* ------------------------------------------------------------------ student: today's tasks, points pop */
+.tt { margin: 0 0 18px; padding: 18px 20px; border-radius: 22px; background: #fff; border: 1px solid #EBE9E4; box-shadow: 0 8px 22px rgba(23, 23, 26, .06) }
+.tt-head { display: flex; align-items: center; gap: 12px } .tt-head h2 { margin: 0; font-size: 18px } .tt-head small { color: #6B6B73 } .tt-head .sp-link { margin-inline-start: auto }
+.tt-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 10px; margin-top: 14px }
+.tt-item { display: flex; flex-direction: column; gap: 3px; padding: 12px 14px; border-radius: 14px; border: 1px solid #EBE9E4; border-top: 4px solid var(--c); background: #FDFCFB; color: inherit; text-decoration: none }
+a.tt-item:hover { text-decoration: none; color: inherit; box-shadow: 0 10px 20px rgba(23, 23, 26, .08) }
+.tt-kind { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; color: var(--c) } .tt-item small { color: #6B6B73 }
+.pp-pop { position: absolute; top: -6px; left: 50%; z-index: 4; transform: translateX(-50%); padding: 4px 12px; border-radius: 99px; background: #14633B; color: #fff; font-weight: 800; font-size: 15px; box-shadow: 0 8px 18px rgba(20, 99, 59, .35); animation: popUp 2.6s .6s ease-out both }
+@keyframes popUp { 0% { opacity: 0; transform: translate(-50%, 20px) scale(.6) } 15% { opacity: 1; transform: translate(-50%, 0) scale(1.15) } 25% { transform: translate(-50%, 0) scale(1) } 80% { opacity: 1; transform: translate(-50%, -18px) } 100% { opacity: 0; transform: translate(-50%, -34px) } }
+
+/* ------------------------------------------------------------------ quiz builder: question types */
+.qz-q-head { gap: 10px } .qz-q-head .qz-kind { width: auto; margin-inline-start: auto }
+.qz-tf { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin: 6px 0 }
+.qz-q .qz-for-tf, .qz-q .qz-for-short { display: none }
+.qz-q[data-kind=TRUEFALSE] .qz-for-choice, .qz-q[data-kind=SHORT] .qz-for-choice { display: none }
+.qz-q[data-kind=TRUEFALSE] .qz-for-tf { display: flex } .qz-q[data-kind=SHORT] .qz-for-short { display: block }
+.qz-written { max-width: 420px }
+
+/* ------------------------------------------------------------------ print a school report */
+@media print {
+  .sidebar, .sp-top, .page-top .row, .lo-hero-tools, .tr-range, .co-btns { display: none !important }
+  .frame { display: block } .page { padding: 0 !important } .card, .mx-tile { break-inside: avoid; box-shadow: none !important }
+  body { background: #fff }
+}
+@media (prefers-reduced-motion: reduce) { .os-place, .os-medal, .ss-place, .ss-medal, .ss-p1::after, .tr-line, .pp-pop { animation: none !important } .tr-line { stroke-dashoffset: 0 } }
+
+/* the whole sidebar scrolls, so long staff menus are never cut off */
+.sidebar, .frame:has(.sp) .sidebar { overflow-y: auto; overscroll-behavior: contain }
+.sidebar .nav { flex: none; overflow: visible }
+.sidebar .side-sky, .sidebar .side-help { margin-top: auto }
+/* measure tiles: the status chip wraps under the label when space is short */
+.mx-tile-top { flex-wrap: wrap; align-items: flex-start }
+.tr text { font-weight: 500 }
+.tr-x, .tr-y { font-size: 12px }
+/* Leadership pages stroke every svg (icons); charts draw their own strokes */
+.lo .tr svg, .tr svg { stroke: none; fill: none }
+.tr svg text { stroke: none }
+.tr svg circle { stroke-width: 2 }
+
+/* ------------------------------------------------------------------ pick-up: parent confirms, staff see green */
+.pkm { position: fixed; inset: 0; z-index: 1000; display: grid; place-items: center; padding: 16px; background: rgba(23, 23, 26, .55); animation: fadeIn .15s ease-out }
+@keyframes fadeIn { from { opacity: 0 } }
+.pkm-card { width: min(520px, 100%); background: #fff; border-radius: 22px; padding: 26px 26px 20px; box-shadow: 0 30px 60px rgba(23, 23, 26, .3); animation: popIn .3s cubic-bezier(.2, 1.4, .4, 1) }
+.pkm-ic { display: grid; place-items: center; width: 48px; height: 48px; border-radius: 50%; background: #FDF3DF; color: #8A5A00; font-weight: 800; font-size: 24px; margin-bottom: 10px }
+.pkm-card h2 { margin: 0 0 4px; font-size: 20px } .pkm-who { margin: 0 0 14px; color: #4A4A50 }
+.pkm-text { padding: 14px 16px; border-radius: 14px; background: #FFF8E8; border: 1px solid #F1DFAE; color: #3A2A00; line-height: 1.6; font-size: 14.5px }
+.pkm-check { display: flex; gap: 10px; align-items: flex-start; margin: 16px 0; cursor: pointer; font-weight: 600 }
+.pkm-check input { width: 20px; height: 20px; margin-top: 2px; accent-color: #14633B; flex: none }
+.pkm-act { display: flex; justify-content: flex-end; gap: 10px }
+.pkm-go { background: linear-gradient(135deg, #1E8A55, #14633B) !important; border-color: #14633B !important } .pkm-go:disabled { opacity: .45; cursor: not-allowed }
+.pk-btn-pick:not(:disabled) { background: linear-gradient(135deg, #1E8A55, #14633B); border-color: #14633B; color: #fff; font-size: 16px }
+.pk-btn-pick:disabled { background: #E3F3EA; color: #14633B; border-color: #BFE0CC; opacity: 1 }
+.pk-note-ok { background: #E7F7EF !important; color: #0B7A4F !important }
+.pk-now-done { border-color: #BFE0CC; background: linear-gradient(170deg, #fff, #E6F4EC) }
+.pk-green { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 12px }
+.pk-gcard { display: flex; align-items: center; gap: 12px; padding: 14px 16px; border-radius: 16px; background: linear-gradient(135deg, #1E8A55, #14633B); color: #fff; box-shadow: 0 10px 22px rgba(20, 99, 59, .25); animation: popIn .5s cubic-bezier(.2, 1.4, .4, 1) both }
+.pk-gcheck { flex: none; width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center; background: rgba(255, 255, 255, .2); font-size: 20px; font-weight: 800 }
+.pk-gcard > div { flex: 1; min-width: 0; display: flex; flex-direction: column } .pk-gcard b { font-size: 17px } .pk-gcard small { opacity: .85 } .pk-gcard span { font-size: 12.5px; opacity: .92 }
+.pk-gcard time { font-weight: 800; font-size: 15px; white-space: nowrap }
+
+/* ------------------------------------------------------------------ coordinator overview: light cards, dark text */
+a.co-k.kpi-a, .co-k { color: #1C1C1F; border: 1px solid var(--kb); box-shadow: 0 8px 22px rgba(23, 23, 26, .07) }
+.co-k-open { --k: #6B1730; --kb: #EBCBD6; background: linear-gradient(150deg, #FFFFFF 0%, #F8ECF0 100%) }
+.co-k-follow { --k: #8A5A00; --kb: #EFD9AE; background: linear-gradient(150deg, #FFFFFF 0%, #FDF3DF 100%) }
+.co-k-fixed { --k: #14633B; --kb: #BFE0CC; background: linear-gradient(150deg, #FFFFFF 0%, #E6F4EC 100%) }
+.co-k-top span, .co-k-open .co-k-top span { color: #2E2E33 }
+.co-k-top i, .co-k-open .co-k-top i { color: var(--k); background: #fff; border-color: var(--kb) }
+.co-k-main b, .co-k-n { color: var(--k) }
+.co-k-main span, .co-k-sub, .co-k-ring > span { color: #3A3A40 }
+.co-k-ring b { color: var(--k) }
+.co-k-ring circle:first-child { stroke: color-mix(in srgb, var(--k) 15%, #fff) } .co-k-ring circle + circle { stroke: var(--k) }
+.co-wm svg { stroke: var(--k); opacity: .25 }
+a.co-k.kpi-a:hover { filter: none; box-shadow: 0 14px 28px rgba(23, 23, 26, .12); border-color: var(--k) }
+
+/* the head teacher's staff lists: what the numbers and colours mean */
+.pd-key { margin: 10px 2px 0; font-size: 12px; color: #4A4A50; line-height: 1.7 }
+.pd-key i { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin: 0 4px 0 10px; vertical-align: -1px }
+.pd-key i.g { background: #14633b } .pd-key i.o { background: #b7791f } .pd-key i.r { background: #a11d12 }
+[dir=rtl] .pd-key i { margin: 0 10px 0 4px }
+
+/* ------------------------------------------------------------------ Arabic: numbers read left to right, charts keep their layout */
+[dir=rtl] :is(.mx-tile > b, .mx-bar b, .mx-facts b, .mx-overall, .co-k-n, .co-k-main b, .co-k-ring b, .pd-kpi > b, .sp-kpi > b, .lo-kpi-val, .os-score,
+  .kpi-value, .pp-ring b, .qz-ring b, .ss-place em, .ss-rest em, .ac-hero b, .ac-pts, .pk-stat b, .cx-k b, .pd-open b, .pd-gauge b, .hw-total b, .qz-score, .pf-dots em,
+  .lo-sp-row b, .tr-legend, .mx-ring + small) { direction: ltr; unicode-bidi: isolate; text-align: end }
+[dir=rtl] .tr svg, [dir=rtl] .pd-trend, [dir=rtl] .sp-chart, [dir=rtl] .lo-area-box svg { direction: ltr }
+[dir=rtl] .tr-legend { direction: rtl; text-align: start }
+
+/* coordinator overview: the three chart cards are light too, with dark text */
+.co-c { color: #1C1C1F; border: 1px solid #EBE9E4; box-shadow: 0 8px 22px rgba(23, 23, 26, .07) }
+.co-c-sev { background: linear-gradient(160deg, #FFFFFF 0%, #F8ECF0 100%) }
+.co-c-type { background: linear-gradient(160deg, #FFFFFF 0%, #F6F4F1 100%) }
+.co-c-day { background: linear-gradient(160deg, #FFFFFF 0%, #FCEFF3 100%) }
+.co-ch h2 { color: #1C1C1F } .co-ch div div { color: #4A4A50 }
+.co-ci { background: #6B1730; border-color: #6B1730; color: #fff }
+.co-none, .co-donut span, .co-dy, .co-dx { color: #4A4A50 }
+.co-donut b { color: #6B1730 }
+.co-donut circle:first-child { stroke: #E9C77A }
+.co-tiles > div { background: #fff; border-color: #EBE9E4 }
+.co-tiles > div:first-child small { color: #A11D12 !important } .co-tiles > div:last-child small { color: #8A5A00 !important }
+.co-tiles b { color: #1C1C1F }
+.co-type { border-top-color: #EBE9E4 } .co-type b { color: #1C1C1F }
+.co-type i.u { background: #A11D12 } .co-type i.n { background: #B7791F }
+.co-bar { background: #F1EEEA }
+.co-dplot { border-bottom-color: #D8D3CD } .co-dgrid i { border-top-color: #E4E0DA }
+.co-dbar b { color: #6B1730 }
+.co-dbar div { background: linear-gradient(180deg, #C24A6E, #8F2447) } .co-dbar div.hot { background: linear-gradient(180deg, #E0392D, #A11D12) }
+[dir=rtl] :is(.co-donut b, .co-tiles b, .co-type b, .co-dbar b) { direction: ltr; unicode-bidi: isolate }
+/* the coordinator's 7-day line chart: left-to-right in Arabic too, and its labels a normal size on wide screens */
+.co-line svg { direction: ltr; max-height: 300px }
