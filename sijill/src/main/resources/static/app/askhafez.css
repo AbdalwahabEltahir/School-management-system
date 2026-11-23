@@ -1,0 +1,65 @@
+/* Ask Hafez: the floating helper. Positioned with logical properties so it sits bottom-left in Arabic (right to left). */
+.ah-root { position: fixed; inset-block-end: 20px; inset-inline-end: 20px; z-index: 900; font-family: inherit }
+.ah-fab { display: flex; align-items: center; gap: 10px; border: 0; cursor: pointer; color: #fff; font: inherit; font-weight: 600; padding: 12px 18px 12px 14px;
+  border-radius: 999px; background: linear-gradient(135deg, #B24F76, #842F51); box-shadow: 0 10px 28px rgba(80, 14, 40, .38); transition: transform .15s, box-shadow .15s }
+.ah-fab:hover { transform: translateY(-2px); box-shadow: 0 14px 32px rgba(80, 14, 40, .45) }
+.ah-fab:focus-visible, .ah-input:focus-visible, .ah-chip:focus-visible, .ah-icon-btn:focus-visible, .ah-send:focus-visible { outline: 3px solid #F4C27A; outline-offset: 2px }
+.ah-fab-ic { display: inline-flex }
+.ah-open .ah-fab { display: none }
+
+.ah-panel { width: min(380px, calc(100vw - 24px)); height: min(560px, calc(100vh - 40px)); background: #fff; color: #1f1a1c; border-radius: 18px; overflow: hidden;
+  display: flex; flex-direction: column; box-shadow: 0 24px 60px rgba(40, 6, 22, .35); border: 1px solid rgba(132, 47, 81, .25); animation: ahIn .18s ease-out }
+.ah-panel[hidden] { display: none }
+@keyframes ahIn { from { opacity: 0; transform: translateY(12px) scale(.98) } to { opacity: 1; transform: none } }
+.ah-head { display: flex; align-items: center; gap: 10px; padding: 12px 12px 12px 16px; color: #fff; background: linear-gradient(135deg, #B24F76, #842F51) }
+.ah-head > div { flex: 1; min-width: 0 }
+.ah-head b { display: block; font-size: 15px }
+.ah-head small { display: block; opacity: .9; font-size: 12px; line-height: 1.3 }
+.ah-head-ic { display: inline-flex; width: 36px; height: 36px; align-items: center; justify-content: center; border-radius: 50%; background: rgba(255, 255, 255, .18) }
+.ah-head-ic svg { width: 20px; height: 20px }
+.ah-icon-btn { background: rgba(255, 255, 255, .16); border: 0; color: #fff; width: 32px; height: 32px; border-radius: 50%; cursor: pointer; font-size: 15px; line-height: 1 }
+.ah-icon-btn:hover { background: rgba(255, 255, 255, .3) }
+
+.ah-log { flex: 1; overflow-y: auto; padding: 14px; background: #FBF6F8; display: flex; flex-direction: column; gap: 10px }
+.ah-msg { display: flex; flex-direction: column; max-width: 88%; gap: 4px }
+.ah-me { align-self: flex-end; align-items: flex-end }
+.ah-bot { align-self: flex-start; align-items: flex-start }
+.ah-bubble { padding: 9px 12px; border-radius: 14px; font-size: 14px; line-height: 1.5; white-space: pre-wrap; overflow-wrap: anywhere }
+.ah-me .ah-bubble { background: #842F51; color: #fff; border-end-end-radius: 4px }
+.ah-bot .ah-bubble { background: #fff; border: 1px solid #ECDDE3; border-end-start-radius: 4px }
+.ah-bad .ah-bubble { background: #FDECEC; border-color: #E8B4B4; color: #7A1D1D }
+.ah-typing { color: #7a6a70; font-style: italic }
+.ah-links { display: flex; flex-wrap: wrap; gap: 6px; align-items: center }
+.ah-links small { color: #7a6a70 }
+.ah-link { font-size: 12.5px; padding: 3px 10px; border-radius: 999px; background: #F3E3EA; color: #6D2342; text-decoration: none; font-weight: 600 }
+.ah-link:hover { background: #E9CFDA }
+.ah-rate { display: flex; gap: 4px }
+.ah-rate button { border: 1px solid #ECDDE3; background: #fff; border-radius: 999px; cursor: pointer; padding: 2px 8px; font-size: 13px }
+.ah-rate button:hover { background: #F3E3EA }
+.ah-thanks { color: #7a6a70 }
+
+.ah-chips { display: flex; gap: 6px; overflow-x: auto; padding: 8px 12px 2px; background: #FBF6F8; scrollbar-width: thin }
+.ah-chips:empty { display: none }
+.ah-chip { flex: none; max-width: 260px; text-align: start; border: 1px solid #DDBFCB; background: #fff; color: #6D2342; border-radius: 999px; padding: 6px 12px; font: inherit; font-size: 12.5px; cursor: pointer }
+.ah-chip:hover { background: #F3E3EA }
+
+.ah-form { display: flex; gap: 8px; padding: 10px 12px; background: #FBF6F8 }
+.ah-input { flex: 1; min-width: 0; border: 1px solid #DDBFCB; border-radius: 999px; padding: 9px 14px; font: inherit; font-size: 14px; background: #fff }
+.ah-send { border: 0; border-radius: 999px; padding: 0 16px; background: #842F51; color: #fff; font: inherit; font-weight: 600; cursor: pointer }
+.ah-send:hover { background: #6D2342 }
+.ah-note { margin: 0; padding: 0 14px 10px; font-size: 11px; color: #7a6a70; background: #FBF6F8 }
+
+@media (max-width: 640px) {
+  .ah-root { inset-block-end: 12px; inset-inline-end: 12px }
+  .ah-open { inset: 0; inset-block-end: 0 }
+  .ah-open .ah-panel { width: 100vw; height: 100dvh; border-radius: 0 }
+  .ah-fab-tx { display: none }
+  .ah-fab { padding: 14px }
+}
+@media (prefers-reduced-motion: reduce) { .ah-panel { animation: none } .ah-fab { transition: none } }
+@media print { .ah-root { display: none } }
+
+/* Preferences: the parent's switch for each child */
+.ah-pref { display: grid; gap: 10px }
+.ah-pref-row { gap: 10px; font-weight: 400; align-items: center; padding: 10px 12px; border: 1px solid #ECDDE3; border-radius: 12px }
+.ah-pref-row input { width: 20px; height: 20px; accent-color: #842F51 }

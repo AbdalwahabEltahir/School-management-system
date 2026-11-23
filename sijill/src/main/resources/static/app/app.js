@@ -944,6 +944,7 @@ const avatar = initials => S.me.hasPhoto
   : html`<span class="who-av">${initials}</span>`;
 SCREENS.prefs = async () => {
   const me = S.me, kinds = me.alertKinds || [], muted = me.muted || [];
+  const ask = me.role === 'PARENT' ? await get('/api/ask/status').catch(() => null) : null;
   return page('My profile and preferences', 'Your details, photo, language and which alerts you receive.', html`
     ${card('Profile', null, html`
       <div class="row" style="align-items:center;gap:16px;margin-bottom:12px">${avatar(initialsOf(me.displayName))}
@@ -958,7 +959,9 @@ SCREENS.prefs = async () => {
       ${field('Language of messages', html`<select name="language" data-act="prefLang">${options(['EN', 'AR', 'BOTH'], me.language, x => ({ EN: 'English', AR: 'Arabic', BOTH: 'English and Arabic' }[x]))}</select>`)}
       ${field('How to receive them', html`<select name="digestMode">${options(['PER_ISSUE', 'DAILY'], me.digestMode, x => x === 'DAILY' ? 'One daily summary' : 'One message per issue')}</select>`)}
       <div class="field"><label>Alerts</label>${kinds.map(k => html`<label class="row" style="gap:8px;font-weight:400;align-items:flex-start"><input type="checkbox" name="alert_${k}" ${k !== 'SECURITY' && muted.includes(k) ? '' : raw('checked')} ${k === 'SECURITY' ? raw('disabled') : ''}><span><b>${ALERTS[k][0]}</b><br><small class="muted">${ALERTS[k][1]}</small></span></label>`)}</div>
-      <button class="btn btn-primary">Save</button></form>`)}`);
+      <button class="btn btn-primary">Save</button></form>`)}
+    ${ask ? card('Ask Hafez', 'The floating helper that answers questions about school. Choose which of your children may use it: when it is off for a child, their Ask Hafez button disappears. It only reads information and never changes anything.',
+      ask.children.length ? html`<div class="ah-pref">${ask.children.map(k => html`<label class="row ah-pref-row"><input type="checkbox" data-ask-child="${k.id}" ${k.enabled ? raw('checked') : ''}><span><b>${k.name}</b><br><small class="muted">Can use Ask Hafez</small></span></label>`)}</div>` : empty('No children are linked to your account yet.')) : ''}`);
 };
 
 // ---- support tickets: a head teacher writes to EAA head office; EAA triages, replies and closes
@@ -2153,6 +2156,7 @@ const home = () => ({ TEACHER: 'today', STUDENT: 'mydash', PARENT: 'children', C
 
 async function render() {
   const app = document.getElementById('app');
+  if (!S.me && typeof AskHafez !== 'undefined') AskHafez.sync();
   if (!S.me) {
     try { S.me = await get('/api/me'); if (!I18N.stored && S.me.language === 'AR' && I18N.lang !== 'ar') setLang('ar', false); }
     catch (e) {
@@ -2187,6 +2191,7 @@ async function render() {
   S.kpiFlash = false;
   window.scrollTo(0, 0);
   afterRender();
+  if (typeof AskHafez !== 'undefined') AskHafez.sync();
 }
 
 window.addEventListener('hashchange', render);
