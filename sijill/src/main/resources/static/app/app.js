@@ -164,7 +164,7 @@ const cxPath = h => cxHeading(h) || ({ followup: CO_P.clock, academic: SPI.calen
 const isPortal = () => !!S.me && (S.me.role === 'STUDENT' || S.me.role === 'PARENT');
 const PAGE_ICON = { mydash: 'calendar', children: 'users', results: 'list', mymaterials: 'folder', notices: 'megaphone', notifications: 'bell', prefs: 'gear', pickup: 'users', homework: 'calendar', quizzes: 'star', chat: 'users' };
 const empty = t => isCoord() ? html`<div class="cx-empty">${t}</div>` : isPortal() ? html`<div class="sp-empty"><span class="sp-ic sp-ic-soft">${sIc(PAGE_ICON[S.route] || 'book')}</span>${t}</div>` : html`<div class="empty">${t}</div>`;
-const card = (heading, sub, body, extra) => isCoord()
+const card = (heading, sub, body, extra) => isNewLook() ? eaaCard(heading, sub, body, extra) : isCoord()
   ? html`<section class="cx-card"><div class="cx-ch"><span class="cx-ci">${coIcon(cxPath(heading))}</span><div><h2>${heading}</h2>${sub ? html`<small>${sub}</small>` : ''}</div>${extra ? html`<div class="cx-ex">${extra}</div>` : ''}</div>${body}</section>`
   : isPortal()
   ? html`<section class="sp-card"><div class="sp-card-head"><div class="sp-card-title"><span class="sp-ic">${sIc(PAGE_ICON[S.route] || 'book')}</span><div><h2>${heading}</h2>${sub ? html`<small class="sp-card-sub">${sub}</small>` : ''}</div></div>${extra || ''}</div>${body}</section>`
@@ -177,7 +177,7 @@ const LIC = {
 };
 const lico = p => html`<svg viewBox="0 0 24 24" aria-hidden="true"><path d="${p}"/></svg>`;
 const lkpi = (label, value, unit, tone, ic, sub) => html`<div class="lo-kpi lo-${tone}"><span class="lo-kpi-ic">${lico(LIC[ic])}</span><div class="lo-kpi-body"><div class="lo-kpi-label">${label}</div><div class="lo-kpi-val"><b>${value}</b>${unit ? html`<span>${unit}</span>` : ''}</div><div class="lo-kpi-sub">${sub}</div></div></div>`;
-const page = (heading, sub, body, actions, kpis) => isCoord()
+const page = (heading, sub, body, actions, kpis) => isNewLook() ? eaaPage(heading, sub, body, actions, kpis) : isCoord()
   ? html`<div class="co"><header class="co-top"><div class="co-title"><span></span><div><h1>${heading}</h1>${sub ? html`<p>${sub}</p>` : ''}</div></div><div class="co-btns cx-act">${actions || ''}</div></header><div class="cx-stack">${body}</div></div>`
   : isPortal()
   ? html`<section class="sp-pagehead"><i class="sp-hero-glow"></i><span class="sp-ic sp-ic-exam">${sIc(PAGE_ICON[S.route] || 'book')}</span><div class="sp-pagehead-text"><h1>${heading}</h1>${sub ? html`<p>${sub}</p>` : ''}</div><div class="row sp-pagehead-act">${actions || ''}</div></section><div class="sp-stack">${body}</div>`
@@ -785,7 +785,7 @@ SCREENS.sites = async () => {
   const schoolCards = html`<div class="lp-grid">${schools.map(s => html`<article class="lp-rule ${s.active ? '' : 'is-off'}"><div class="lp-rule-top"><span class="lp-code">${(s.name || '?').split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase()}</span>${s.active ? badge('b-good', 'Active') : badge('b-neutral', 'Inactive')}${s.scored ? badge('b-internal', 'Counted in KPIs') : badge('b-watch', 'Not counted')}</div><h3>${s.name}</h3><p class="mono">${s.domain}</p>
       <div class="row"><a class="btn btn-sm" href="#/site/${s.id}">View score</a>${lead ? html`<button class="btn btn-sm" data-act="renameSchool" data-id="${s.id}" data-name="${s.name}">Rename</button><button class="btn btn-sm ${s.scored ? '' : 'btn-primary'}" data-act="toggleScored" data-id="${s.id}" data-value="${!s.scored}">${s.scored ? 'Exclude' : 'Include'}</button>`: ''}${lead && !s.headOffice ? html`<button class="btn btn-sm btn-danger" data-act="removeSchool" data-id="${s.id}" data-name="${s.name}">Remove</button>` : ''}</div></article>`)}</div>`;
   return page('Schools & settings', net ? 'The schools in the network and whether they count toward the KPIs.' : null, html`
-    ${net && schools.length ? schoolCards : card('Schools', null, schools.length ? table(['Name', 'Domain', 'Counted in KPIs', 'Status'], schools.map(s => ({ cells: [html`${s.name} ${lead ? html`<button class="btn btn-sm" data-act="renameSchool" data-id="${s.id}" data-name="${s.name}">Rename</button>` : ''}`, s.domain, counted(s), s.active ? badge('b-good', 'Active') : badge('b-neutral', 'Inactive')] }))) : empty('No school yet. Add the first one below.'))}
+    ${lead && schools.length ? eaaSchools(schools, lead) : net && schools.length ? schoolCards : card('Schools', null, schools.length ? table(['Name', 'Domain', 'Counted in KPIs', 'Status'], schools.map(s => ({ cells: [html`${s.name} ${lead ? html`<button class="btn btn-sm" data-act="renameSchool" data-id="${s.id}" data-name="${s.name}">Rename</button>` : ''}`, s.domain, counted(s), s.active ? badge('b-good', 'Active') : badge('b-neutral', 'Inactive')] }))) : empty('No school yet. Add the first one below.'))}
     ${lead ? card('Add school', null, html`<form data-form="site" class="row"><input class="input" name="name" placeholder="School name" required><input class="input" name="domain" placeholder="school.edu" required><label><input type="checkbox" name="scored" checked> Counted in the KPIs</label><button class="btn btn-primary">Add school</button></form>`) : ''}
     ${it ? card('Settings', null, table(['Setting', 'Value'], settings.map(s => ({ cells: [s.key, html`<form data-form="setting" data-key="${s.key}" class="row"><input class="input" name="value" value="${s.value}"><button class="btn btn-sm">Save</button></form>`] })))) : ''}`, '', lead ? [['Schools', schools.length, '', 'brand', 'school', 'In the network'], ['Counted in KPIs', schools.filter(x => x.scored).length, '', 'good', 'check', 'Scored'], ['Not counted', schools.filter(x => !x.scored).length, '', 'watch', 'pause', 'Left out of totals'], ['Active', schools.filter(x => x.active).length, '', 'slate', 'shield', 'Connected']] : null);
 };
@@ -1087,6 +1087,7 @@ async function parentPickup() {
   const live = list => html`<div class="pk-live">${list.map(pkCurrent)}</div>`;
   pickupPoll('pickupMine', () => get('/api/pickup/mine'), live);
   if (!kids.length) return page('Pick-up', PK_SUB, card('Pick-up', null, empty('No children are linked to your account yet.')));
+  const early = typeof earlyPickupParent === 'function' ? await earlyPickupParent(kids) : '';   // early pick-up requests (family.js)
   return page('Pick-up', PK_SUB, html`
     ${card('Right now', 'The school sees this at once. It updates by itself.', html`<div id="pickupMine" class="pk">${live(kids)}</div>`)}
     ${kids.map(c => {
@@ -1108,7 +1109,7 @@ async function parentPickup() {
           ${field('Phone (optional)', html`<input class="input" name="phone" maxlength="30" inputmode="tel">`)}
           <button class="pk-btn pk-btn-go">Add collector</button></form></details>
       ${c.recent.length ? html`<p class="pk-sub">Recent pick-ups</p><ul class="pk-hist">${c.recent.map(r => html`<li><span class="pk-chip pk-chip-ok">Picked up</span><span>${r.collector} (${REL_LABEL[r.relationship] || r.relationship})</span><span>${r.releasedBy}<br>${fmt(r.releasedAt)}</span></li>`)}</ul>` : ''}</div>`);
-    })}`);
+    })}${early}`);
 }
 
 const pkAct = (r, canAct, step) => !canAct ? '' : html`<div class="pk-q-act">${step === 'verify'
@@ -1130,10 +1131,10 @@ const pickupBoardHtml = b => {
   ${waiting.length ? card('Older requests', 'From before parents confirmed pick-ups themselves.', html`<div class="pk pk-grid">${b.arrivals.map(r => pkQueueCard(r, b.canAct, 'verify'))}${b.pending.map(r => pkQueueCard(r, b.canAct, 'release'))}</div>`) : ''}`;
 };
 async function staffPickup() {
-  const [board, log] = await Promise.all([get('/api/pickup/board'), get('/api/pickup/log')]);
+  const [board, log, early] = await Promise.all([get('/api/pickup/board'), get('/api/pickup/log'), typeof earlyPickupStaff === 'function' ? earlyPickupStaff() : '']);
   pickupPoll('pickupBoard', () => get('/api/pickup/board'), pickupBoardHtml);
   return page('Pick-up board', 'Live: when a parent presses Pick up, the child shows here in green at once. No approval is needed.',
-    html`<div id="pickupBoard" class="stack-gap">${pickupBoardHtml(board)}</div>
+    html`${early}<div id="pickupBoard" class="stack-gap">${pickupBoardHtml(board)}</div>
     ${card('Pick-up log', 'Every pick-up is kept permanently and cannot be changed, with the parent who confirmed it. The last 30 days are shown.', log.length
       ? table(['Student', 'Class', 'Collected by', 'Confirmed by', 'Date and time'], log.map(r => ({ cells: [r.student, r.section, r.collector + ' (' + (REL_LABEL[r.relationship] || r.relationship) + ')', r.releasedBy, fmt(r.releasedAt)] })))
       : empty('No releases in the last 30 days.'))}`);
@@ -2037,13 +2038,9 @@ function shell(route, body) {
   route = ({ schoolReport: S.me.role === 'LEADERSHIP' ? 'schools' : 'metrics', investigations: S.me.role === 'PRINCIPAL' ? 'performance' : 'investigations' })[route] || route;
   const initials = (S.me.displayName || '?').split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase();
   const portal = S.me.role === 'STUDENT' || S.me.role === 'PARENT';
-  return html`<div class="frame">
-    <aside class="sidebar"><div class="brand brand-eaa"><a href="#/${home()}" class="brand-logo-link" aria-label="Home"><img class="brand-logo" src="app/eaa-logo.png" alt="Assalam School · Education Above All"></a><div class="brand-row"><span class="brand-name">Hafez</span><span class="brand-ar" lang="ar" dir="rtl">حافظ</span></div></div>
-      <div class="who">${avatar(initials)}<div><b>${S.me.displayName}</b>${ROLE_LABEL[S.me.role]}${personSite(S.me) ? ' · ' + personSite(S.me) : ''}</div></div>
-      <nav class="nav">${nav.map(([r, label]) => r === '#' ? html`<div class="nav-group">${label}</div>` : html`<a class="nav-item ${route === r ? 'nav-on' : ''} ${route === r && S.kpiFlash ? 'nav-flash' : ''}" href="#/${r}" style="text-decoration:none">${raw(ICON)}<span>${label}</span>${r === 'notifications' && S.unread ? html`<span class="count">${S.unread}</span>` : ''}${r === 'chat' && S.chatUnread ? html`<span class="count">${S.chatUnread}</span>` : ''}</a>`)}
-        <div class="nav-sep"></div><a class="nav-item ${route === 'prefs' ? 'nav-on' : ''}" href="#/prefs" style="text-decoration:none">${raw(ICON)}<span>My preferences</span></a>
-        <button class="nav-item nav-lang" data-act="setLang">${raw(ICON)}<span>${langLabel()}</span></button>
-        <button class="nav-item" data-act="signout">${raw(ICON)}<span>Sign out</span></button></nav>${loc(portal ? SIDE_HELP : SIDE_SKY)}</aside>
+  if (isNewLook()) return eaaShell(route, body);
+  return html`<div class="frame ea-keep">
+    ${eaaSide(route)}
     <div class="content">${portal ? portalTopbar(initials) : ''}<main class="page ${portal ? 'sp' : isCoord() ? 'cx' : ''}" id="main">${body}</main></div></div>`;
 }
 
@@ -2059,79 +2056,144 @@ const LD_ICON = {
 const ldIc = (p, s, w) => html`<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="${w || 2}" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="${p}"/></svg>`;
 const ldGo = (t, label, cls) => html`<button type="button" class="${cls || 'ld-lnk'}" data-act="scrollTo" data-target="${t}">${label}</button>`;
 
+Object.assign(AR, {
+  'Home': 'الرئيسية', 'About': 'عن حافظ', 'Portals': 'البوابات', 'About Hafez': 'عن حافظ',
+  'Assalam Schools · Education Above All': 'مدارس السلام · التعليم فوق الجميع', 'Assalam Schools': 'مدارس السلام',
+  'One place for your school day': 'مكان واحد ليومك الدراسي',
+  'Timetable, attendance, homework, results and pick-up for parents, students and teachers, in Arabic and English.': 'الجدول والحضور والواجبات والنتائج واستلام الطلاب لأولياء الأمور والطلاب والمعلمين، بالعربية والإنجليزية.',
+  'Sign in →': 'تسجيل الدخول ←', 'See what is inside': 'تعرّف على المزايا',
+  'A caring community of learners': 'مجتمع متعلمين يسوده الاهتمام',
+  'Hafez brings families, students and teachers together. Teachers set homework and take attendance, parents see how their children are doing, and everyone can ask questions in Arabic or English.': 'يجمع حافظ الأسر والطلاب والمعلمين. يضع المعلمون الواجبات ويسجلون الحضور، ويتابع أولياء الأمور أحوال أبنائهم، ويمكن للجميع طرح الأسئلة بالعربية أو الإنجليزية.',
+  'Everything you see comes from the school\'s own records, and each person only sees what they are allowed to.': 'كل ما تراه مصدره سجلات المدرسة نفسها، ولا يرى كل شخص إلا ما يحق له.',
+  'At a glance': 'لمحة سريعة', 'Two languages, one school': 'لغتان، مدرسة واحدة', 'Arabic and English are part of every screen.': 'العربية والإنجليزية جزء من كل شاشة.',
+  'Grades 1 to 12': 'من الصف الأول إلى الثاني عشر', 'From the first lesson to university preparation.': 'من أول درس حتى الاستعداد للجامعة.',
+  'Families in the loop': 'الأسر على اطلاع', 'Parents follow homework, marks and attendance online.': 'يتابع أولياء الأمور الواجبات والدرجات والحضور عبر الإنترنت.',
+  'A portal for every role': 'بوابة لكل دور', 'Parents': 'أولياء الأمور',
+  'Follow every child\'s marks, attendance, homework and timetable, and pick them up early with a few taps.': 'تابع درجات كل طفل وحضوره وواجباته وجدوله، واستلمه مبكراً ببضع نقرات.',
+  'See your homework, quizzes, timetable, points and levels in one place.': 'شاهد واجباتك واختباراتك وجدولك ونقاطك ومستوياتك في مكان واحد.',
+  'Take attendance, set homework and quizzes, publish marks and talk to families.': 'سجّل الحضور، وضع الواجبات والاختبارات، وانشر الدرجات وتواصل مع الأسر.',
+  'What is inside': 'ما بداخل حافظ', 'Everything for the school day': 'كل ما يحتاجه اليوم الدراسي',
+  'Homework and quizzes': 'الواجبات والاختبارات', 'Set, hand in and mark work online.': 'ضع الأعمال وسلّمها وصحّحها عبر الإنترنت.',
+  'Taken in class, seen by families the same day.': 'يُسجَّل في الصف وتراه الأسر في اليوم نفسه.',
+  'Every lesson, every day of the week.': 'كل حصة في كل يوم من الأسبوع.',
+  'Marks and points': 'الدرجات والنقاط', 'Results, levels and progress over time.': 'النتائج والمستويات والتقدم عبر الوقت.',
+  'Pick-up': 'الاستلام', 'Parents take responsibility for early pick-up.': 'يتحمل أولياء الأمور مسؤولية الاستلام المبكر.',
+  'A helper that answers questions about school.': 'مساعد يجيب عن أسئلة المدرسة.',
+  'Get started': 'ابدأ الآن', 'Sign in to Hafez': 'سجّل الدخول إلى حافظ', 'Use your school account, or the e-mail and password you were given.': 'استخدم حساب المدرسة، أو البريد الإلكتروني وكلمة المرور التي زوّدتك بها المدرسة.',
+  'I have an invitation code': 'لدي رمز دعوة', 'Getting access': 'كيف تحصل على الدخول',
+  'Sign in with your school account': 'سجّل الدخول بحساب المدرسة', 'Parents and students': 'أولياء الأمور والطلاب', 'Use your e-mail and password': 'استخدم بريدك الإلكتروني وكلمة المرور',
+  'New here?': 'جديد هنا؟', 'Activate with the invitation code from your school': 'فعّل حسابك برمز الدعوة من مدرستك', 'Questions': 'أسئلة', 'Ask your school office': 'اسأل مكتب المدرسة',
+  'Assalam Schools · Qatar': 'مدارس السلام · قطر',
+  '‹ Back to website': 'الرجوع إلى الموقع ›', '‹ Back to sign in': 'الرجوع إلى تسجيل الدخول ›',
+  'One place for your school day: timetable, attendance, results and pick-up.': 'مكان واحد ليومك الدراسي: الجدول والحضور والنتائج والاستلام.',
+  'Sign in': 'تسجيل الدخول', 'Welcome back. Choose how you sign in.': 'أهلاً بعودتك. اختر طريقة تسجيل الدخول.',
+  'Teachers and school staff sign in with their school account.': 'يسجّل المعلمون وموظفو المدرسة الدخول بحساب المدرسة.',
+  'Continue with school account': 'المتابعة بحساب المدرسة', 'Parent or student': 'ولي أمر أو طالب',
+  'E-mail': 'البريد الإلكتروني', 'Enter your password': 'أدخل كلمة المرور', 'At least 8 characters': '8 أحرف على الأقل',
+  'Activate your student account': 'فعّل حساب الطالب', 'Create your parent account': 'أنشئ حساب ولي الأمر'
+});
+const pbIc = (p, s) => html`<svg width="${s || 18}" height="${s || 18}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="${p}"/></svg>`;
+const PB = {
+  book: 'M4 5a2 2 0 012-2h13v16H6a2 2 0 00-2 2zM4 19a2 2 0 012-2h13M8 7h7',
+  globe: 'M12 21a9 9 0 100-18 9 9 0 000 18zM3 12h18M12 3a14 14 0 010 18M12 3a14 14 0 000 18',
+  cap: LD_ICON.cap, users: LD_ICON.users, doc: LD_ICON.doc,
+  clock: 'M12 21a9 9 0 100-18 9 9 0 000 18zM12 7v5l3 2',
+  cal: 'M5 4h14a1 1 0 011 1v15a1 1 0 01-1 1H5a1 1 0 01-1-1V5a1 1 0 011-1zM4 9h16M8 2v4M16 2v4',
+  chart: 'M4 20V10M10 20V4M16 20v-8M22 20H2',
+  car: 'M5 17h14M6 17l1.5-6h9L18 17M7 17v2M17 17v2M9 14h.01M15 14h.01',
+  chat: 'M21 12a8 8 0 01-11.6 7.1L4 20.5l1.5-4.6A8 8 0 1121 12z',
+  key: 'M15 7a4 4 0 11-3.9 4.9L3 20v-3l3-3 2 .5.5-2L11 11a4 4 0 014-4zM16 9h.01',
+  mail: 'M4 6h16a1 1 0 011 1v10a1 1 0 01-1 1H4a1 1 0 01-1-1V7a1 1 0 011-1zM3 7l9 6 9-6',
+  home: 'M3 11l9-8 9 8M5 10v10h5v-6h4v6h5V10'
+};
+const pbLogo = cls => html`<span class="${cls || 'pb-brand'}"><img src="app/eaa-logo.png" alt=""><span><b>Hafez</b><small lang="ar" dir="rtl">حافظ</small></span></span>`;
+const pbGo = (t, label, cls) => html`<button type="button" class="${cls || 'pb-link'}" data-act="scrollTo" data-target="${t}">${label}</button>`;
+const pbSignIn = (label, cls, view, mode) => html`<button type="button" class="${cls}" data-act="landing" data-view="${view || 'signin'}" data-mode="${mode || 'login'}">${label}</button>`;
+const pbGlobe = raw('<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="' + PB.globe + '"/></svg>');
+
 function landingPage() {
-  const features = [['Check & Fix', 'Spot issues and fix them within minutes.', LIC.shield], ['Manage Access', 'Control who can view, edit and share files.', LD_ICON.users], ['Stay Compliant', 'Keep records secure and follow school policies.', LD_ICON.doc], ['Support Better Education', 'Focus on what matters, students.', LD_ICON.cap]];
-  const mock = [['1,248', 'Total files', '#6b1730'], ['342', 'Active users', '#2563eb'], ['98%', 'Compliance', '#14633b'], ['2 min', 'Avg. fix time', '#b7791f']];
-  const portals = [['student', 'Student', 'linear-gradient(135deg,#c24a6e,#8f2447)', LD_ICON.cap], ['parent', 'Parent', 'linear-gradient(135deg,#e7a3b6,#a8365c)', LD_ICON.users]];
-  return html`<div class="ld" id="ld-top">
-  <nav class="ld-nav"><button type="button" class="ld-logo" data-act="scrollTo" data-target="ld-top"><img class="ld-logo-img" src="app/eaa-logo.png" alt=""><b>Hafez</b><i lang="ar">حافظ</i></button>
-    <div class="ld-links">${ldGo('ld-features', 'Features')}${ldGo('ld-solution', 'Solution')}${ldGo('ld-signin', 'Sign in')}${ldGo('ld-signin', 'Contact')}</div>
-    <button type="button" class="ld-lang" data-act="setLang">${langLabel()}</button>${ldGo('ld-signin', 'Access Hafez →', 'ld-pill')}</nav>
+  const glance = [[PB.globe, 'Two languages, one school', 'Arabic and English are part of every screen.'], [PB.cap, 'Grades 1 to 12', 'From the first lesson to university preparation.'], [PB.users, 'Families in the loop', 'Parents follow homework, marks and attendance online.']];
+  const roles = [['Parents', 'Follow every child\'s marks, attendance, homework and timetable, and pick them up early with a few taps.', 'portal-a'], ['Students', 'See your homework, quizzes, timetable, points and levels in one place.', 'portal-b'], ['Teachers', 'Take attendance, set homework and quizzes, publish marks and talk to families.', 'portal-c']];
+  const inside = [[PB.book, 'Homework and quizzes', 'Set, hand in and mark work online.'], [PB.cal, 'Attendance', 'Taken in class, seen by families the same day.'], [PB.clock, 'Timetable', 'Every lesson, every day of the week.'], [PB.chart, 'Marks and points', 'Results, levels and progress over time.'], [PB.car, 'Pick-up', 'Parents take responsibility for early pick-up.'], [PB.chat, 'Ask Hafez', 'A helper that answers questions about school.']];
+  return html`<div class="pb" id="pb-top">
+  <header class="pb-nav"><button type="button" class="pb-brand-btn" data-act="scrollTo" data-target="pb-top">${pbLogo()}</button>
+    <nav class="pb-links">${pbGo('pb-top', 'Home')}${pbGo('pb-about', 'About')}${pbGo('pb-portals', 'Portals')}${pbGo('pb-inside', 'Features')}${pbGo('pb-start', 'Contact')}</nav>
+    <button type="button" class="pb-lang" data-act="setLang">${pbGlobe} ${langLabel()}</button>${pbSignIn('Sign in', 'pb-btn pb-btn-sm')}</header>
+  <main class="pb-main">
+  <section class="pb-hero"><img src="app/assalam-school.jpg" alt=""><div class="pb-hero-in"><span class="pb-badge">Assalam Schools · Education Above All</span><h1>One place for your school day</h1>
+    <p>Timetable, attendance, homework, results and pick-up for parents, students and teachers, in Arabic and English.</p>
+    <div class="pb-cta">${pbSignIn('Sign in →', 'pb-btn pb-btn-light')}${pbGo('pb-inside', 'See what is inside', 'pb-btn pb-btn-ghost')}</div></div></section>
 
-  <section class="ld-hero"><i class="ld-blob b1"></i><i class="ld-blob b2"></i><div class="ld-photo ld-photo-school" role="img" aria-label="Assalam School, Education Above All"><img class="ld-ph-school" src="app/assalam-school.jpg" alt=""><img class="ld-ph-logo" src="app/eaa-logo.png" alt=""></div>
-    <div class="ld-chip ld-chip-a"><span>${ldIc(LIC.shield, 22)}</span><div><b>Read-only</b><div>Your files stay safe</div></div></div>
-    <div class="ld-chip ld-chip-b"><span>✓</span><b>Issues fixed in minutes</b></div>
-    <svg class="ld-dots" width="120" height="120" aria-hidden="true"><defs><pattern id="dt" width="16" height="16" patternUnits="userSpaceOnUse"><circle cx="2" cy="2" r="2" fill="#c24a6e"/></pattern></defs><rect width="120" height="120" fill="url(#dt)"/></svg>
-    <div class="ld-hero-text"><div class="ld-eyebrow"><span>Hafez</span><i></i></div><h1>Keep every school file safe, findable and owned</h1>
-      <p>A read-only checker that keeps your school files safe, findable and owned — and helps you fix issues quickly.</p>
-      <div class="ld-cta">${ldGo('ld-signin', 'Explore Hafez →', 'ld-fill')}${ldGo('ld-solution', 'Learn more', 'ld-outline')}</div></div></section>
+  <section class="pb-sec pb-about" id="pb-about"><div><small class="pb-eyebrow">About Hafez</small><h2>A caring community of learners</h2>
+    <p>Hafez brings families, students and teachers together. Teachers set homework and take attendance, parents see how their children are doing, and everyone can ask questions in Arabic or English.</p>
+    <p>Everything you see comes from the school's own records, and each person only sees what they are allowed to.</p></div>
+    <aside class="pb-glance"><small>At a glance</small>${glance.map(([p, t, d]) => html`<div><span>${pbIc(p, 18)}</span><div><b>${t}</b><div>${d}</div></div></div>`)}</aside></section>
 
-  <section class="ld-feat" id="ld-features"><div>${features.map(([t, d, p]) => html`<div><span>${ldIc(p, 26, 1.8)}</span><div><b>${t}</b><div>${d}</div></div></div>`)}</div></section>
+  <section class="pb-sec" id="pb-portals"><small class="pb-eyebrow">Portals</small><h2>A portal for every role</h2>
+    <div class="pb-cards">${roles.map(([t, d, c]) => html`<article class="pb-card"><div class="pb-card-img ${c}"></div><div class="pb-card-b"><b>${t}</b><p>${d}</p>${pbSignIn('Sign in →', 'pb-more')}</div></article>`)}</div></section>
 
-  <section class="ld-sol" id="ld-solution"><div class="ld-sol-t"><div class="ld-eyebrow"><span>The Hafez Solution</span><i></i></div><h2>Built for Schools, Designed for Impact</h2><p>Hafez helps your school manage important files with confidence, supporting a safer and more efficient learning environment.</p>${ldGo('ld-signin', 'Discover more →', 'ld-fill')}</div>
-    <div class="ld-win"><div class="ld-win-s"><div><img class="ld-win-logo" src="app/eaa-logo.png" alt=""><b>Hafez</b></div><span class="on">Overview</span><span>Incidents</span><span>Rules</span><span>Schools</span><span>Reports</span></div>
-      <div class="ld-win-m"><b>Overview</b><div class="ld-win-k">${mock.map(([v, l, c]) => html`<div><i style="background:${c}"></i><b>${v}</b><span>${l}</span></div>`)}</div>
-        <div class="ld-win-a"><b>Recent activity</b><div><span><i style="color:#14633b">●</i> Policy updated by Admin</span><span>2m ago</span></div><div><span><i style="color:#2563eb">●</i> File access granted</span><span>5m ago</span></div></div></div></div></section>
+  <section class="pb-sec" id="pb-inside"><small class="pb-eyebrow">What is inside</small><h2>Everything for the school day</h2>
+    <div class="pb-notes">${inside.map(([p, t, d]) => html`<div class="pb-note"><span>${pbIc(p, 22)}</span><div><b>${t}</b><div>${d}</div></div></div>`)}</div></section>
 
-  <section class="ld-sign" id="ld-signin"><div class="ld-sign-in">
-    <div class="ld-sign-h"><div>SIGN IN</div><h2>Welcome to Hafez</h2><p>Choose how you want to sign in.</p></div>
-    <div class="ld-sign-g">
-      <div class="ld-google"><svg class="ld-rings" viewBox="0 0 200 200" aria-hidden="true"><g fill="none" stroke="#fff" stroke-width="3"><circle cx="100" cy="100" r="90"/><circle cx="100" cy="100" r="62"/><circle cx="100" cy="100" r="34"/></g></svg>
-        <div class="ld-g-top"><span><svg width="32" height="32" viewBox="0 0 24 24" aria-hidden="true"><path d="M21.6 12.2c0-.7-.1-1.4-.2-2H12v3.8h5.4a4.6 4.6 0 01-2 3v2.5h3.2c1.9-1.7 3-4.3 3-7.3z" fill="#4285F4"/><path d="M12 22c2.7 0 5-.9 6.6-2.5l-3.2-2.5c-.9.6-2 1-3.4 1-2.6 0-4.8-1.8-5.6-4.1H3.1v2.6A10 10 0 0012 22z" fill="#34A853"/><path d="M6.4 14c-.2-.6-.3-1.3-.3-2s.1-1.4.3-2V7.4H3.1a10 10 0 000 9.2z" fill="#FBBC05"/><path d="M12 5.9c1.5 0 2.8.5 3.8 1.5l2.8-2.8A10 10 0 003.1 7.4L6.4 10c.8-2.3 3-4.1 5.6-4.1z" fill="#EA4335"/></svg></span><i>Recommended</i></div>
-        <div class="ld-g-bot"><b>Login with Google</b><span>For school related emails</span><div class="ld-g-act"><a href="/oauth2/authorization/google">Continue <span aria-hidden="true">→</span></a><button type="button" data-act="landing" data-view="testname" data-mode="login">Sign in with a name (testing)</button></div></div></div>
-      <div class="ld-portals">${portals.map(([v, t, g, p]) => html`<button type="button" class="ld-portal" data-act="landing" data-view="${v}" data-mode="login"><span style="background:${g}">${ldIc(p, 28, 1.8)}</span><div><small>PORTAL</small><b>${t}</b><div>Sign in or register</div></div><i aria-hidden="true">→</i></button>`)}</div></div>
-    ${L.dev ? html`<p class="ld-dev">Test mode, no e-mail needed: <a href="/dev/login/student?next=/">student</a> · <a href="/dev/login/parent?next=/">parent</a> · <a href="/dev/login">all test roles</a></p>` : ''}</div></section>
+  <section class="pb-sec"><div class="pb-band"><div><small>Get started</small><h2>Sign in to Hafez</h2><p>Use your school account, or the e-mail and password you were given.</p></div>
+    <div class="pb-cta">${pbSignIn('Sign in →', 'pb-btn pb-btn-light')}${pbSignIn('I have an invitation code', 'pb-btn pb-btn-ghost', 'parent', 'invite')}</div></div></section>
 
-  <section class="ld-end"><div><img src="app/assalam-school.jpg" alt="" aria-hidden="true"><span></span><div><b>Together, we build brighter futures.</b><div>Through innovative solutions like Hafez, schools support quality education for every child.</div></div>${ldGo('ld-top', 'Our impact →', 'ld-fill')}</div></section>
-  <footer class="ld-foot"><span><b>Hafez</b> · Assalam Schools · Education Above All</span><span>Qatar</span></footer></div>`;
+  <section class="pb-sec" id="pb-start"><small class="pb-eyebrow">Contact</small><h2>Getting access</h2>
+    <div class="pb-contact"><div class="pb-info">
+      <div><span>${pbIc(PB.key, 18)}</span><div><small>Staff</small><b>Sign in with your school account</b></div></div>
+      <div><span>${pbIc(PB.mail, 18)}</span><div><small>Parents and students</small><b>Use your e-mail and password</b></div></div>
+      <div><span>${pbIc(PB.doc, 18)}</span><div><small>New here?</small><b>Activate with the invitation code from your school</b></div></div>
+      <div><span>${pbIc(PB.home, 18)}</span><div><small>Questions</small><b>Ask your school office</b></div></div></div>
+      <div class="pb-map"><img src="app/heritage-school.png" alt=""><span>Assalam Schools · Qatar</span></div></div>
+    ${L.dev ? html`<p class="pb-dev">Test mode, no e-mail needed: <a href="/dev/login/student?next=/">student</a> · <a href="/dev/login/parent?next=/">parent</a> · <a href="/dev/login">all test roles</a></p>` : ''}</section>
+  </main>
+  <footer class="pb-foot"><div>${pbLogo('pb-brand pb-brand-w')}<p>Assalam Schools · Education Above All</p></div>
+    <div><b>Hafez</b>${pbGo('pb-about', 'About')}${pbGo('pb-inside', 'Features')}</div><div><b>Portals</b>${pbSignIn('Sign in', 'pb-link')}${pbGo('pb-start', 'Contact')}</div></footer></div>`;
+}
+
+/** The split sign-in screen: the school on the left, one white card on the right. */
+function authShell(card) {
+  return html`<div class="au"><aside class="au-art"><img src="app/assalam-school.jpg" alt="">${pbLogo('pb-brand pb-brand-w')}
+      <div class="au-cap"><span class="pb-badge">Assalam Schools</span><h2>One place for your school day: timetable, attendance, results and pick-up.</h2></div></aside>
+    <section class="au-side"><div class="au-top"><button type="button" class="au-back" data-act="landing" data-view="home">‹ Back to website</button><button type="button" class="pb-lang" data-act="setLang">${pbGlobe} ${langLabel()}</button></div>
+      <div class="au-card">${card}</div></section></div>`;
 }
 
 function signIn(message, dev) {
   if (dev !== undefined) L.dev = !!dev;
-  const logo = html`<div class="card-logo"><img src="app/eaa-logo.png" alt="Assalam School · Education Above All"><span class="brand-name" style="color:var(--ink)">Hafez</span></div>`;
   if (message) {
-    return html`<div class="center-screen"><div class="center-card">${logo}
-      <h1 style="margin:0 0 8px;font-size:22px">Your account is not set up yet</h1><p class="muted">${message}</p>
-      <button class="btn" data-act="signout">Sign out and try another account</button></div></div>`;
+    return authShell(html`<h1>Your account is not set up yet</h1><p class="au-sub">${message}</p><button class="btn btn-primary au-wide" data-act="signout">Sign out and try another account</button>`);
   }
   if (L.view === 'home') return landingPage();
+  const back = html`<p class="au-note"><button type="button" class="pb-more" data-act="landing" data-view="signin" data-mode="login">‹ Back to sign in</button></p>`;
   if (L.view === 'testname') {
     const off = L.testPeople === null;
     const order = ['STUDENT', 'PARENT', 'TEACHER', 'COORDINATOR', 'PRINCIPAL', 'PRINCIPAL_ASSISTANT', 'ATTENDANCE_OFFICER', 'SCHOOL_IT', 'LEADERSHIP', 'EAA_ADMIN'];
     const people = (L.testPeople || []).slice().sort((a, b) => (order.indexOf(a.role) - order.indexOf(b.role)) || a.name.localeCompare(b.name));
     const who = people.map(x => html`<button type="button" class="ts-person" data-act="testPick" data-id="${x.id}"><span class="ts-av">${initialsOf(x.name)}</span><span class="ts-txt"><b>${x.name}</b><small>${ROLE_LABEL[x.role] || x.role}</small></span><i aria-hidden="true">→</i></button>`);
-    return html`<div class="center-screen"><div class="center-card landing ts-card" style="text-align:start"><button type="button" class="card-lang" data-act="setLang">${langLabel()}</button>${logo}
-      <h1 style="margin:0 0 8px;font-size:22px">Test sign-in</h1>
-      ${off ? html`<p class="muted" style="color:#8E1B1B">Test sign-in is switched off. Start the app with SIJILL_SIGNIN_TEST_MODE=true to use it.</p>` : html`<p class="muted">For testing only. Press a person to sign in with their role. There is no password.</p>`}
+    return authShell(html`<h1>Test sign-in</h1>
+      ${off ? html`<p class="au-sub" style="color:#8E1B1B">Test sign-in is switched off. Start the app with SIJILL_SIGNIN_TEST_MODE=true to use it.</p>` : html`<p class="au-sub">For testing only. Press a person to sign in with their role. There is no password.</p>`}
       ${who.length ? html`<div class="ts-grid">${who}</div>` : ''}
-      <details class="ts-type" ${who.length ? '' : raw('open')}><summary>Or type a name</summary><form data-form="testSignin">${field('Name', html`<input class="input" name="name" autocomplete="off" required>`)}<button class="btn btn-primary" style="width:100%">Sign in</button></form></details>
-      <p style="margin:18px 0 0"><button class="btn btn-sm" data-act="landing" data-view="home">Back</button></p></div></div>`;
+      <details class="ts-type" ${who.length ? '' : raw('open')}><summary>Or type a name</summary><form data-form="testSignin">${field('Name', html`<input class="input" name="name" autocomplete="off" required>`)}<button class="btn btn-primary au-wide">Sign in</button></form></details>${back}`);
   }
-  const student = L.view === 'student', reg = L.mode === 'invite';
-  const pw = html`${field('Password', html`<input class="input" type="password" name="password" minlength="${reg ? 8 : 1}" autocomplete="${reg ? 'new-password' : 'current-password'}" required>`)}`;
-  const code = html`${field('Invitation code', html`<input class="input mono" name="code" placeholder="XXXX-XXXX-XXXX" autocomplete="off" required>`)}`;
-  const form = !reg
-    ? html`<form data-form="login">${field('E-mail', html`<input class="input" type="email" name="email" autocomplete="email" required>`)}${pw}<button class="btn btn-primary" style="width:100%">Sign in</button></form>`
-    : student
-      ? html`<form data-form="redeemStudent">${code}${pw}
-          <p class="muted" style="font-size:12.5px">Your school gave you a one-time code. Choose a password of at least 8 characters.</p><button class="btn btn-primary" style="width:100%">Activate my account</button></form>`
-      : html`<form data-form="redeemParent">${code}${field('Your full name', html`<input class="input" name="name" autocomplete="name" required>`)}${field('Your e-mail', html`<input class="input" type="email" name="email" autocomplete="email" required>`)}${pw}
-          <p class="muted" style="font-size:12.5px">Your school gave you a one-time invitation code. It links your children to your own account.</p><button class="btn btn-primary" style="width:100%">Create my account</button></form>`;
-  return html`<div class="center-screen"><div class="center-card landing" style="text-align:start"><button type="button" class="card-lang" data-act="setLang">${langLabel()}</button>${logo}
-    <h1 style="margin:0 0 14px;font-size:22px">${student ? 'Student portal' : 'Parent portal'}</h1>
-    <div class="row" style="margin-bottom:16px"><button class="btn ${reg ? '' : 'btn-primary'}" data-act="landing" data-view="${L.view}" data-mode="login">Sign in</button><button class="btn ${reg ? 'btn-primary' : ''}" data-act="landing" data-view="${L.view}" data-mode="invite">I have an invitation code</button></div>
-    ${form}
-    <p style="margin:18px 0 0"><button class="btn btn-sm" data-act="landing" data-view="home">Back</button></p></div></div>`;
+  const pw = reg => field('Password', html`<input class="input" type="password" name="password" minlength="${reg ? 8 : 1}" autocomplete="${reg ? 'new-password' : 'current-password'}" placeholder="${reg ? 'At least 8 characters' : 'Enter your password'}" required>`);
+  const code = field('Invitation code', html`<input class="input mono" name="code" placeholder="XXXX-XXXX-XXXX" autocomplete="off" required>`);
+  if (L.mode === 'invite') {
+    const student = L.view === 'student';
+    return authShell(html`<h1>${student ? 'Activate your student account' : 'Create your parent account'}</h1>
+      <p class="au-sub">${student ? 'Your school gave you a one-time code. Choose a password of at least 8 characters.' : 'Your school gave you a one-time invitation code. It links your children to your own account.'}</p>
+      <div class="au-seg"><button type="button" class="${student ? '' : 'on'}" data-act="landing" data-view="parent" data-mode="invite">Parent</button><button type="button" class="${student ? 'on' : ''}" data-act="landing" data-view="student" data-mode="invite">Student</button></div>
+      ${student ? html`<form data-form="redeemStudent">${code}${pw(true)}<button class="btn btn-primary au-wide">Activate my account</button></form>`
+        : html`<form data-form="redeemParent">${code}${field('Your full name', html`<input class="input" name="name" autocomplete="name" required>`)}${field('Your e-mail', html`<input class="input" type="email" name="email" autocomplete="email" required>`)}${pw(true)}<button class="btn btn-primary au-wide">Create my account</button></form>`}${back}`);
+  }
+  return authShell(html`<h1>Sign in</h1><p class="au-sub">Welcome back. Choose how you sign in.</p>
+    <div class="au-staff"><b>${pbIc(PB.home, 16)} Staff</b><p>Teachers and school staff sign in with their school account.</p>
+      <a class="au-google" href="/oauth2/authorization/google">${pbIc(PB.key, 16)} Continue with school account</a></div>
+    <div class="au-or"><span>Parent or student</span></div>
+    <form data-form="login">${field('E-mail', html`<input class="input" type="email" name="email" autocomplete="email" placeholder="name@example.com" required>`)}${pw(false)}<button class="btn btn-primary au-wide">Sign in</button></form>
+    <p class="au-note">Got an invitation? Activate your account as a <button type="button" class="pb-more" data-act="landing" data-view="parent" data-mode="invite">parent</button> or a <button type="button" class="pb-more" data-act="landing" data-view="student" data-mode="invite">student</button>.</p>
+    ${L.test ? html`<p class="au-note"><button type="button" class="pb-more" data-act="landing" data-view="testname" data-mode="login">Sign in with a name (testing)</button></p>` : ''}
+    ${L.dev ? html`<p class="au-note">Test mode: <a href="/dev/login/student?next=/">student</a> · <a href="/dev/login/parent?next=/">parent</a> · <a href="/dev/login">all roles</a></p>` : ''}`);
 }
 
 function problem(e) {
@@ -2152,7 +2214,7 @@ async function refreshChat() {
 }
 async function refreshBell() { refreshChat(); try { const r = await get('/api/notifications/unread-count'); if (r.unread !== S.unread) { S.unread = r.unread; const c = document.querySelector('.nav-item[href="#/notifications"]'); if (c) { const old = c.querySelector('.count'); if (old) old.remove(); if (S.unread) c.insertAdjacentHTML('beforeend', `<span class="count">${S.unread}</span>`); } } } catch { } }
 
-const home = () => ({ TEACHER: 'today', STUDENT: 'mydash', PARENT: 'children', COORDINATOR: 'dashboard', PRINCIPAL: 'school', PRINCIPAL_ASSISTANT: 'metrics', SCHOOL_IT: 'noticesAdmin', LEADERSHIP: 'overview', EAA_ADMIN: 'incidents', ATTENDANCE_OFFICER: 'attendance' }[S.me.role]);
+const home = () => ({ TEACHER: 'today', STUDENT: 'mydash', PARENT: 'children', COORDINATOR: 'dashboard', PRINCIPAL: 'school', PRINCIPAL_ASSISTANT: 'metrics', SCHOOL_IT: 'itdash', LEADERSHIP: 'overview', EAA_ADMIN: 'netoverview', ATTENDANCE_OFFICER: 'attendance' }[S.me.role]);
 
 async function render() {
   const app = document.getElementById('app');
@@ -2174,7 +2236,7 @@ async function render() {
   S.route = route;
   const studentRoutes = new Set([...(NAV.STUDENT || []).map(x => x[0]), 'prefs']);
   const screen = SCREENS[route];
-  if (S.me.role === 'PARENT' && !['children', 'homework', 'chat', 'pickup', 'notices', 'notifications', 'prefs'].includes(route)) { location.hash = '#/' + home(); return; }
+  if (S.me.role === 'PARENT' && !new Set([...(NAV.PARENT || []).map(x => x[0]), 'prefs']).has(route)) { location.hash = '#/' + home(); return; }
   if (S.me.role === 'STUDENT' && !studentRoutes.has(route)) { location.hash = '#/' + home(); return; }
   if (!screen) { location.hash = '#/' + home(); return; }
   if ((HIDDEN_ROUTES[S.me.role] || []).includes(route)) { location.hash = '#/' + home(); return; }   // screens taken off this role's sidebar stay closed when typed in by hand
@@ -2191,6 +2253,7 @@ async function render() {
   S.kpiFlash = false;
   window.scrollTo(0, 0);
   afterRender();
+  if (typeof eaEnhance !== 'undefined') eaEnhance();
   if (typeof AskHafez !== 'undefined') AskHafez.sync();
 }
 

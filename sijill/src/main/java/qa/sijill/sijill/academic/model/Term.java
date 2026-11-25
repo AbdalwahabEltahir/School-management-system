@@ -20,6 +20,10 @@ public class Term extends BaseEntity {
     @Column(name = "name", nullable = false, length = 80)
     private String name;
 
+    /** The school session this term belongs to, such as 2026-2027. */
+    @Column(name = "session", nullable = false, length = 9)
+    private String session;
+
     @Column(name = "starts_on", nullable = false)
     private LocalDate startsOn;
 

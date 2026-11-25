@@ -60,13 +60,13 @@ public class SettingsController {
 
     @PostMapping("/subjects")
     public OrganisationDtos.SubjectView addSubject(CurrentUser user, @Valid @RequestBody OrganisationDtos.SubjectRequest request) {
-        return OrganisationDtos.SubjectView.from(settings.saveSubject(user, null, request.name(), request.coordinatorId()));
+        return OrganisationDtos.SubjectView.from(settings.saveSubject(user, null, request.name(), request.coordinatorId(), request.code(), request.gradeFrom(), request.gradeTo(), request.maxPeriods()));
     }
 
     @PutMapping("/subjects/{subjectId}")
     public OrganisationDtos.SubjectView updateSubject(CurrentUser user, @PathVariable UUID subjectId,
                                                       @Valid @RequestBody OrganisationDtos.SubjectRequest request) {
-        return OrganisationDtos.SubjectView.from(settings.saveSubject(user, subjectId, request.name(), request.coordinatorId()));
+        return OrganisationDtos.SubjectView.from(settings.saveSubject(user, subjectId, request.name(), request.coordinatorId(), request.code(), request.gradeFrom(), request.gradeTo(), request.maxPeriods()));
     }
 
     // ---- document types ----

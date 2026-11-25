@@ -22,7 +22,10 @@ public final class AcademicDtos {
 
     public record SectionView(UUID id, int grade, String name, int students) {}
 
-    public record TermView(UUID id, int number, String name, LocalDate startsOn, LocalDate endsOn) {}
+    public record TermView(UUID id, int number, String name, LocalDate startsOn, LocalDate endsOn, String session) {}
+
+    /** The school's sessions, newest first, and which one is current. */
+    public record SessionsView(String current, List<String> all) {}
 
     public record StudentView(UUID id, String name, String email) {}
 
@@ -94,7 +97,7 @@ public final class AcademicDtos {
 
     // ------------------------------------------------------------------ requests
 
-    public record TermRequest(int number, @NotBlank String name, @NotNull LocalDate startsOn, @NotNull LocalDate endsOn) {}
+    public record TermRequest(int number, @NotBlank String name, @NotNull LocalDate startsOn, @NotNull LocalDate endsOn, String session) {}
 
     public record SectionRequest(int grade, @NotBlank String name) {}
 

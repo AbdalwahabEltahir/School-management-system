@@ -9,5 +9,7 @@ import qa.sijill.sijill.academic.model.Term;
 public interface TermRepository extends JpaRepository<Term, UUID> {
 
     List<Term> findBySiteIdOrderByNumberAsc(UUID siteId);
-    Optional<Term> findBySiteIdAndNumber(UUID siteId, int number);
+    Optional<Term> findBySiteIdAndSessionAndNumber(UUID siteId, String session, int number);
+    /** The newest session's term with this number. */
+    Optional<Term> findFirstBySiteIdAndNumberOrderByStartsOnDesc(UUID siteId, int number);
 }

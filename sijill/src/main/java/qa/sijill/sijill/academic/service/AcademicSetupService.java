@@ -111,6 +111,12 @@ public class AcademicSetupService {
     /** Creates or updates term 1, 2 or 3 of the school year. Only the coordinator does this (FR-016). */
     @Transactional
     public TermView saveTerm(CurrentUser user, int number, String name, LocalDate startsOn, LocalDate endsOn) {
+        return saveTerm(user, null, number, name, startsOn, endsOn);
+    }
+
+    /** As above, in a named session such as {@code 2026-2027}. Without one, the term joins the current session. */
+    @Transactional
+    public TermView saveTerm(CurrentUser user, String session, int number, String name, LocalDate startsOn, LocalDate endsOn) {
         access.requireSetup(user);
         if (number < 1 || number > 3) {
             throw new BadRequestException("The term must be 1, 2 or 3.");
@@ -121,7 +127,10 @@ public class AcademicSetupService {
         if (startsOn == null || endsOn == null || !endsOn.isAfter(startsOn)) {
             throw new BadRequestException("The term must end after it starts.");
         }
-        Term term = terms.findBySiteIdAndNumber(user.siteId(), number).orElseGet(Term::new);
+        String chosen = session != null && session.matches("\\d{4}-\\d{4}") ? session
+                : currentSession(user.siteId()).orElse(sessionOf(startsOn));
+        Term term = terms.findBySiteIdAndSessionAndNumber(user.siteId(), chosen, number).orElseGet(Term::new);
+        term.setSession(chosen);
         String before = term.getName() == null ? null : term.getName() + " " + term.getStartsOn() + " to " + term.getEndsOn();
         term.setOrgId(user.orgId());
         term.setSiteId(user.siteId());
@@ -138,14 +147,47 @@ public class AcademicSetupService {
     /** The school's terms, for every signed-in school role. */
     @Transactional(readOnly = true)
     public List<TermView> terms(CurrentUser user) {
+        return terms(user, null);
+    }
+
+    /** The terms of one session; without a session, of the current one. */
+    @Transactional(readOnly = true)
+    public List<TermView> terms(CurrentUser user, String session) {
         if (user.isNetwork()) {
             throw new ForbiddenException("Terms are not available for your role.");
         }
-        return terms.findBySiteIdOrderByNumberAsc(user.siteId()).stream().map(AcademicSetupService::termView).toList();
+        String chosen = session != null && !session.isBlank() ? session : currentSession(user.siteId()).orElse(null);
+        return terms.findBySiteIdOrderByNumberAsc(user.siteId()).stream().filter(t -> chosen == null || chosen.equals(t.getSession()))
+                .map(AcademicSetupService::termView).toList();
+    }
+
+    /** Every session the school has terms for (newest first) and the current one. */
+    @Transactional(readOnly = true)
+    public qa.sijill.sijill.academic.dto.AcademicDtos.SessionsView sessions(CurrentUser user) {
+        if (user.isNetwork()) {
+            throw new ForbiddenException("Sessions are not available for your role.");
+        }
+        List<String> all = terms.findBySiteIdOrderByNumberAsc(user.siteId()).stream().map(Term::getSession).distinct()
+                .sorted(java.util.Comparator.reverseOrder()).toList();
+        return new qa.sijill.sijill.academic.dto.AcademicDtos.SessionsView(currentSession(user.siteId()).orElse(null), all);
+    }
+
+    /** The session whose term covers today, else the newest session. */
+    private java.util.Optional<String> currentSession(UUID siteId) {
+        List<Term> all = terms.findBySiteIdOrderByNumberAsc(siteId);
+        java.time.LocalDate today = access.today();
+        return all.stream().filter(t -> !today.isBefore(t.getStartsOn()) && !today.isAfter(t.getEndsOn())).map(Term::getSession).findFirst()
+                .or(() -> all.stream().map(Term::getSession).max(String::compareTo));
+    }
+
+    /** August to July: a date in October 2026 belongs to 2026-2027, one in March 2027 too. */
+    static String sessionOf(LocalDate d) {
+        int y = d.getYear();
+        return d.getMonthValue() >= 8 ? y + "-" + (y + 1) : (y - 1) + "-" + y;
     }
 
     private static TermView termView(Term t) {
-        return new TermView(t.getId(), t.getNumber(), t.getName(), t.getStartsOn(), t.getEndsOn());
+        return new TermView(t.getId(), t.getNumber(), t.getName(), t.getStartsOn(), t.getEndsOn(), t.getSession());
     }
 
     /** Puts a student in a section, moving them if they were in another one (BR-002). */

@@ -103,7 +103,20 @@ public class SettingsService {
     /** Adds a subject, or changes its name/coordinator when {@code subjectId} is given. School IT, as part of the academic setup. */
     @Transactional
     public Subject saveSubject(CurrentUser user, UUID subjectId, String name, UUID coordinatorId) {
+        return saveSubject(user, subjectId, name, coordinatorId, null, null, null, null);
+    }
+
+    /** As above, with the subject's code, the grades it is taught in and its periods per week (null leaves a field as it is). */
+    @Transactional
+    public Subject saveSubject(CurrentUser user, UUID subjectId, String name, UUID coordinatorId, String code, Integer gradeFrom, Integer gradeTo, Integer maxPeriods) {
         policy.requireRole(user, Role.SCHOOL_IT);
+        int from = gradeFrom == null ? 0 : gradeFrom, to = gradeTo == null ? 0 : gradeTo;
+        if ((gradeFrom != null && (from < 1 || from > 12)) || (gradeTo != null && (to < 1 || to > 12))) {
+            throw new BadRequestException("Grades run from 1 to 12.");
+        }
+        if (maxPeriods != null && (maxPeriods < 1 || maxPeriods > 40)) {
+            throw new BadRequestException("Periods per week must be between 1 and 40.");
+        }
         Subject subject;
         if (subjectId == null) {
             if (name == null || name.isBlank()) {
@@ -121,6 +134,21 @@ public class SettingsService {
         }
         if (coordinatorId != null) {
             subject.setCoordinatorId(coordinatorId);
+        }
+        if (code != null) {
+            subject.setCode(code.isBlank() ? null : code.trim().toUpperCase());
+        }
+        if (gradeFrom != null) {
+            subject.setGradeFrom(from);
+        }
+        if (gradeTo != null) {
+            subject.setGradeTo(to);
+        }
+        if (subject.getGradeFrom() > subject.getGradeTo()) {
+            throw new BadRequestException("The first grade cannot be after the last grade.");
+        }
+        if (maxPeriods != null) {
+            subject.setMaxPeriods(maxPeriods);
         }
         subjects.save(subject);
         audit.log(user.orgId(), user.siteId(), ActivityActions.SUBJECT_CHANGED).by(user)
