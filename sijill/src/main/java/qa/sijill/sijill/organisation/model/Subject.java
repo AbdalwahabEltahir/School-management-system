@@ -24,4 +24,18 @@ public class Subject extends BaseEntity {
     /** The {@code Person} who coordinates this subject; may be null until assigned. */
     @Column(name = "coordinator_id")
     private UUID coordinatorId;
+
+    /** A short code such as MATH. */
+    @Column(length = 12)
+    private String code;
+
+    @Column(name = "grade_from", nullable = false)
+    private int gradeFrom = 1;
+
+    @Column(name = "grade_to", nullable = false)
+    private int gradeTo = 12;
+
+    /** How many periods a week this subject should have. */
+    @Column(name = "max_periods", nullable = false)
+    private int maxPeriods = 5;
 }

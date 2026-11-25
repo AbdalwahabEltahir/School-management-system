@@ -1,0 +1,56 @@
+/* Family engagement: students at risk, absence notes, trips and events, early pick-up and meetings. */
+.fm-form { display: grid; gap: 10px; max-width: 760px }
+.fm-form .field { margin: 0 }
+.fm-two { display: grid; grid-template-columns: 1fr 1fr; gap: 12px }
+.fm-three { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px }
+@media (max-width: 720px) { .fm-two, .fm-three { grid-template-columns: 1fr } }
+.fm-checks { display: flex; flex-wrap: wrap; gap: 8px }
+.fm-checks label { display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; border: 1px solid #E3E5EC; border-radius: 999px; font-weight: 600; cursor: pointer; background: #fff }
+.fm-checks label:has(input:checked) { border-color: var(--brand); background: var(--brand-50); color: var(--brand-700) }
+.fm-note { font-size: 13px; line-height: 1.4; max-width: 280px }
+.fm-more summary { cursor: pointer; color: var(--brand); font-weight: 700; white-space: nowrap }
+.fm-more[open] { min-width: 260px }
+.fm-more form { display: grid; gap: 6px; margin-top: 8px }
+.fm-list { display: grid; gap: 8px }
+.fm-row { display: flex; align-items: center; gap: 12px; padding: 10px 12px; border: 1px solid #F1D9A8; background: #FFF8EA; border-radius: 12px }
+.fm-row > div { flex: 1; display: grid }
+.fm-row small { color: var(--ink-3) }
+.fm-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 12px }
+.fm-req { border: 1px solid #E3E5EC; border-radius: 14px; padding: 14px; display: grid; gap: 8px; background: #fff }
+.fm-req p { margin: 0 }
+.fm-req-top, .fm-child-top { display: flex; align-items: center; gap: 10px }
+.fm-req-top > div, .fm-child-top > div { flex: 1; display: grid }
+.fm-req-top small, .fm-child-top small { color: var(--ink-3) }
+.fm-child-top b { flex: 1 }
+.fm-act { display: grid; gap: 8px; margin: 4px 0 0; min-width: 240px }
+.fm-act .input { width: 100%; min-width: 0; min-height: 38px; font-size: 13px }
+.fm-btns { display: grid; grid-template-columns: 1fr 1fr; gap: 8px }
+.fm-btns .btn { width: 100%; justify-content: center; box-shadow: none }
+.fm-req-top .badge { align-self: flex-start; white-space: nowrap }
+.fm-tally { display: inline-flex; gap: 6px }
+.fm-tally i { font-style: normal; font-weight: 800; min-width: 26px; text-align: center; padding: 2px 8px; border-radius: 999px; background: #EEF0F5; color: var(--ink-2) }
+.fm-tally i.ok { background: #E7F7EF; color: #0B7A4F }
+.fm-tally i.no { background: #FDECEC; color: #8E1B1B }
+.fm-pre { white-space: pre-wrap; margin: 0 0 8px }
+.fm-children, .fm-teachers { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 12px; margin-top: 8px }
+.fm-child, .fm-teacher { border: 1px solid #E3E5EC; border-radius: 14px; padding: 14px; display: grid; gap: 10px; background: #fff }
+.fm-agree { display: flex; gap: 8px; align-items: flex-start; font-size: 13px; line-height: 1.45; cursor: pointer }
+.fm-agree input { margin-top: 3px }
+.fm-day { margin: 14px 0 8px; font-size: 14px; color: var(--ink-2) }
+.fm-slots { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 10px }
+.fm-slot { border: 1px dashed #D5D8E2; border-radius: 12px; padding: 10px 12px; display: grid; gap: 4px; background: #fff }
+.fm-slot.on { border-style: solid; border-color: #9BD8BC; background: #F3FBF7 }
+.fm-slot > span { color: var(--ink-3); font-size: 13px }
+.fm-slot-who { display: grid; font-size: 13px }
+.fm-slot-who small { color: var(--ink-3) }
+.fm-slot .btn { justify-self: start }
+.fm-pick { display: grid; gap: 8px }
+.fm-pick small { color: var(--ink-3); font-weight: 600 }
+.fm-times { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px }
+.fm-times label { cursor: pointer }
+.fm-times input { position: absolute; opacity: 0; pointer-events: none }
+.fm-times span { display: inline-grid; text-align: center; padding: 6px 10px; border: 1px solid #E3E5EC; border-radius: 10px; font-weight: 700; background: #fff }
+.fm-times span i { font-style: normal; font-weight: 500; font-size: 11px; color: var(--ink-3) }
+.fm-times input:checked + span { border-color: var(--brand); background: var(--brand); color: #fff }
+.fm-times input:checked + span i { color: #fff }
+.fm-times input:focus-visible + span { outline: 2px solid var(--brand-400); outline-offset: 2px }

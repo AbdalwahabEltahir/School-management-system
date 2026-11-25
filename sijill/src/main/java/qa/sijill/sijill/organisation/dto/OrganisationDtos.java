@@ -25,9 +25,9 @@ public final class OrganisationDtos {
         }
     }
 
-    public record SubjectView(UUID id, String name, UUID coordinatorId) {
+    public record SubjectView(UUID id, String name, UUID coordinatorId, String code, int gradeFrom, int gradeTo, int maxPeriods) {
         public static SubjectView from(Subject s) {
-            return new SubjectView(s.getId(), s.getName(), s.getCoordinatorId());
+            return new SubjectView(s.getId(), s.getName(), s.getCoordinatorId(), s.getCode(), s.getGradeFrom(), s.getGradeTo(), s.getMaxPeriods());
         }
     }
 
@@ -50,7 +50,7 @@ public final class OrganisationDtos {
         }
     }
 
-    public record SubjectRequest(@NotBlank String name, UUID coordinatorId) {}
+    public record SubjectRequest(@NotBlank String name, UUID coordinatorId, String code, Integer gradeFrom, Integer gradeTo, Integer maxPeriods) {}
 
     public record DocTypeRequest(@NotBlank String name, @NotNull Sensitivity sensitivity) {}
 

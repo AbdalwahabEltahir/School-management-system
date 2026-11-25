@@ -96,4 +96,16 @@ public final class ActivityActions {
     public static final String PICKUP_RELEASED = "PICKUP_RELEASED";
     public static final String PICKUP_DECLINED = "PICKUP_DECLINED";
     public static final String PICKUP_CANCELLED = "PICKUP_CANCELLED";
+    // ---- family engagement ----
+    public static final String RISK_NOTED = "RISK_NOTED";
+    public static final String RISK_PARENTS_TOLD = "RISK_PARENTS_TOLD";
+    public static final String EXCUSE_SUBMITTED = "EXCUSE_SUBMITTED";
+    public static final String EXCUSE_REVIEWED = "EXCUSE_REVIEWED";
+    public static final String EVENT_CREATED = "EVENT_CREATED";
+    public static final String EVENT_CANCELLED = "EVENT_CANCELLED";
+    public static final String EVENT_CONSENT = "EVENT_CONSENT";
+    public static final String EARLY_PICKUP_REQUESTED = "EARLY_PICKUP_REQUESTED";
+    public static final String EARLY_PICKUP_DECIDED = "EARLY_PICKUP_DECIDED";
+    public static final String MEETING_BOOKED = "MEETING_BOOKED";
+    public static final String MEETING_CANCELLED = "MEETING_CANCELLED";
 }

@@ -89,7 +89,7 @@ public class MarksService {
         if (term < 1 || term > 3) {
             throw new BadRequestException("The term must be 1, 2 or 3.");
         }
-        if (terms.findBySiteIdAndNumber(user.siteId(), term).isEmpty()) {
+        if (terms.findFirstBySiteIdAndNumberOrderByStartsOnDesc(user.siteId(), term).isEmpty()) {
             throw new BadRequestException("Term " + term + " has not been created yet. Ask the coordinator to create it.");
         }
         if (name == null || name.isBlank()) {

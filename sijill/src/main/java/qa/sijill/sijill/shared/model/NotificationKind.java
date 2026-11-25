@@ -15,6 +15,10 @@ public enum NotificationKind {
     MESSAGE,
     /** New homework, quizzes and class notices from a teacher. */
     CLASSWORK,
+    /** A student's average in a subject fell below the pass line (raised automatically from submitted marks). */
+    AT_RISK,
+    /** Family requests: absence notes, trip and event permission, early pick-ups and parent-teacher meetings. */
+    FAMILY,
     /** Security and account events. Always delivered: a person cannot switch these off. */
     SECURITY;
 

@@ -32,13 +32,18 @@ public class AcademicController {
     }
 
     @GetMapping("/terms")
-    public List<AcademicDtos.TermView> terms(CurrentUser user) {
-        return setup.terms(user);
+    public List<AcademicDtos.TermView> terms(CurrentUser user, @org.springframework.web.bind.annotation.RequestParam(required = false) String session) {
+        return setup.terms(user, session);
+    }
+
+    @GetMapping("/sessions")
+    public AcademicDtos.SessionsView sessions(CurrentUser user) {
+        return setup.sessions(user);
     }
 
     @PutMapping("/terms")
     public AcademicDtos.TermView saveTerm(CurrentUser user, @Valid @RequestBody AcademicDtos.TermRequest request) {
-        return setup.saveTerm(user, request.number(), request.name(), request.startsOn(), request.endsOn());
+        return setup.saveTerm(user, request.session(), request.number(), request.name(), request.startsOn(), request.endsOn());
     }
 
     @PostMapping("/sections")
